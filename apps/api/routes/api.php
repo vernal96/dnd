@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\ActorInstanceController;
 use App\Http\Controllers\Api\AuthSessionController;
 use App\Http\Controllers\Api\GameController;
+use App\Http\Controllers\Api\GameImageController;
 use App\Http\Controllers\Api\GameInvitationController;
 use App\Http\Controllers\Api\GameSceneStateController;
 use App\Http\Controllers\Api\RaceController;
@@ -49,6 +50,9 @@ Route::middleware([
     Route::post('/games', [GameController::class, 'store']);
     Route::get('/games/{game}', [GameController::class, 'show']);
     Route::patch('/games/{game}/status', [GameController::class, 'updateStatus']);
+    Route::get('/games/{game}/images', [GameImageController::class, 'index']);
+    Route::post('/games/{game}/images', [GameImageController::class, 'store']);
+    Route::get('/games/{game}/images/{image}', [GameImageController::class, 'show'])->where('image', '[A-Za-z0-9._-]+');
     Route::post('/games/{game}/invitations', [GameController::class, 'inviteMember']);
     Route::delete('/games/{game}/members/{member}', [GameController::class, 'removeMember']);
     Route::get('/game-invitations', [GameInvitationController::class, 'index']);
