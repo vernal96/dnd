@@ -65,6 +65,10 @@ final class CharacterClassControllerTest extends TestCase
         $this->getJson('/api/character-classes', $this->frontendHeaders())
             ->assertOk()
             ->assertJsonPath('0.code', 'barbarian')
+            ->assertJsonPath('0.startingEquipment.0.item.code', 'greataxe')
+            ->assertJsonPath('0.startingEquipment.0.item.name', 'Большой топор')
+            ->assertJsonPath('0.startingEquipment.1.quantity', 2)
+            ->assertJsonPath('0.startingEquipment.1.item.code', 'handaxe')
             ->assertJsonPath('0.subclasses.0.code', 'path-of-the-berserker')
             ->assertJsonPath('1.code', 'bard')
             ->assertJsonPath('2.code', 'cleric')
@@ -96,6 +100,10 @@ final class CharacterClassControllerTest extends TestCase
         $this->getJson('/api/character-classes/warlock', $this->frontendHeaders())
             ->assertOk()
             ->assertJsonPath('name', 'Колдун / Чернокнижник')
+            ->assertJsonPath('startingEquipment.0.item.name', 'Лёгкий арбалет')
+            ->assertJsonPath('startingEquipment.0.item.code', 'light-crossbow')
+            ->assertJsonPath('startingEquipment.3.item.name', 'Магический фокус')
+            ->assertJsonPath('startingEquipment.3.item.code', 'arcane-focus')
             ->assertJsonPath('subclasses.0.name', 'Архифея-покровитель')
             ->assertJsonPath('subclasses.3.name', 'Великий Древний покровитель');
     }

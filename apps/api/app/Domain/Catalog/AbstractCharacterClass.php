@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog;
 
+use App\Data\Catalog\StartingEquipmentEntryData;
+
 /**
  * Базовая сущность класса персонажа, реализуемая конкретными классами.
  */
@@ -17,7 +19,25 @@ abstract class AbstractCharacterClass
 	 *     name: string,
 	 *     description: ?string,
 	 *     isActive: bool,
-	 *     subclasses: list<array{code: string, name: string, description: ?string, isActive: bool}>
+	 *     subclasses: list<array{code: string, name: string, description: ?string, isActive: bool}>,
+	 *     startingEquipment: list<array{
+	 *         quantity: int,
+	 *         item: array{
+	 *             code: string,
+	 *             name: string,
+	 *             type: string,
+	 *             category: string,
+	 *             damageDice: ?string,
+	 *             versatileDamageDice: ?string,
+	 *             attackAbilities: list<string>,
+	 *             armorClassBase: ?int,
+	 *             armorClassAbility: ?string,
+	 *             armorClassAbilityCap: ?int,
+	 *             armorClassBonus: ?int,
+	 *             description: ?string,
+	 *             isActive: bool
+	 *         }
+	 *     }>
 	 * }
 	 */
 	public function toArray(): array
@@ -30,6 +50,10 @@ abstract class AbstractCharacterClass
 			'subclasses' => array_map(
 				static fn(AbstractCharacterSubclass $subclass): array => $subclass->toArray(),
 				$this->getActiveSubclasses(),
+			),
+			'startingEquipment' => array_map(
+				static fn(StartingEquipmentEntryData $entry): array => $entry->toArray(),
+				$this->getStartingEquipment(),
 			),
 		];
 	}
@@ -78,5 +102,28 @@ abstract class AbstractCharacterClass
 	public function getSubclasses(): array
 	{
 		return [];
+	}
+
+	/**
+	 * Возвращает стартовое снаряжение класса персонажа.
+	 *
+	 * @return list<StartingEquipmentEntryData>
+	 */
+	public function getStartingEquipment(): array
+	{
+		return [];
+	}
+
+	/**
+	 * Создает одну запись стартового снаряжения.
+	 */
+	protected function makeStartingEquipmentEntry(
+		string $itemClass,
+		int $quantity = 1,
+	): StartingEquipmentEntryData {
+		return new StartingEquipmentEntryData(
+			itemClass: $itemClass,
+			quantity: $quantity,
+		);
 	}
 }

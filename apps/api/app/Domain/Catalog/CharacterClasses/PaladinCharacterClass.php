@@ -4,12 +4,22 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\CharacterClasses;
 
+use App\Data\Catalog\StartingEquipmentEntryData;
 use App\Domain\Catalog\AbstractCharacterClass;
 use App\Domain\Catalog\AbstractCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\OathOfDevotionCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\OathOfGloryCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\OathOfTheAncientsCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\OathOfVengeanceCharacterSubclass;
+use App\Domain\Catalog\Items\BackpackItem;
+use App\Domain\Catalog\Items\BedrollItem;
+use App\Domain\Catalog\Items\ChainMailItem;
+use App\Domain\Catalog\Items\HolySymbolItem;
+use App\Domain\Catalog\Items\JavelinItem;
+use App\Domain\Catalog\Items\LongswordItem;
+use App\Domain\Catalog\Items\RationsItem;
+use App\Domain\Catalog\Items\ShieldItem;
+use App\Domain\Catalog\Items\WaterskinItem;
 
 /**
  * Сущность класса паладина.
@@ -52,6 +62,26 @@ final class PaladinCharacterClass extends AbstractCharacterClass
 			new OathOfGloryCharacterSubclass,
 			new OathOfTheAncientsCharacterSubclass,
 			new OathOfVengeanceCharacterSubclass,
+		];
+	}
+
+	/**
+	 * Возвращает стартовое снаряжение паладина.
+	 *
+	 * @return list<StartingEquipmentEntryData>
+	 */
+	public function getStartingEquipment(): array
+	{
+		return [
+			$this->makeStartingEquipmentEntry(LongswordItem::class),
+			$this->makeStartingEquipmentEntry(JavelinItem::class, 5),
+			$this->makeStartingEquipmentEntry(ChainMailItem::class),
+			$this->makeStartingEquipmentEntry(ShieldItem::class),
+			$this->makeStartingEquipmentEntry(HolySymbolItem::class),
+			$this->makeStartingEquipmentEntry(BackpackItem::class),
+			$this->makeStartingEquipmentEntry(BedrollItem::class),
+			$this->makeStartingEquipmentEntry(WaterskinItem::class),
+			$this->makeStartingEquipmentEntry(RationsItem::class),
 		];
 	}
 }

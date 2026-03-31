@@ -4,12 +4,21 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\CharacterClasses;
 
+use App\Data\Catalog\StartingEquipmentEntryData;
 use App\Domain\Catalog\AbstractCharacterClass;
 use App\Domain\Catalog\AbstractCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\CollegeOfDanceCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\CollegeOfGlamourCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\CollegeOfLoreCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\CollegeOfValorCharacterSubclass;
+use App\Domain\Catalog\Items\BackpackItem;
+use App\Domain\Catalog\Items\DaggerItem;
+use App\Domain\Catalog\Items\LeatherArmorItem;
+use App\Domain\Catalog\Items\MusicalInstrumentItem;
+use App\Domain\Catalog\Items\PaperAndQuillItem;
+use App\Domain\Catalog\Items\RapierItem;
+use App\Domain\Catalog\Items\RationsItem;
+use App\Domain\Catalog\Items\WaterskinItem;
 
 /**
  * Сущность класса барда.
@@ -52,6 +61,25 @@ final class BardCharacterClass extends AbstractCharacterClass
 			new CollegeOfGlamourCharacterSubclass,
 			new CollegeOfLoreCharacterSubclass,
 			new CollegeOfValorCharacterSubclass,
+		];
+	}
+
+	/**
+	 * Возвращает стартовое снаряжение барда.
+	 *
+	 * @return list<StartingEquipmentEntryData>
+	 */
+	public function getStartingEquipment(): array
+	{
+		return [
+			$this->makeStartingEquipmentEntry(RapierItem::class),
+			$this->makeStartingEquipmentEntry(DaggerItem::class),
+			$this->makeStartingEquipmentEntry(LeatherArmorItem::class),
+			$this->makeStartingEquipmentEntry(MusicalInstrumentItem::class),
+			$this->makeStartingEquipmentEntry(BackpackItem::class),
+			$this->makeStartingEquipmentEntry(PaperAndQuillItem::class),
+			$this->makeStartingEquipmentEntry(WaterskinItem::class),
+			$this->makeStartingEquipmentEntry(RationsItem::class),
 		];
 	}
 }

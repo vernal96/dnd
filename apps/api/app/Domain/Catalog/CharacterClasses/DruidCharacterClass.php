@@ -4,12 +4,22 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\CharacterClasses;
 
+use App\Data\Catalog\StartingEquipmentEntryData;
 use App\Domain\Catalog\AbstractCharacterClass;
 use App\Domain\Catalog\AbstractCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\CircleOfTheLandCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\CircleOfTheMoonCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\CircleOfTheSeaCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\CircleOfTheStarsCharacterSubclass;
+use App\Domain\Catalog\Items\BackpackItem;
+use App\Domain\Catalog\Items\DaggerItem;
+use App\Domain\Catalog\Items\DruidicFocusItem;
+use App\Domain\Catalog\Items\HerbsOrHerbalismKitItem;
+use App\Domain\Catalog\Items\LeatherArmorItem;
+use App\Domain\Catalog\Items\QuarterstaffItem;
+use App\Domain\Catalog\Items\RationsItem;
+use App\Domain\Catalog\Items\WaterskinItem;
+use App\Domain\Catalog\Items\WoodenShieldItem;
 
 /**
  * Сущность класса друида.
@@ -52,6 +62,26 @@ final class DruidCharacterClass extends AbstractCharacterClass
 			new CircleOfTheMoonCharacterSubclass,
 			new CircleOfTheSeaCharacterSubclass,
 			new CircleOfTheStarsCharacterSubclass,
+		];
+	}
+
+	/**
+	 * Возвращает стартовое снаряжение друида.
+	 *
+	 * @return list<StartingEquipmentEntryData>
+	 */
+	public function getStartingEquipment(): array
+	{
+		return [
+			$this->makeStartingEquipmentEntry(QuarterstaffItem::class),
+			$this->makeStartingEquipmentEntry(DaggerItem::class),
+			$this->makeStartingEquipmentEntry(LeatherArmorItem::class),
+			$this->makeStartingEquipmentEntry(WoodenShieldItem::class),
+			$this->makeStartingEquipmentEntry(DruidicFocusItem::class),
+			$this->makeStartingEquipmentEntry(BackpackItem::class),
+			$this->makeStartingEquipmentEntry(HerbsOrHerbalismKitItem::class),
+			$this->makeStartingEquipmentEntry(WaterskinItem::class),
+			$this->makeStartingEquipmentEntry(RationsItem::class),
 		];
 	}
 }
