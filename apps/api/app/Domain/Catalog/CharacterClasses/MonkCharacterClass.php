@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\CharacterClasses;
 
+use App\Data\Catalog\CharacterClassSkillProgressionData;
 use App\Data\Catalog\StartingEquipmentEntryData;
 use App\Domain\Catalog\AbstractCharacterClass;
 use App\Domain\Catalog\AbstractCharacterSubclass;
@@ -18,6 +19,29 @@ use App\Domain\Catalog\Items\RopeItem;
 use App\Domain\Catalog\Items\ShortswordItem;
 use App\Domain\Catalog\Items\TravelerPackItem;
 use App\Domain\Catalog\Items\WaterskinItem;
+use App\Domain\Catalog\Skills\AbilityScoreImprovementSkill;
+use App\Domain\Catalog\Skills\AcrobaticMovementSkill;
+use App\Domain\Catalog\Skills\BodyAndMindSkill;
+use App\Domain\Catalog\Skills\DeflectAttacksSkill;
+use App\Domain\Catalog\Skills\DeflectEnergySkill;
+use App\Domain\Catalog\Skills\DisciplinedSurvivorSkill;
+use App\Domain\Catalog\Skills\EmpoweredStrikesSkill;
+use App\Domain\Catalog\Skills\EpicBoonSkill;
+use App\Domain\Catalog\Skills\EvasionSkill;
+use App\Domain\Catalog\Skills\ExtraAttackSkill;
+use App\Domain\Catalog\Skills\HeightenedFocusSkill;
+use App\Domain\Catalog\Skills\MartialArtsSkill;
+use App\Domain\Catalog\Skills\MonksFocusSkill;
+use App\Domain\Catalog\Skills\MonkSubclassFeatureSkill;
+use App\Domain\Catalog\Skills\MonkSubclassSkill;
+use App\Domain\Catalog\Skills\MonkUnarmoredDefenseSkill;
+use App\Domain\Catalog\Skills\PerfectFocusSkill;
+use App\Domain\Catalog\Skills\SelfRestorationSkill;
+use App\Domain\Catalog\Skills\SlowFallSkill;
+use App\Domain\Catalog\Skills\StunningStrikeSkill;
+use App\Domain\Catalog\Skills\SuperiorDefenseSkill;
+use App\Domain\Catalog\Skills\UnarmoredMovementSkill;
+use App\Domain\Catalog\Skills\UncannyMetabolismSkill;
 
 /**
  * Сущность класса монаха.
@@ -61,6 +85,35 @@ final class MonkCharacterClass extends AbstractCharacterClass
 			new WarriorOfTheElementsCharacterSubclass,
 			new WarriorOfTheOpenHandCharacterSubclass,
 		];
+	}
+
+	/**
+	 * Возвращает прогрессию классовых способностей монаха по уровням.
+	 */
+	public function getSkillsByLevel(): CharacterClassSkillProgressionData
+	{
+		return new CharacterClassSkillProgressionData(
+			level1: [new MartialArtsSkill, new MonkUnarmoredDefenseSkill],
+			level2: [new MonksFocusSkill, new UnarmoredMovementSkill, new UncannyMetabolismSkill],
+			level3: [new DeflectAttacksSkill, new MonkSubclassSkill],
+			level4: [new AbilityScoreImprovementSkill, new SlowFallSkill],
+			level5: [new ExtraAttackSkill, new StunningStrikeSkill],
+			level6: [new EmpoweredStrikesSkill, new MonkSubclassFeatureSkill],
+			level7: [new EvasionSkill],
+			level8: [new AbilityScoreImprovementSkill],
+			level9: [new AcrobaticMovementSkill],
+			level10: [new HeightenedFocusSkill, new SelfRestorationSkill],
+			level11: [new MonkSubclassFeatureSkill],
+			level12: [new AbilityScoreImprovementSkill],
+			level13: [new DeflectEnergySkill],
+			level14: [new DisciplinedSurvivorSkill],
+			level15: [new PerfectFocusSkill],
+			level16: [new AbilityScoreImprovementSkill],
+			level17: [new MonkSubclassFeatureSkill],
+			level18: [new SuperiorDefenseSkill],
+			level19: [new EpicBoonSkill],
+			level20: [new BodyAndMindSkill],
+		);
 	}
 
 	/**

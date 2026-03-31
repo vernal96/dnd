@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\CharacterClasses;
 
+use App\Data\Catalog\CharacterClassSkillProgressionData;
 use App\Data\Catalog\StartingEquipmentEntryData;
 use App\Domain\Catalog\AbstractCharacterClass;
 use App\Domain\Catalog\AbstractCharacterSubclass;
@@ -20,6 +21,20 @@ use App\Domain\Catalog\Items\QuarterstaffItem;
 use App\Domain\Catalog\Items\RationsItem;
 use App\Domain\Catalog\Items\ShieldItem;
 use App\Domain\Catalog\Items\WaterskinItem;
+use App\Domain\Catalog\Skills\AbilityScoreImprovementSkill;
+use App\Domain\Catalog\Skills\ArchdruidSkill;
+use App\Domain\Catalog\Skills\BeastSpellsSkill;
+use App\Domain\Catalog\Skills\DruidicSkill;
+use App\Domain\Catalog\Skills\DruidSubclassFeatureSkill;
+use App\Domain\Catalog\Skills\DruidSubclassSkill;
+use App\Domain\Catalog\Skills\ElementalFurySkill;
+use App\Domain\Catalog\Skills\EpicBoonSkill;
+use App\Domain\Catalog\Skills\ImprovedElementalFurySkill;
+use App\Domain\Catalog\Skills\PrimalOrderSkill;
+use App\Domain\Catalog\Skills\SpellcastingSkill;
+use App\Domain\Catalog\Skills\WildCompanionSkill;
+use App\Domain\Catalog\Skills\WildResurgenceSkill;
+use App\Domain\Catalog\Skills\WildShapeSkill;
 
 /**
  * Сущность класса друида.
@@ -63,6 +78,35 @@ final class DruidCharacterClass extends AbstractCharacterClass
 			new CircleOfTheSeaCharacterSubclass,
 			new CircleOfTheStarsCharacterSubclass,
 		];
+	}
+
+	/**
+	 * Возвращает прогрессию классовых способностей друида по уровням.
+	 */
+	public function getSkillsByLevel(): CharacterClassSkillProgressionData
+	{
+		return new CharacterClassSkillProgressionData(
+			level1: [new SpellcastingSkill, new DruidicSkill, new PrimalOrderSkill],
+			level2: [new WildShapeSkill, new WildCompanionSkill],
+			level3: [new DruidSubclassSkill],
+			level4: [new AbilityScoreImprovementSkill],
+			level5: [new WildResurgenceSkill],
+			level6: [new DruidSubclassFeatureSkill],
+			level7: [new ElementalFurySkill],
+			level8: [new AbilityScoreImprovementSkill],
+			level9: [],
+			level10: [new DruidSubclassFeatureSkill],
+			level11: [],
+			level12: [new AbilityScoreImprovementSkill],
+			level13: [],
+			level14: [new DruidSubclassFeatureSkill],
+			level15: [new ImprovedElementalFurySkill],
+			level16: [new AbilityScoreImprovementSkill],
+			level17: [],
+			level18: [new BeastSpellsSkill],
+			level19: [new EpicBoonSkill],
+			level20: [new ArchdruidSkill],
+		);
 	}
 
 	/**

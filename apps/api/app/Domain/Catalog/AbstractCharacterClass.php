@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog;
 
+use App\Data\Catalog\CharacterClassSkillProgressionData;
 use App\Data\Catalog\StartingEquipmentEntryData;
 
 /**
@@ -20,6 +21,28 @@ abstract class AbstractCharacterClass
 	 *     description: ?string,
 	 *     isActive: bool,
 	 *     subclasses: list<array{code: string, name: string, description: ?string, isActive: bool}>,
+	 *     skillsByLevel: array{
+	 *         level1: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
+	 *         level2: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
+	 *         level3: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
+	 *         level4: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
+	 *         level5: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
+	 *         level6: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
+	 *         level7: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
+	 *         level8: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
+	 *         level9: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
+	 *         level10: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
+	 *         level11: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
+	 *         level12: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
+	 *         level13: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
+	 *         level14: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
+	 *         level15: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
+	 *         level16: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
+	 *         level17: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
+	 *         level18: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
+	 *         level19: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
+	 *         level20: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>
+	 *     },
 	 *     startingEquipment: list<array{
 	 *         quantity: int,
 	 *         item: array{
@@ -51,6 +74,7 @@ abstract class AbstractCharacterClass
 				static fn(AbstractCharacterSubclass $subclass): array => $subclass->toArray(),
 				$this->getActiveSubclasses(),
 			),
+			'skillsByLevel' => $this->getSkillsByLevel()->toArray(),
 			'startingEquipment' => array_map(
 				static fn(StartingEquipmentEntryData $entry): array => $entry->toArray(),
 				$this->getStartingEquipment(),
@@ -102,6 +126,14 @@ abstract class AbstractCharacterClass
 	public function getSubclasses(): array
 	{
 		return [];
+	}
+
+	/**
+	 * Возвращает распределение навыков класса персонажа по уровням.
+	 */
+	public function getSkillsByLevel(): CharacterClassSkillProgressionData
+	{
+		return new CharacterClassSkillProgressionData;
 	}
 
 	/**

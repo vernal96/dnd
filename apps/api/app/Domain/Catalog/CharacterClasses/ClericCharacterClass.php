@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\CharacterClasses;
 
+use App\Data\Catalog\CharacterClassSkillProgressionData;
 use App\Data\Catalog\StartingEquipmentEntryData;
 use App\Domain\Catalog\AbstractCharacterClass;
 use App\Domain\Catalog\AbstractCharacterSubclass;
@@ -20,6 +21,18 @@ use App\Domain\Catalog\Items\RationsItem;
 use App\Domain\Catalog\Items\ShieldItem;
 use App\Domain\Catalog\Items\SpearItem;
 use App\Domain\Catalog\Items\WaterskinItem;
+use App\Domain\Catalog\Skills\AbilityScoreImprovementSkill;
+use App\Domain\Catalog\Skills\BlessedStrikesSkill;
+use App\Domain\Catalog\Skills\ChannelDivinitySkill;
+use App\Domain\Catalog\Skills\ClericSubclassFeatureSkill;
+use App\Domain\Catalog\Skills\ClericSubclassSkill;
+use App\Domain\Catalog\Skills\DivineInterventionSkill;
+use App\Domain\Catalog\Skills\DivineOrderSkill;
+use App\Domain\Catalog\Skills\EpicBoonSkill;
+use App\Domain\Catalog\Skills\GreaterDivineInterventionSkill;
+use App\Domain\Catalog\Skills\ImprovedBlessedStrikesSkill;
+use App\Domain\Catalog\Skills\SearUndeadSkill;
+use App\Domain\Catalog\Skills\SpellcastingSkill;
 
 /**
  * Сущность класса жреца.
@@ -63,6 +76,35 @@ final class ClericCharacterClass extends AbstractCharacterClass
 			new TrickeryDomainCharacterSubclass,
 			new WarDomainCharacterSubclass,
 		];
+	}
+
+	/**
+	 * Возвращает прогрессию классовых способностей жреца по уровням.
+	 */
+	public function getSkillsByLevel(): CharacterClassSkillProgressionData
+	{
+		return new CharacterClassSkillProgressionData(
+			level1: [new SpellcastingSkill, new DivineOrderSkill],
+			level2: [new ChannelDivinitySkill],
+			level3: [new ClericSubclassSkill],
+			level4: [new AbilityScoreImprovementSkill],
+			level5: [new SearUndeadSkill],
+			level6: [new ClericSubclassFeatureSkill],
+			level7: [new BlessedStrikesSkill],
+			level8: [new AbilityScoreImprovementSkill],
+			level9: [],
+			level10: [new DivineInterventionSkill],
+			level11: [],
+			level12: [new AbilityScoreImprovementSkill],
+			level13: [],
+			level14: [new ImprovedBlessedStrikesSkill],
+			level15: [],
+			level16: [new AbilityScoreImprovementSkill],
+			level17: [new ClericSubclassFeatureSkill],
+			level18: [],
+			level19: [new EpicBoonSkill],
+			level20: [new GreaterDivineInterventionSkill],
+		);
 	}
 
 	/**
