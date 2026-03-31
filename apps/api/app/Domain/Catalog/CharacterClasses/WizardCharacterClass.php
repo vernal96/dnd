@@ -14,9 +14,9 @@ use App\Domain\Catalog\CharacterSubclasses\IllusionistCharacterSubclass;
 use App\Domain\Catalog\Items\ArcaneFocusItem;
 use App\Domain\Catalog\Items\BackpackItem;
 use App\Domain\Catalog\Items\DaggerItem;
-use App\Domain\Catalog\Items\InkAndQuillItem;
-use App\Domain\Catalog\Items\NoArmorItem;
+use App\Domain\Catalog\Items\InkItem;
 use App\Domain\Catalog\Items\QuarterstaffItem;
+use App\Domain\Catalog\Items\QuillItem;
 use App\Domain\Catalog\Items\RationsItem;
 use App\Domain\Catalog\Items\SpellbookItem;
 use App\Domain\Catalog\Items\WaterskinItem;
@@ -75,11 +75,11 @@ final class WizardCharacterClass extends AbstractCharacterClass
 		return [
 			$this->makeStartingEquipmentEntry(QuarterstaffItem::class),
 			$this->makeStartingEquipmentEntry(DaggerItem::class),
-			$this->makeStartingEquipmentEntry(NoArmorItem::class),
 			$this->makeStartingEquipmentEntry(SpellbookItem::class),
 			$this->makeStartingEquipmentEntry(ArcaneFocusItem::class),
 			$this->makeStartingEquipmentEntry(BackpackItem::class),
-			$this->makeStartingEquipmentEntry(InkAndQuillItem::class),
+			$this->makeStartingEquipmentEntry(InkItem::class),
+			$this->makeStartingEquipmentEntry(QuillItem::class),
 			$this->makeStartingEquipmentEntry(WaterskinItem::class),
 			$this->makeStartingEquipmentEntry(RationsItem::class),
 		];

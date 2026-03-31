@@ -43,4 +43,11 @@ final class CandlesItem extends Item
 	{
 		return 'useful-trinkets';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Небольшие источники света, удобные для быта, ритуалов и экономного освещения.';
+	}
 }

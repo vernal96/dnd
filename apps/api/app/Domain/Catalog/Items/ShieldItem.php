@@ -51,4 +51,11 @@ final class ShieldItem extends Item
 	{
 		return 2;
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Носимый в одной руке щит из дерева или металла, увеличивающий защиту владельца.';
+	}
 }

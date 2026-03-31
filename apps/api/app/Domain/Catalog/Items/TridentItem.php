@@ -74,4 +74,11 @@ final class TridentItem extends Item
 			new StrengthAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Трезубец, пригодный для ближнего боя и броска. Может использоваться двумя руками для более сильного удара.';
+	}
 }

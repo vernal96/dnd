@@ -43,4 +43,11 @@ final class BackpackItem extends Item
 	{
 		return 'survival-and-travel';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Рюкзак для переноски снаряжения. На него удобно крепить спальник, верёвку и другие вещи снаружи.';
+	}
 }

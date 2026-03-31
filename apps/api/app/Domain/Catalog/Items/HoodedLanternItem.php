@@ -43,4 +43,11 @@ final class HoodedLanternItem extends Item
 	{
 		return 'light-and-vision';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Фонарь с заслонкой, позволяющий направлять и прикрывать свет.';
+	}
 }

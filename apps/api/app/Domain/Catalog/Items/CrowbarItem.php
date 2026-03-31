@@ -43,4 +43,11 @@ final class CrowbarItem extends Item
 	{
 		return 'useful-trinkets';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Ломик для силового вскрытия, отжима крышек и демонтажа препятствий.';
+	}
 }

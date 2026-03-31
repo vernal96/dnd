@@ -51,4 +51,11 @@ final class SplintArmorItem extends Item
 	{
 		return 17;
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Тяжёлый доспех из металлических полос на кожаной основе с защитой сочленений кольчугой.';
+	}
 }

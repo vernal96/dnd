@@ -74,4 +74,11 @@ final class LightCrossbowItem extends Item
 			new DexterityAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Простой арбалет с хорошей дальностью и надёжной точностью. Требует обеих рук и времени на перезарядку.';
+	}
 }

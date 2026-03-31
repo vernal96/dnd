@@ -74,4 +74,11 @@ final class PikeItem extends Item
 			new StrengthAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Очень длинное строевое копьё для удержания противника на дистанции и борьбы с натиском.';
+	}
 }

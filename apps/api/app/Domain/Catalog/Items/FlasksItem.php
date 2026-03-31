@@ -43,4 +43,11 @@ final class FlasksItem extends Item
 	{
 		return 'healing-and-alchemy';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Склянки для переноски жидкостей, масел и алхимических составов.';
+	}
 }

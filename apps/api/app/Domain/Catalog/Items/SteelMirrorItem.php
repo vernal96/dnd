@@ -43,4 +43,11 @@ final class SteelMirrorItem extends Item
 	{
 		return 'light-and-vision';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Небольшое стальное зеркальце для сигнала, осмотра углов и бытового использования.';
+	}
 }

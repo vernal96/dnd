@@ -69,4 +69,11 @@ final class BreastplateItem extends Item
 	{
 		return 2;
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Жёсткая металлическая защита груди, сохраняющая подвижность рук и ног.';
+	}
 }

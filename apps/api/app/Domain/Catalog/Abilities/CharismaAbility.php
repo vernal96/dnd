@@ -26,4 +26,12 @@ final class CharismaAbility extends Ability
 	{
 		return 'Харизма';
 	}
+
+	/**
+	 * Возвращает описание характеристики.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Харизма отражает силу личности, уверенность, обаяние и умение влиять на других.';
+	}
 }

@@ -43,4 +43,11 @@ final class LockItem extends Item
 	{
 		return 'useful-trinkets';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Навесной замок для контейнеров, дверей и хранения имущества.';
+	}
 }

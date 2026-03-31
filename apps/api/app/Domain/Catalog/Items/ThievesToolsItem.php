@@ -43,4 +43,11 @@ final class ThievesToolsItem extends Item
 	{
 		return 'kits';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Набор отмычек и тонких инструментов для вскрытия замков и обезвреживания ловушек.';
+	}
 }

@@ -74,4 +74,11 @@ final class QuarterstaffItem extends Item
 			new StrengthAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Крепкий посох, пригодный для путешествий и боя. Может использоваться одной или двумя руками.';
+	}
 }

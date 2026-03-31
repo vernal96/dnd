@@ -43,4 +43,11 @@ final class HourglassItem extends Item
 	{
 		return 'useful-trinkets';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Небольшие песочные часы для отсчёта ограниченного времени.';
+	}
 }

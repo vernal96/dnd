@@ -74,4 +74,11 @@ final class HalberdItem extends Item
 			new StrengthAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Древковое оружие с сочетанием топора, шипа и крюка. Создано для контроля пространства и мощных ударов.';
+	}
 }

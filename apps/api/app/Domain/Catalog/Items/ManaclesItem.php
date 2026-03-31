@@ -43,4 +43,11 @@ final class ManaclesItem extends Item
 	{
 		return 'useful-trinkets';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Кандалы для удержания пленников или фиксации существ.';
+	}
 }

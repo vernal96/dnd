@@ -43,4 +43,11 @@ final class RationsItem extends Item
 	{
 		return 'survival-and-travel';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Запас сухой и долго хранящейся еды, рассчитанный на путешествие без нормальной кухни.';
+	}
 }

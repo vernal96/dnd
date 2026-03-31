@@ -74,4 +74,11 @@ final class HandCrossbowItem extends Item
 			new DexterityAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Компактный арбалет для ближней дистанции. Удобен в тесных помещениях и скрытном ношении.';
+	}
 }

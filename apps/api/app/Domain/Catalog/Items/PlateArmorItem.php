@@ -51,4 +51,11 @@ final class PlateArmorItem extends Item
 	{
 		return 18;
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Полный латный доспех из сочленённых пластин, обеспечивающий лучшую обычную защиту среди немагической брони.';
+	}
 }

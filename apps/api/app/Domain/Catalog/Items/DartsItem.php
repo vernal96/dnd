@@ -76,4 +76,11 @@ final class DartsItem extends Item
 			new DexterityAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Небольшие метательные дротики, которые можно бросать быстро и точно.';
+	}
 }

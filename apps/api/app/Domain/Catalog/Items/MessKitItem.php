@@ -43,4 +43,11 @@ final class MessKitItem extends Item
 	{
 		return 'survival-and-travel';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Компактный набор походной посуды для приготовления и употребления простой пищи.';
+	}
 }

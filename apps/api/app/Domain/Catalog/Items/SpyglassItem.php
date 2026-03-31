@@ -43,4 +43,11 @@ final class SpyglassItem extends Item
 	{
 		return 'light-and-vision';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Подзорная труба, увеличивающая удалённые объекты и полезная для наблюдения.';
+	}
 }

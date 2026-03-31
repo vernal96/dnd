@@ -43,4 +43,11 @@ final class SealAndWaxItem extends Item
 	{
 		return 'useful-trinkets';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Печать и воск для запечатывания писем, свитков и официальных документов.';
+	}
 }

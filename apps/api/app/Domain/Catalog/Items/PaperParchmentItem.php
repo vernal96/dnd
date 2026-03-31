@@ -43,4 +43,11 @@ final class PaperParchmentItem extends Item
 	{
 		return 'useful-trinkets';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Листы бумаги или пергамента для записей, карт, переписки и заметок.';
+	}
 }

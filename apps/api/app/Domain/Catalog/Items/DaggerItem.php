@@ -76,4 +76,11 @@ final class DaggerItem extends Item
 			new DexterityAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Короткий клинок для ближнего боя и броска. Благодаря балансу подходит как для силы, так и для точных ловких ударов.';
+	}
 }

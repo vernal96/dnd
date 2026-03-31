@@ -74,4 +74,11 @@ final class LongswordItem extends Item
 			new StrengthAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Классический длинный меч, одинаково надёжный со щитом и при хвате двумя руками.';
+	}
 }

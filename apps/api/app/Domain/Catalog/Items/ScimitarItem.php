@@ -76,4 +76,11 @@ final class ScimitarItem extends Item
 			new DexterityAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Изогнутый лёгкий клинок для быстрых и частых рубящих ударов.';
+	}
 }

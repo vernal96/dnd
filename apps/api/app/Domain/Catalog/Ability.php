@@ -18,4 +18,12 @@ abstract class Ability
 	 * Возвращает название характеристики.
 	 */
 	abstract public function getName(): string;
+
+	/**
+	 * Возвращает описание характеристики.
+	 */
+	public function getDescription(): ?string
+	{
+		return null;
+	}
 }

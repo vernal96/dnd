@@ -43,4 +43,11 @@ final class MapOrScrollCaseItem extends Item
 	{
 		return 'containers';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Жёсткий футляр для карт, свитков и других свёрнутых документов.';
+	}
 }

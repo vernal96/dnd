@@ -43,4 +43,11 @@ final class ArrowsItem extends Item
 	{
 		return 'ammunition';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Боеприпасы для луков. Обычно используются пачками, а не по одной стреле.';
+	}
 }

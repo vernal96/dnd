@@ -74,4 +74,11 @@ final class BattleaxeItem extends Item
 			new StrengthAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Воинский топор, пригодный для боя одной рукой со щитом или двумя руками ради более сильного удара.';
+	}
 }

@@ -74,4 +74,11 @@ final class HandaxeItem extends Item
 			new StrengthAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Лёгкий боевой топор, подходящий для ближнего боя и метания на короткую дистанцию.';
+	}
 }

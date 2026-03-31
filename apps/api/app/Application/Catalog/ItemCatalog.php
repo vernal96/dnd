@@ -111,15 +111,10 @@ use App\Domain\Catalog\Items\DungeoneerPackItem;
 use App\Domain\Catalog\Items\DiplomatPackItem;
 use App\Domain\Catalog\Items\PriestPackItem;
 use App\Domain\Catalog\Items\HolySymbolItem;
-use App\Domain\Catalog\Items\WoodenShieldItem;
 use App\Domain\Catalog\Items\DruidicFocusItem;
 use App\Domain\Catalog\Items\ArcaneFocusItem;
 use App\Domain\Catalog\Items\SpellbookItem;
 use App\Domain\Catalog\Items\CloakItem;
-use App\Domain\Catalog\Items\NoArmorItem;
-use App\Domain\Catalog\Items\PaperAndQuillItem;
-use App\Domain\Catalog\Items\InkAndQuillItem;
-use App\Domain\Catalog\Items\HerbsOrHerbalismKitItem;
 
 /**
  * Хранит кодовый справочник предметов и снаряжения.
@@ -266,15 +261,10 @@ final class ItemCatalog
 			new DiplomatPackItem,
 			new PriestPackItem,
 			new HolySymbolItem,
-			new WoodenShieldItem,
 			new DruidicFocusItem,
 			new ArcaneFocusItem,
 			new SpellbookItem,
 			new CloakItem,
-			new NoArmorItem,
-			new PaperAndQuillItem,
-			new InkAndQuillItem,
-			new HerbsOrHerbalismKitItem,
 		];
 	}
 }

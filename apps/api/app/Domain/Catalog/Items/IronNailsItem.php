@@ -43,4 +43,11 @@ final class IronNailsItem extends Item
 	{
 		return 'useful-trinkets';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Железные гвозди для плотницких задач, укрепления лагеря и простых конструкций.';
+	}
 }

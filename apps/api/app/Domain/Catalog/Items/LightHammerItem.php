@@ -74,4 +74,11 @@ final class LightHammerItem extends Item
 			new StrengthAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Небольшой боевой молот для ближнего боя и броска. Часто используется как запасное оружие.';
+	}
 }

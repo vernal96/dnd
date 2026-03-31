@@ -76,4 +76,11 @@ final class RapierItem extends Item
 			new DexterityAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Длинный тонкий клинок для точных колющих атак. Хорошо подходит ловким фехтовальщикам.';
+	}
 }

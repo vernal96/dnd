@@ -51,4 +51,11 @@ final class RingMailItem extends Item
 	{
 		return 14;
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Кожаная броня с нашитыми тяжёлыми кольцами. Хуже кольчуги, но дешевле и доступнее.';
+	}
 }

@@ -43,4 +43,11 @@ final class DungeoneerPackItem extends Item
 	{
 		return 'kits';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Набор исследователя подземелий с инструментами, светом и припасами для опасных руин.';
+	}
 }

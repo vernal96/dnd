@@ -71,4 +71,11 @@ final class NetItem extends Item
 	{
 		return [];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Особое оружие, предназначенное не для урона, а для обездвиживания небольшой цели.';
+	}
 }

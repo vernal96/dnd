@@ -43,4 +43,11 @@ final class CrossbowBoltsItem extends Item
 	{
 		return 'ammunition';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Боеприпасы для арбалетов, короче и тяжелее обычных стрел.';
+	}
 }

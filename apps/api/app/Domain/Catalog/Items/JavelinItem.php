@@ -74,4 +74,11 @@ final class JavelinItem extends Item
 			new StrengthAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Универсальное метательное копьё, которым можно сражаться в рукопашной и поражать цели на расстоянии.';
+	}
 }

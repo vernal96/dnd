@@ -43,4 +43,11 @@ final class InkItem extends Item
 	{
 		return 'useful-trinkets';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Чернила для письма, заметок, копирования текстов и иных письменных работ.';
+	}
 }

@@ -26,4 +26,12 @@ final class DexterityAbility extends Ability
 	{
 		return 'Ловкость';
 	}
+
+	/**
+	 * Возвращает описание характеристики.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Ловкость отражает подвижность, рефлексы, координацию и чувство равновесия.';
+	}
 }

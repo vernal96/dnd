@@ -69,4 +69,11 @@ final class ScaleMailItem extends Item
 	{
 		return 2;
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Доспех из перекрывающихся металлических пластин на кожаной основе, напоминающих рыбью чешую.';
+	}
 }

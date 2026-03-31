@@ -43,4 +43,11 @@ final class ChalkItem extends Item
 	{
 		return 'useful-trinkets';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Куски мела для пометок на стенах, досках, камне и других поверхностях.';
+	}
 }

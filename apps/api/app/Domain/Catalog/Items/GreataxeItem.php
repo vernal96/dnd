@@ -74,4 +74,11 @@ final class GreataxeItem extends Item
 			new StrengthAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Тяжёлый двуручный топор, рассчитанный на редкие, но особенно разрушительные удары.';
+	}
 }

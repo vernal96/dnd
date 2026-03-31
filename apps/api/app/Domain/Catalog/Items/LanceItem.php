@@ -74,4 +74,11 @@ final class LanceItem extends Item
 			new StrengthAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Длинное копьё всадника, особенно опасное в натиске верхом, но неудобное вплотную без седла.';
+	}
 }

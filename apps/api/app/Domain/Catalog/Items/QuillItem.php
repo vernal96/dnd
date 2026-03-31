@@ -43,4 +43,11 @@ final class QuillItem extends Item
 	{
 		return 'useful-trinkets';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Перо для письма чернилами на бумаге или пергаменте.';
+	}
 }

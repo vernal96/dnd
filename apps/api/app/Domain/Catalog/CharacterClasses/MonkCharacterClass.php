@@ -13,7 +13,6 @@ use App\Domain\Catalog\CharacterSubclasses\WarriorOfTheElementsCharacterSubclass
 use App\Domain\Catalog\CharacterSubclasses\WarriorOfTheOpenHandCharacterSubclass;
 use App\Domain\Catalog\Items\BackpackItem;
 use App\Domain\Catalog\Items\DaggerItem;
-use App\Domain\Catalog\Items\NoArmorItem;
 use App\Domain\Catalog\Items\RationsItem;
 use App\Domain\Catalog\Items\RopeItem;
 use App\Domain\Catalog\Items\ShortswordItem;
@@ -74,7 +73,6 @@ final class MonkCharacterClass extends AbstractCharacterClass
 		return [
 			$this->makeStartingEquipmentEntry(ShortswordItem::class),
 			$this->makeStartingEquipmentEntry(DaggerItem::class),
-			$this->makeStartingEquipmentEntry(NoArmorItem::class),
 			$this->makeStartingEquipmentEntry(TravelerPackItem::class),
 			$this->makeStartingEquipmentEntry(BackpackItem::class),
 			$this->makeStartingEquipmentEntry(RopeItem::class),

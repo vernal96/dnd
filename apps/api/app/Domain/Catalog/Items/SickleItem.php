@@ -74,4 +74,11 @@ final class SickleItem extends Item
 			new StrengthAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Изогнутый клинок хозяйственного происхождения, приспособленный для лёгких ближних атак.';
+	}
 }

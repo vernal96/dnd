@@ -74,4 +74,11 @@ final class ShortbowItem extends Item
 			new DexterityAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Лёгкий лук для мобильных стрелков. Уступает длинному луку в дальности и силе, но проще в обращении.';
+	}
 }

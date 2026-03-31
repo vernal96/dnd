@@ -43,4 +43,11 @@ final class TinderboxItem extends Item
 	{
 		return 'survival-and-travel';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Небольшой набор кремня, огнива и трута для разведения огня.';
+	}
 }

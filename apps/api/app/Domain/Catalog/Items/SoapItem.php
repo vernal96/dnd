@@ -43,4 +43,11 @@ final class SoapItem extends Item
 	{
 		return 'useful-trinkets';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Простое мыло для гигиены, очистки вещей и бытовых нужд.';
+	}
 }

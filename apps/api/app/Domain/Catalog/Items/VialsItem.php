@@ -43,4 +43,11 @@ final class VialsItem extends Item
 	{
 		return 'healing-and-alchemy';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Малые сосуды для хранения небольших объёмов жидкостей и реагентов.';
+	}
 }

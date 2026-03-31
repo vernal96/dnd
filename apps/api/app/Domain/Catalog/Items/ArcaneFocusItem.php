@@ -43,4 +43,11 @@ final class ArcaneFocusItem extends Item
 	{
 		return 'kits';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Магический фокус, созданный для направления силы тайных заклинаний чародеев, колдунов и волшебников.';
+	}
 }

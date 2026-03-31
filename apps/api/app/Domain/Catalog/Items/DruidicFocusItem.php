@@ -43,4 +43,11 @@ final class DruidicFocusItem extends Item
 	{
 		return 'kits';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Друидический фокус из природных материалов, позволяющий направлять силу друидских заклинаний.';
+	}
 }

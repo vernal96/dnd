@@ -26,4 +26,12 @@ final class WisdomAbility extends Ability
 	{
 		return 'Мудрость';
 	}
+
+	/**
+	 * Возвращает описание характеристики.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Мудрость отражает внимательность к миру, интуицию, проницательность и здравый смысл.';
+	}
 }

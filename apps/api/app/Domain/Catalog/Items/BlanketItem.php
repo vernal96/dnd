@@ -43,4 +43,11 @@ final class BlanketItem extends Item
 	{
 		return 'survival-and-travel';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Тёплое походное одеяло для сна, отдыха и защиты от холода.';
+	}
 }

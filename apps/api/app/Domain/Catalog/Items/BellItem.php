@@ -43,4 +43,11 @@ final class BellItem extends Item
 	{
 		return 'useful-trinkets';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Колокольчик для сигналов, приманок, тревоги или устройства простых ловушек.';
+	}
 }

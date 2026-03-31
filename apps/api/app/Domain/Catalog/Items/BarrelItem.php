@@ -43,4 +43,11 @@ final class BarrelItem extends Item
 	{
 		return 'containers';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Бочонок для крупных запасов жидкости или сыпучих материалов.';
+	}
 }

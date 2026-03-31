@@ -43,4 +43,11 @@ final class TentItem extends Item
 	{
 		return 'survival-and-travel';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Переносное полотняное укрытие для ночёвок и защиты от непогоды.';
+	}
 }

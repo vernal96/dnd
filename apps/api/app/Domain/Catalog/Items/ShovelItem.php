@@ -43,4 +43,11 @@ final class ShovelItem extends Item
 	{
 		return 'useful-trinkets';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Лопата для рытья, расчистки и землеройных работ.';
+	}
 }

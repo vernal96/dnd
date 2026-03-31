@@ -43,4 +43,11 @@ final class LanternItem extends Item
 	{
 		return 'light-and-vision';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Фонарь для переносного света в дороге, в лагере и в подземельях.';
+	}
 }

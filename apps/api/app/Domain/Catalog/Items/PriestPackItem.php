@@ -43,4 +43,11 @@ final class PriestPackItem extends Item
 	{
 		return 'kits';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Набор священника с принадлежностями для служения, света и повседневных нужд.';
+	}
 }

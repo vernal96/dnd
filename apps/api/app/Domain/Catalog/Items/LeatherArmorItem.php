@@ -61,4 +61,11 @@ final class LeatherArmorItem extends Item
 	{
 		return new DexterityAbility;
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Лёгкая кожаная броня из жёстко обработанных накладок и более мягких гибких частей.';
+	}
 }

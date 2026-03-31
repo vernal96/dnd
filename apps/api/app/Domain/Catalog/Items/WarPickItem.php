@@ -74,4 +74,11 @@ final class WarPickItem extends Item
 			new StrengthAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Боевой клевец с узкой ударной частью, рассчитанной на пробивание защиты.';
+	}
 }

@@ -43,4 +43,11 @@ final class BasketItem extends Item
 	{
 		return 'containers';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Плетёная корзина для переноски лёгких припасов и мелких предметов.';
+	}
 }

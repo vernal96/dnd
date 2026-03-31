@@ -43,4 +43,11 @@ final class OilItem extends Item
 	{
 		return 'light-and-vision';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Масло для светильников и фонарей, а также для отдельных ловушек и поджогов.';
+	}
 }

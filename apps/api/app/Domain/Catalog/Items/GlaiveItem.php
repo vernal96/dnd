@@ -74,4 +74,11 @@ final class GlaiveItem extends Item
 			new StrengthAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Древковое рубящее оружие с длинным клинком. Эффективно для удержания врага на расстоянии.';
+	}
 }

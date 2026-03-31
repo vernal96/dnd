@@ -69,4 +69,11 @@ final class HalfPlateItem extends Item
 	{
 		return 2;
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Набор формованных пластин, прикрывающих большую часть тела без полноценной латной защиты ног.';
+	}
 }

@@ -43,4 +43,11 @@ final class HolySymbolItem extends Item
 	{
 		return 'kits';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Священный символ божества или пантеона, который клирики и паладины используют как магический фокус.';
+	}
 }

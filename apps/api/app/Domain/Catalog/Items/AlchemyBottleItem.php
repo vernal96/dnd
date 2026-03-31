@@ -43,4 +43,11 @@ final class AlchemyBottleItem extends Item
 	{
 		return 'healing-and-alchemy';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Стеклянная бутыль для хранения и транспортировки жидкости или реагентов.';
+	}
 }

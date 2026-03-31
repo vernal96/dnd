@@ -43,4 +43,11 @@ final class SpellbookItem extends Item
 	{
 		return 'kits';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Книга заклинаний волшебника с пустыми страницами, предназначенными для записи и хранения формул.';
+	}
 }

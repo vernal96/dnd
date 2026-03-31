@@ -43,4 +43,11 @@ final class MortarAndPestleItem extends Item
 	{
 		return 'healing-and-alchemy';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Ступка с пестиком для измельчения трав, порошков и компонентов.';
+	}
 }

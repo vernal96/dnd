@@ -74,4 +74,11 @@ final class WarhammerItem extends Item
 			new StrengthAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Воинский молот для мощных дробящих ударов. Допускает использование двумя руками.';
+	}
 }

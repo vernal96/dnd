@@ -74,4 +74,11 @@ final class HeavyCrossbowItem extends Item
 			new DexterityAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Мощный арбалет с высоким уроном и дальностью, но медленной перезарядкой.';
+	}
 }

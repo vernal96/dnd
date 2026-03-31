@@ -26,4 +26,12 @@ final class IntelligenceAbility extends Ability
 	{
 		return 'Интеллект';
 	}
+
+	/**
+	 * Возвращает описание характеристики.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Интеллект отражает память, рассудочность, эрудицию и способность к анализу.';
+	}
 }

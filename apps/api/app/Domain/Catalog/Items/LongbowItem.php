@@ -74,4 +74,11 @@ final class LongbowItem extends Item
 			new DexterityAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Воинский лук для дальнобойной стрельбы. Требует силы натяжения и хорошей техники.';
+	}
 }

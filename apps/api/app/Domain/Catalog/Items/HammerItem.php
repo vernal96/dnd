@@ -43,4 +43,11 @@ final class HammerItem extends Item
 	{
 		return 'useful-trinkets';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Молоток для забивания штырей, ремонта и общих работ в лагере.';
+	}
 }

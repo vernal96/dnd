@@ -43,4 +43,11 @@ final class RopeItem extends Item
 	{
 		return 'survival-and-travel';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Крепкая верёвка для лазания, страховки, связывания и множества бытовых задач.';
+	}
 }

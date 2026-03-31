@@ -76,4 +76,11 @@ final class ShortswordItem extends Item
 			new DexterityAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Лёгкий короткий меч для быстрой рукопашной, особенно удобный для ловких бойцов.';
+	}
 }

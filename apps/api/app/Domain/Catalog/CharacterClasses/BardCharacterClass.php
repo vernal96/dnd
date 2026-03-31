@@ -15,7 +15,8 @@ use App\Domain\Catalog\Items\BackpackItem;
 use App\Domain\Catalog\Items\DaggerItem;
 use App\Domain\Catalog\Items\LeatherArmorItem;
 use App\Domain\Catalog\Items\MusicalInstrumentItem;
-use App\Domain\Catalog\Items\PaperAndQuillItem;
+use App\Domain\Catalog\Items\PaperParchmentItem;
+use App\Domain\Catalog\Items\QuillItem;
 use App\Domain\Catalog\Items\RapierItem;
 use App\Domain\Catalog\Items\RationsItem;
 use App\Domain\Catalog\Items\WaterskinItem;
@@ -77,7 +78,8 @@ final class BardCharacterClass extends AbstractCharacterClass
 			$this->makeStartingEquipmentEntry(LeatherArmorItem::class),
 			$this->makeStartingEquipmentEntry(MusicalInstrumentItem::class),
 			$this->makeStartingEquipmentEntry(BackpackItem::class),
-			$this->makeStartingEquipmentEntry(PaperAndQuillItem::class),
+			$this->makeStartingEquipmentEntry(PaperParchmentItem::class),
+			$this->makeStartingEquipmentEntry(QuillItem::class),
 			$this->makeStartingEquipmentEntry(WaterskinItem::class),
 			$this->makeStartingEquipmentEntry(RationsItem::class),
 		];

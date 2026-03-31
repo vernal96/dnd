@@ -43,4 +43,11 @@ final class HerbalismKitItem extends Item
 	{
 		return 'kits';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Набор травника с инструментами и ёмкостями для распознавания трав и изготовления снадобий.';
+	}
 }

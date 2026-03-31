@@ -51,4 +51,11 @@ final class ChainMailItem extends Item
 	{
 		return 16;
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Полноценная кольчуга с поддоспешником и рукавицами, хорошо защищающая ценой веса и шума.';
+	}
 }

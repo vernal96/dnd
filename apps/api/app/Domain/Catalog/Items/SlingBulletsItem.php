@@ -43,4 +43,11 @@ final class SlingBulletsItem extends Item
 	{
 		return 'ammunition';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Небольшие снаряды для пращи, рассчитанные на частую стрельбу.';
+	}
 }

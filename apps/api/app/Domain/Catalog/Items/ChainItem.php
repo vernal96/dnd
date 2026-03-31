@@ -43,4 +43,11 @@ final class ChainItem extends Item
 	{
 		return 'useful-trinkets';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Металлическая цепь для крепления, связывания и блокировки объектов.';
+	}
 }

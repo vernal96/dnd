@@ -76,4 +76,11 @@ final class WhipItem extends Item
 			new DexterityAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Гибкое оружие с увеличенной досягаемостью, полагающееся на ловкость и точность.';
+	}
 }

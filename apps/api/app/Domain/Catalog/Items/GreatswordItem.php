@@ -74,4 +74,11 @@ final class GreatswordItem extends Item
 			new StrengthAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Большой двуручный меч, полагающийся на силу и широкий размах в ближнем бою.';
+	}
 }

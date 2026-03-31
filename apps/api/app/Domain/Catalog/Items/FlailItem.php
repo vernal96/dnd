@@ -74,4 +74,11 @@ final class FlailItem extends Item
 			new StrengthAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Цепное дробящее оружие, наносящее тяжёлые удары за счёт инерции подвижной боевой части.';
+	}
 }

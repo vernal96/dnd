@@ -74,4 +74,11 @@ final class GreatclubItem extends Item
 			new StrengthAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Тяжёлая двуручная дубина, полагающаяся на грубую силу и мощный размах.';
+	}
 }

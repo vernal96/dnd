@@ -43,4 +43,11 @@ final class ArtisansToolsItem extends Item
 	{
 		return 'kits';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Обобщённый набор ремесленных инструментов для выбранной профессии или мастерства.';
+	}
 }

@@ -43,4 +43,11 @@ final class HealersKitItem extends Item
 	{
 		return 'healing-and-alchemy';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Набор повязок, мазей и шин для стабилизации раненого без проверки Medicine.';
+	}
 }

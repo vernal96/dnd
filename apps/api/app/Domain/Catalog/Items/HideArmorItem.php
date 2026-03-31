@@ -69,4 +69,11 @@ final class HideArmorItem extends Item
 	{
 		return 2;
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Грубая броня из шкур и меха, характерная для племён и тех, кто не располагает хорошими материалами.';
+	}
 }

@@ -43,4 +43,11 @@ final class PotionOfHealingItem extends Item
 	{
 		return 'healing-and-alchemy';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Зелье лечения, восстанавливающее здоровье при употреблении.';
+	}
 }

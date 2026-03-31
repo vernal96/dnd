@@ -26,4 +26,12 @@ final class StrengthAbility extends Ability
 	{
 		return 'Сила';
 	}
+
+	/**
+	 * Возвращает описание характеристики.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Сила отражает физическую мощь, атлетическую подготовку и способность прикладывать грубое усилие.';
+	}
 }

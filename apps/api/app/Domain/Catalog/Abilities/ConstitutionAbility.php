@@ -26,4 +26,12 @@ final class ConstitutionAbility extends Ability
 	{
 		return 'Телосложение';
 	}
+
+	/**
+	 * Возвращает описание характеристики.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Телосложение отражает здоровье, выносливость и запас жизненных сил.';
+	}
 }

@@ -14,12 +14,12 @@ use App\Domain\Catalog\CharacterSubclasses\CircleOfTheStarsCharacterSubclass;
 use App\Domain\Catalog\Items\BackpackItem;
 use App\Domain\Catalog\Items\DaggerItem;
 use App\Domain\Catalog\Items\DruidicFocusItem;
-use App\Domain\Catalog\Items\HerbsOrHerbalismKitItem;
+use App\Domain\Catalog\Items\HerbalismKitItem;
 use App\Domain\Catalog\Items\LeatherArmorItem;
 use App\Domain\Catalog\Items\QuarterstaffItem;
 use App\Domain\Catalog\Items\RationsItem;
+use App\Domain\Catalog\Items\ShieldItem;
 use App\Domain\Catalog\Items\WaterskinItem;
-use App\Domain\Catalog\Items\WoodenShieldItem;
 
 /**
  * Сущность класса друида.
@@ -76,10 +76,10 @@ final class DruidCharacterClass extends AbstractCharacterClass
 			$this->makeStartingEquipmentEntry(QuarterstaffItem::class),
 			$this->makeStartingEquipmentEntry(DaggerItem::class),
 			$this->makeStartingEquipmentEntry(LeatherArmorItem::class),
-			$this->makeStartingEquipmentEntry(WoodenShieldItem::class),
+			$this->makeStartingEquipmentEntry(ShieldItem::class),
 			$this->makeStartingEquipmentEntry(DruidicFocusItem::class),
 			$this->makeStartingEquipmentEntry(BackpackItem::class),
-			$this->makeStartingEquipmentEntry(HerbsOrHerbalismKitItem::class),
+			$this->makeStartingEquipmentEntry(HerbalismKitItem::class),
 			$this->makeStartingEquipmentEntry(WaterskinItem::class),
 			$this->makeStartingEquipmentEntry(RationsItem::class),
 		];

@@ -43,4 +43,11 @@ final class CloakItem extends Item
 	{
 		return 'survival-and-travel';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Плащ для защиты от непогоды, маскировки и повседневного дорожного использования.';
+	}
 }

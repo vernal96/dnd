@@ -43,4 +43,11 @@ final class StorageBottleItem extends Item
 	{
 		return 'containers';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Стеклянная бутыль для хранения и транспортировки жидкости или реагентов.';
+	}
 }

@@ -74,4 +74,11 @@ final class SpearItem extends Item
 			new StrengthAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Классическое копьё для строя, охоты и рукопашной. Можно метать или удерживать двумя руками для более сильного удара.';
+	}
 }

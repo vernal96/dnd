@@ -61,4 +61,11 @@ final class PaddedArmorItem extends Item
 	{
 		return new DexterityAbility;
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Стёганый доспех из слоёв ткани и набивки. Даёт базовую защиту, но заметно шуршит и стесняет скрытность.';
+	}
 }

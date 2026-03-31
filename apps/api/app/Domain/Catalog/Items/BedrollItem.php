@@ -43,4 +43,11 @@ final class BedrollItem extends Item
 	{
 		return 'survival-and-travel';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Свернутый спальный мешок или подстилка для ночёвок в дороге и лагере.';
+	}
 }

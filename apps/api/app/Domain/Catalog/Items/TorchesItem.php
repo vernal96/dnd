@@ -43,4 +43,11 @@ final class TorchesItem extends Item
 	{
 		return 'survival-and-travel';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Простые факелы, дающие свет и огонь в тёмных помещениях и на ночных стоянках.';
+	}
 }

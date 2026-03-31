@@ -43,4 +43,11 @@ final class BagItem extends Item
 	{
 		return 'containers';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Простой мешок для переноски добычи, вещей и припасов.';
+	}
 }

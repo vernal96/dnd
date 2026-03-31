@@ -74,4 +74,11 @@ final class MorningstarItem extends Item
 			new StrengthAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Тяжёлое ударное оружие с шипастой головкой, пробивающее броню и плоть.';
+	}
 }

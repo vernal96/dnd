@@ -43,4 +43,11 @@ final class ChestItem extends Item
 	{
 		return 'containers';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Прочный сундук для долговременного хранения ценностей и снаряжения.';
+	}
 }

@@ -43,4 +43,11 @@ final class PickaxeItem extends Item
 	{
 		return 'useful-trinkets';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Кирка для тяжёлых земляных и каменных работ.';
+	}
 }

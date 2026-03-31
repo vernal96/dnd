@@ -74,4 +74,11 @@ final class SlingshotItem extends Item
 			new DexterityAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Праща для метания снарядов на дистанцию. Дешёвое и простое дальнобойное оружие.';
+	}
 }

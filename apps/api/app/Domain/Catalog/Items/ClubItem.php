@@ -74,4 +74,11 @@ final class ClubItem extends Item
 			new StrengthAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Простая лёгкая дубина для ближнего боя. Удобна как резервное оружие и может использоваться одной рукой.';
+	}
 }

@@ -43,4 +43,11 @@ final class DiceOrCardsItem extends Item
 	{
 		return 'kits';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Игральные кости или карты для досуга, азартных игр и социальных сцен.';
+	}
 }

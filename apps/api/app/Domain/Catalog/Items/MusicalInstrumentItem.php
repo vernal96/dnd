@@ -43,4 +43,11 @@ final class MusicalInstrumentItem extends Item
 	{
 		return 'kits';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Музыкальный инструмент для исполнения, выступлений и, для барда, колдовского фокуса.';
+	}
 }

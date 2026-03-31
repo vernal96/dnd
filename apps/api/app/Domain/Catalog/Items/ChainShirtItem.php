@@ -69,4 +69,11 @@ final class ChainShirtItem extends Item
 	{
 		return 2;
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Кольчужная рубаха из переплетённых металлических колец, скрытая под слоями одежды или кожи.';
+	}
 }

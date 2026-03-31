@@ -74,4 +74,11 @@ final class MaceItem extends Item
 			new StrengthAbility,
 		];
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Одноручное дробящее оружие с тяжёлой ударной головой, эффективное против незащищённых целей.';
+	}
 }

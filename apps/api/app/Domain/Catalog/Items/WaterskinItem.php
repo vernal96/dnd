@@ -43,4 +43,11 @@ final class WaterskinItem extends Item
 	{
 		return 'survival-and-travel';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Фляга из кожи или плотного материала для переноски запаса воды в пути.';
+	}
 }

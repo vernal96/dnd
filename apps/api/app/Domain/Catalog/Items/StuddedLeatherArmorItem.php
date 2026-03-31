@@ -61,4 +61,11 @@ final class StuddedLeatherArmorItem extends Item
 	{
 		return new DexterityAbility;
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Усиленная кожаная броня с плотной посадкой заклёпок или шипов для лучшей защиты.';
+	}
 }

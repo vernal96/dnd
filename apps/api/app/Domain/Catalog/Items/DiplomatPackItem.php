@@ -43,4 +43,11 @@ final class DiplomatPackItem extends Item
 	{
 		return 'kits';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Набор дипломата с письменными принадлежностями и вещами для официальных встреч.';
+	}
 }

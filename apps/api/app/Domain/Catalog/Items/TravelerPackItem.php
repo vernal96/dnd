@@ -43,4 +43,11 @@ final class TravelerPackItem extends Item
 	{
 		return 'kits';
 	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Набор путешественника с базовым походным снаряжением для странствий.';
+	}
 }

@@ -16,7 +16,6 @@ use App\Domain\Catalog\Items\BackpackItem;
 use App\Domain\Catalog\Items\CrossbowBoltsItem;
 use App\Domain\Catalog\Items\DaggerItem;
 use App\Domain\Catalog\Items\LightCrossbowItem;
-use App\Domain\Catalog\Items\NoArmorItem;
 use App\Domain\Catalog\Items\RationsItem;
 use App\Domain\Catalog\Items\WaterskinItem;
 
@@ -74,7 +73,6 @@ final class SorcererCharacterClass extends AbstractCharacterClass
 		return [
 			$this->makeStartingEquipmentEntry(LightCrossbowItem::class),
 			$this->makeStartingEquipmentEntry(DaggerItem::class),
-			$this->makeStartingEquipmentEntry(NoArmorItem::class),
 			$this->makeStartingEquipmentEntry(ArcaneFocusItem::class),
 			$this->makeStartingEquipmentEntry(CrossbowBoltsItem::class),
 			$this->makeStartingEquipmentEntry(BackpackItem::class),
