@@ -24,33 +24,31 @@ use Illuminate\Support\Carbon;
  */
 class CharacterProgression extends Model
 {
-    use HasFactory;
+	use HasFactory;
 
-    protected $table = 'character_progression';
+	public $timestamps = false;
+	protected $table = 'character_progression';
+	protected $fillable = [
+		'player_character_id',
+		'event_type',
+		'level_before',
+		'level_after',
+		'experience_before',
+		'experience_after',
+		'payload',
+		'occurred_at',
+	];
 
-    public $timestamps = false;
+	protected $casts = [
+		'payload' => 'array',
+		'occurred_at' => 'datetime',
+	];
 
-    protected $fillable = [
-        'player_character_id',
-        'event_type',
-        'level_before',
-        'level_after',
-        'experience_before',
-        'experience_after',
-        'payload',
-        'occurred_at',
-    ];
-
-    protected $casts = [
-        'payload' => 'array',
-        'occurred_at' => 'datetime',
-    ];
-
-    /**
-     * Возвращает персонажа игрока, которому принадлежит эта запись прогрессии.
-     */
-    public function playerCharacter(): BelongsTo
-    {
-        return $this->belongsTo(PlayerCharacter::class);
-    }
+	/**
+	 * Возвращает персонажа игрока, которому принадлежит эта запись прогрессии.
+	 */
+	public function playerCharacter(): BelongsTo
+	{
+		return $this->belongsTo(PlayerCharacter::class);
+	}
 }

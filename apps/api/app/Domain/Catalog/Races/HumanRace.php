@@ -14,40 +14,40 @@ use App\Domain\Catalog\Subraces\VariantHumanSubrace;
  */
 final class HumanRace extends AbstractRace
 {
-    /**
-     * Возвращает код расы.
-     */
-    public function getCode(): string
-    {
-        return 'human';
-    }
+	/**
+	 * Возвращает код расы.
+	 */
+	public function getCode(): string
+	{
+		return 'human';
+	}
 
-    /**
-     * Возвращает название расы.
-     */
-    public function getName(): string
-    {
-        return 'Человек';
-    }
+	/**
+	 * Возвращает название расы.
+	 */
+	public function getName(): string
+	{
+		return 'Человек';
+	}
 
-    /**
-     * Возвращает описание расы.
-     */
-    public function getDescription(): ?string
-    {
-        return 'Гибкая и универсальная раса, подходящая для большинства классов и стилей игры.';
-    }
+	/**
+	 * Возвращает описание расы.
+	 */
+	public function getDescription(): string
+	{
+		return 'Гибкая и универсальная раса, подходящая для большинства классов и стилей игры.';
+	}
 
-    /**
-     * Возвращает подрасы человека.
-     *
-     * @return list<AbstractSubrace>
-     */
-    public function getSubraces(): array
-    {
-        return [
-            new StandardHumanSubrace,
-            new VariantHumanSubrace,
-        ];
-    }
+	/**
+	 * Возвращает подрасы человека.
+	 *
+	 * @return list<AbstractSubrace>
+	 */
+	public function getSubraces(): array
+	{
+		return [
+			new StandardHumanSubrace,
+			new VariantHumanSubrace,
+		];
+	}
 }

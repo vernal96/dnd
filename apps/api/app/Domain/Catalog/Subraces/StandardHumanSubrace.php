@@ -11,28 +11,28 @@ use App\Domain\Catalog\AbstractSubrace;
  */
 final class StandardHumanSubrace extends AbstractSubrace
 {
-    /**
-     * Возвращает код подрасы.
-     */
-    public function getCode(): string
-    {
-        return 'standard-human';
-    }
+	/**
+	 * Возвращает код подрасы.
+	 */
+	public function getCode(): string
+	{
+		return 'standard-human';
+	}
 
-    /**
-     * Возвращает название подрасы.
-     */
-    public function getName(): string
-    {
-        return 'Обычный человек';
-    }
+	/**
+	 * Возвращает название подрасы.
+	 */
+	public function getName(): string
+	{
+		return 'Обычный человек';
+	}
 
-    /**
-     * Возвращает описание подрасы.
-     */
-    public function getDescription(): ?string
-    {
-        return 'Сбалансированный представитель человечества без выраженной ранней специализации.';
-    }
+	/**
+	 * Возвращает описание подрасы.
+	 */
+	public function getDescription(): string
+	{
+		return 'Сбалансированный представитель человечества без выраженной ранней специализации.';
+	}
 
 }

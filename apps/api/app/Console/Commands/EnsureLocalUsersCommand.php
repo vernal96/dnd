@@ -13,45 +13,46 @@ use Throwable;
  */
 final class EnsureLocalUsersCommand extends Command
 {
-    /**
-     * Сигнатура artisan-команды.
-     *
-     * @var string
-     */
-    protected $signature = 'app:ensure-local-users';
+	/**
+	 * Сигнатура artisan-команды.
+	 *
+	 * @var string
+	 */
+	protected $signature = 'app:ensure-local-users';
 
-    /**
-     * Краткое описание artisan-команды.
-     *
-     * @var string
-     */
-    protected $description = 'Создает или обновляет локальных пользователей для разработки';
+	/**
+	 * Краткое описание artisan-команды.
+	 *
+	 * @var string
+	 */
+	protected $description = 'Создает или обновляет локальных пользователей для разработки';
 
-    /**
-     * Создает консольную команду восстановления локальных пользователей.
-     */
-    public function __construct(
-        private readonly LocalDevelopmentUserService $localDevelopmentUserService,
-    ) {
-        parent::__construct();
-    }
+	/**
+	 * Создает консольную команду восстановления локальных пользователей.
+	 */
+	public function __construct(
+		private readonly LocalDevelopmentUserService $localDevelopmentUserService,
+	)
+	{
+		parent::__construct();
+	}
 
-    /**
-     * Выполняет восстановление локальных пользователей.
-     */
-    public function handle(): int
-    {
-        try {
-            $this->localDevelopmentUserService->ensureUsers();
-        } catch (Throwable $throwable) {
-            report($throwable);
-            $this->error('Не удалось восстановить локальных пользователей.');
+	/**
+	 * Выполняет восстановление локальных пользователей.
+	 */
+	public function handle(): int
+	{
+		try {
+			$this->localDevelopmentUserService->ensureUsers();
+		} catch (Throwable $throwable) {
+			report($throwable);
+			$this->error('Не удалось восстановить локальных пользователей.');
 
-            return self::FAILURE;
-        }
+			return self::FAILURE;
+		}
 
-        $this->info('Локальные пользователи восстановлены.');
+		$this->info('Локальные пользователи восстановлены.');
 
-        return self::SUCCESS;
-    }
+		return self::SUCCESS;
+	}
 }

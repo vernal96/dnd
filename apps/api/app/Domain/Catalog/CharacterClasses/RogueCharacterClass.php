@@ -16,42 +16,42 @@ use App\Domain\Catalog\CharacterSubclasses\ThiefCharacterSubclass;
  */
 final class RogueCharacterClass extends AbstractCharacterClass
 {
-    /**
-     * Возвращает код класса персонажа.
-     */
-    public function getCode(): string
-    {
-        return 'rogue';
-    }
+	/**
+	 * Возвращает код класса персонажа.
+	 */
+	public function getCode(): string
+	{
+		return 'rogue';
+	}
 
-    /**
-     * Возвращает название класса персонажа.
-     */
-    public function getName(): string
-    {
-        return 'Плут';
-    }
+	/**
+	 * Возвращает название класса персонажа.
+	 */
+	public function getName(): string
+	{
+		return 'Плут';
+	}
 
-    /**
-     * Возвращает описание класса персонажа.
-     */
-    public function getDescription(): ?string
-    {
-        return 'Хитрый специалист скрытности, ловкости и точечных ударов по уязвимым местам.';
-    }
+	/**
+	 * Возвращает описание класса персонажа.
+	 */
+	public function getDescription(): string
+	{
+		return 'Хитрый специалист скрытности, ловкости и точечных ударов по уязвимым местам.';
+	}
 
-    /**
-     * Возвращает подклассы плута.
-     *
-     * @return list<AbstractCharacterSubclass>
-     */
-    public function getSubclasses(): array
-    {
-        return [
-            new ArcaneTricksterCharacterSubclass,
-            new AssassinCharacterSubclass,
-            new SoulknifeCharacterSubclass,
-            new ThiefCharacterSubclass,
-        ];
-    }
+	/**
+	 * Возвращает подклассы плута.
+	 *
+	 * @return list<AbstractCharacterSubclass>
+	 */
+	public function getSubclasses(): array
+	{
+		return [
+			new ArcaneTricksterCharacterSubclass,
+			new AssassinCharacterSubclass,
+			new SoulknifeCharacterSubclass,
+			new ThiefCharacterSubclass,
+		];
+	}
 }

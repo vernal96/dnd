@@ -11,24 +11,24 @@ use Illuminate\Foundation\Http\FormRequest;
  */
 final class CreateGameRequest extends FormRequest
 {
-    /**
-     * Определяет, разрешено ли выполнение запроса.
-     */
-    public function authorize(): bool
-    {
-        return true;
-    }
+	/**
+	 * Определяет, разрешено ли выполнение запроса.
+	 */
+	public function authorize(): bool
+	{
+		return true;
+	}
 
-    /**
-     * Возвращает правила валидации для создания игры.
-     *
-     * @return array<string, array<int, string>>
-     */
-    public function rules(): array
-    {
-        return [
-            'title' => ['required', 'string', 'min:3', 'max:120'],
-            'description' => ['nullable', 'string', 'max:1000'],
-        ];
-    }
+	/**
+	 * Возвращает правила валидации для создания игры.
+	 *
+	 * @return array
+	 */
+	public function rules(): array
+	{
+		return [
+			'title' => ['required', 'string', 'min:3', 'max:120'],
+			'description' => ['nullable', 'string', 'max:1000'],
+		];
+	}
 }

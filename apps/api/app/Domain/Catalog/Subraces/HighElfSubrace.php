@@ -11,28 +11,28 @@ use App\Domain\Catalog\AbstractSubrace;
  */
 final class HighElfSubrace extends AbstractSubrace
 {
-    /**
-     * Возвращает код подрасы.
-     */
-    public function getCode(): string
-    {
-        return 'high-elf';
-    }
+	/**
+	 * Возвращает код подрасы.
+	 */
+	public function getCode(): string
+	{
+		return 'high-elf';
+	}
 
-    /**
-     * Возвращает название подрасы.
-     */
-    public function getName(): string
-    {
-        return 'Высший эльф';
-    }
+	/**
+	 * Возвращает название подрасы.
+	 */
+	public function getName(): string
+	{
+		return 'Высший эльф';
+	}
 
-    /**
-     * Возвращает описание подрасы.
-     */
-    public function getDescription(): ?string
-    {
-        return 'Эльфы учености, магии и древних башен.';
-    }
+	/**
+	 * Возвращает описание подрасы.
+	 */
+	public function getDescription(): string
+	{
+		return 'Эльфы учености, магии и древних башен.';
+	}
 
 }

@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Application\Game\GameInvitationService;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ApiPayloadResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,85 +19,85 @@ use Throwable;
  */
 final class GameInvitationController extends Controller
 {
-    /**
-     * Создает контроллер API приглашений.
-     */
-    public function __construct(
-        private readonly GameInvitationService $gameInvitationService,
-    ) {}
+	/**
+	 * Создает контроллер API приглашений.
+	 */
+	public function __construct(
+		private readonly GameInvitationService $gameInvitationService,
+	)
+	{
+	}
 
-    /**
-     * Возвращает список непринятых приглашений текущего игрока.
-     */
-    public function index(Request $request): JsonResponse
-    {
-        /** @var User $user */
-        $user = $request->user('web');
+	/**
+	 * Возвращает список непринятых приглашений текущего игрока.
+	 */
+	public function index(Request $request): JsonResponse
+	{
+		/** @var User $user */
+		$user = $request->user('web');
 
-        return response()->json(
-            $this->gameInvitationService->getInvitationsForPlayer($user),
-        );
-    }
+		return ApiPayloadResource::json($this->gameInvitationService->getInvitationsForPlayer($user));
+	}
 
-    /**
-     * Принимает приглашение и добавляет игрока в игру.
-     */
-    public function accept(string $token, Request $request): JsonResponse
-    {
-        /** @var User $user */
-        $user = $request->user('web');
+	/**
+	 * Принимает приглашение и добавляет игрока в игру.
+	 */
+	public function accept(string $token, Request $request): JsonResponse
+	{
+		/** @var User $user */
+		$user = $request->user('web');
 
-        try {
-            $invitation = $this->gameInvitationService->acceptInvitation($token, $user);
-        } catch (RuntimeException $exception) {
-            return response()->json([
-                'message' => $exception->getMessage(),
-            ], Response::HTTP_UNPROCESSABLE_ENTITY);
-        } catch (Throwable $throwable) {
-            report($throwable);
+		try {
+			$invitation = $this->gameInvitationService->acceptInvitation($token, $user);
+		} catch (RuntimeException $exception) {
+			return ApiPayloadResource::json([
+				'message' => $exception->getMessage(),
+			], Response::HTTP_UNPROCESSABLE_ENTITY);
+		} catch (Throwable $throwable) {
+			report($throwable);
 
-            return response()->json([
-                'message' => 'Не удалось принять приглашение.',
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
+			return ApiPayloadResource::json([
+				'message' => 'Не удалось принять приглашение.',
+			], Response::HTTP_INTERNAL_SERVER_ERROR);
+		}
 
-        if ($invitation === null) {
-            return response()->json([
-                'message' => 'Приглашение не найдено.',
-            ], Response::HTTP_NOT_FOUND);
-        }
+		if ($invitation === null) {
+			return ApiPayloadResource::json([
+				'message' => 'Приглашение не найдено.',
+			], Response::HTTP_NOT_FOUND);
+		}
 
-        return response()->json($invitation);
-    }
+		return ApiPayloadResource::json($invitation);
+	}
 
-    /**
-     * Отклоняет приглашение игрока без вступления в игру.
-     */
-    public function decline(string $token, Request $request): JsonResponse
-    {
-        /** @var User $user */
-        $user = $request->user('web');
+	/**
+	 * Отклоняет приглашение игрока без вступления в игру.
+	 */
+	public function decline(string $token, Request $request): JsonResponse
+	{
+		/** @var User $user */
+		$user = $request->user('web');
 
-        try {
-            $invitation = $this->gameInvitationService->declineInvitation($token, $user);
-        } catch (RuntimeException $exception) {
-            return response()->json([
-                'message' => $exception->getMessage(),
-            ], Response::HTTP_UNPROCESSABLE_ENTITY);
-        } catch (Throwable $throwable) {
-            report($throwable);
+		try {
+			$invitation = $this->gameInvitationService->declineInvitation($token, $user);
+		} catch (RuntimeException $exception) {
+			return ApiPayloadResource::json([
+				'message' => $exception->getMessage(),
+			], Response::HTTP_UNPROCESSABLE_ENTITY);
+		} catch (Throwable $throwable) {
+			report($throwable);
 
-            return response()->json([
-                'message' => 'Не удалось отклонить приглашение.',
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
+			return ApiPayloadResource::json([
+				'message' => 'Не удалось отклонить приглашение.',
+			], Response::HTTP_INTERNAL_SERVER_ERROR);
+		}
 
-        if ($invitation === null) {
-            return response()->json([
-                'message' => 'Приглашение не найдено.',
-            ], Response::HTTP_NOT_FOUND);
-        }
+		if ($invitation === null) {
+			return ApiPayloadResource::json([
+				'message' => 'Приглашение не найдено.',
+			], Response::HTTP_NOT_FOUND);
+		}
 
-        return response()->json($invitation);
-    }
+		return ApiPayloadResource::json($invitation);
+	}
 }

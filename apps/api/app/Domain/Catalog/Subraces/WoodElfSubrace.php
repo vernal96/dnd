@@ -11,28 +11,28 @@ use App\Domain\Catalog\AbstractSubrace;
  */
 final class WoodElfSubrace extends AbstractSubrace
 {
-    /**
-     * Возвращает код подрасы.
-     */
-    public function getCode(): string
-    {
-        return 'wood-elf';
-    }
+	/**
+	 * Возвращает код подрасы.
+	 */
+	public function getCode(): string
+	{
+		return 'wood-elf';
+	}
 
-    /**
-     * Возвращает название подрасы.
-     */
-    public function getName(): string
-    {
-        return 'Лесной эльф';
-    }
+	/**
+	 * Возвращает название подрасы.
+	 */
+	public function getName(): string
+	{
+		return 'Лесной эльф';
+	}
 
-    /**
-     * Возвращает описание подрасы.
-     */
-    public function getDescription(): ?string
-    {
-        return 'Эльфы чащ, следопыты и хранители диких земель.';
-    }
+	/**
+	 * Возвращает описание подрасы.
+	 */
+	public function getDescription(): string
+	{
+		return 'Эльфы чащ, следопыты и хранители диких земель.';
+	}
 
 }

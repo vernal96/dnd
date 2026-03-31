@@ -16,42 +16,42 @@ use App\Domain\Catalog\CharacterSubclasses\WarriorOfTheOpenHandCharacterSubclass
  */
 final class MonkCharacterClass extends AbstractCharacterClass
 {
-    /**
-     * Возвращает код класса персонажа.
-     */
-    public function getCode(): string
-    {
-        return 'monk';
-    }
+	/**
+	 * Возвращает код класса персонажа.
+	 */
+	public function getCode(): string
+	{
+		return 'monk';
+	}
 
-    /**
-     * Возвращает название класса персонажа.
-     */
-    public function getName(): string
-    {
-        return 'Монах';
-    }
+	/**
+	 * Возвращает название класса персонажа.
+	 */
+	public function getName(): string
+	{
+		return 'Монах';
+	}
 
-    /**
-     * Возвращает описание класса персонажа.
-     */
-    public function getDescription(): ?string
-    {
-        return 'Воин внутренней дисциплины, направляющий энергию тела и духа в сверхчеловеческое мастерство.';
-    }
+	/**
+	 * Возвращает описание класса персонажа.
+	 */
+	public function getDescription(): string
+	{
+		return 'Воин внутренней дисциплины, направляющий энергию тела и духа в сверхчеловеческое мастерство.';
+	}
 
-    /**
-     * Возвращает подклассы монаха.
-     *
-     * @return list<AbstractCharacterSubclass>
-     */
-    public function getSubclasses(): array
-    {
-        return [
-            new WarriorOfMercyCharacterSubclass,
-            new WarriorOfShadowCharacterSubclass,
-            new WarriorOfTheElementsCharacterSubclass,
-            new WarriorOfTheOpenHandCharacterSubclass,
-        ];
-    }
+	/**
+	 * Возвращает подклассы монаха.
+	 *
+	 * @return list<AbstractCharacterSubclass>
+	 */
+	public function getSubclasses(): array
+	{
+		return [
+			new WarriorOfMercyCharacterSubclass,
+			new WarriorOfShadowCharacterSubclass,
+			new WarriorOfTheElementsCharacterSubclass,
+			new WarriorOfTheOpenHandCharacterSubclass,
+		];
+	}
 }

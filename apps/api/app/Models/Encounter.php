@@ -28,57 +28,57 @@ use Illuminate\Support\Carbon;
  */
 class Encounter extends Model
 {
-    use HasFactory;
+	use HasFactory;
 
-    protected $table = 'encounters';
+	protected $table = 'encounters';
 
-    protected $fillable = [
-        'game_id',
-        'game_scene_state_id',
-        'status',
-        'round',
-        'current_participant_id',
-        'trigger_type',
-        'payload',
-        'started_at',
-        'resolved_at',
-    ];
+	protected $fillable = [
+		'game_id',
+		'game_scene_state_id',
+		'status',
+		'round',
+		'current_participant_id',
+		'trigger_type',
+		'payload',
+		'started_at',
+		'resolved_at',
+	];
 
-    protected $casts = [
-        'payload' => 'array',
-        'started_at' => 'datetime',
-        'resolved_at' => 'datetime',
-    ];
+	protected $casts = [
+		'payload' => 'array',
+		'started_at' => 'datetime',
+		'resolved_at' => 'datetime',
+	];
 
-    /**
-     * Возвращает игру, которой принадлежит encounter.
-     */
-    public function game(): BelongsTo
-    {
-        return $this->belongsTo(Game::class, 'game_id', 'id');
-    }
+	/**
+	 * Возвращает игру, которой принадлежит encounter.
+	 */
+	public function game(): BelongsTo
+	{
+		return $this->belongsTo(Game::class, 'game_id', 'id');
+	}
 
-    /**
-     * Возвращает состояние сцены, на котором происходит encounter.
-     */
-    public function sceneState(): BelongsTo
-    {
-        return $this->belongsTo(GameSceneState::class, 'game_scene_state_id');
-    }
+	/**
+	 * Возвращает состояние сцены, на котором происходит encounter.
+	 */
+	public function sceneState(): BelongsTo
+	{
+		return $this->belongsTo(GameSceneState::class, 'game_scene_state_id');
+	}
 
-    /**
-     * Возвращает всех участников, связанных с encounter.
-     */
-    public function participants(): HasMany
-    {
-        return $this->hasMany(EncounterParticipant::class, 'encounter_id', 'id');
-    }
+	/**
+	 * Возвращает всех участников, связанных с encounter.
+	 */
+	public function participants(): HasMany
+	{
+		return $this->hasMany(EncounterParticipant::class, 'encounter_id', 'id');
+	}
 
-    /**
-     * Возвращает участника, чей ход сейчас активен.
-     */
-    public function currentParticipant(): BelongsTo
-    {
-        return $this->belongsTo(EncounterParticipant::class, 'current_participant_id');
-    }
+	/**
+	 * Возвращает участника, чей ход сейчас активен.
+	 */
+	public function currentParticipant(): BelongsTo
+	{
+		return $this->belongsTo(EncounterParticipant::class, 'current_participant_id');
+	}
 }

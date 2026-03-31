@@ -16,42 +16,42 @@ use App\Domain\Catalog\CharacterSubclasses\CollegeOfValorCharacterSubclass;
  */
 final class BardCharacterClass extends AbstractCharacterClass
 {
-    /**
-     * Возвращает код класса персонажа.
-     */
-    public function getCode(): string
-    {
-        return 'bard';
-    }
+	/**
+	 * Возвращает код класса персонажа.
+	 */
+	public function getCode(): string
+	{
+		return 'bard';
+	}
 
-    /**
-     * Возвращает название класса персонажа.
-     */
-    public function getName(): string
-    {
-        return 'Бард';
-    }
+	/**
+	 * Возвращает название класса персонажа.
+	 */
+	public function getName(): string
+	{
+		return 'Бард';
+	}
 
-    /**
-     * Возвращает описание класса персонажа.
-     */
-    public function getDescription(): ?string
-    {
-        return 'Мастер вдохновения, магии и искусства, меняющий ход событий словом и мелодией.';
-    }
+	/**
+	 * Возвращает описание класса персонажа.
+	 */
+	public function getDescription(): string
+	{
+		return 'Мастер вдохновения, магии и искусства, меняющий ход событий словом и мелодией.';
+	}
 
-    /**
-     * Возвращает подклассы барда.
-     *
-     * @return list<AbstractCharacterSubclass>
-     */
-    public function getSubclasses(): array
-    {
-        return [
-            new CollegeOfDanceCharacterSubclass,
-            new CollegeOfGlamourCharacterSubclass,
-            new CollegeOfLoreCharacterSubclass,
-            new CollegeOfValorCharacterSubclass,
-        ];
-    }
+	/**
+	 * Возвращает подклассы барда.
+	 *
+	 * @return list<AbstractCharacterSubclass>
+	 */
+	public function getSubclasses(): array
+	{
+		return [
+			new CollegeOfDanceCharacterSubclass,
+			new CollegeOfGlamourCharacterSubclass,
+			new CollegeOfLoreCharacterSubclass,
+			new CollegeOfValorCharacterSubclass,
+		];
+	}
 }

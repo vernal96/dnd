@@ -9,22 +9,24 @@ namespace App\Data\Game;
  */
 final readonly class InviteGameMemberData
 {
-    /**
-     * Создает DTO данных приглашения игрока.
-     */
-    public function __construct(
-        public string $login,
-    ) {}
+	/**
+	 * Создает DTO данных приглашения игрока.
+	 */
+	public function __construct(
+		public string $login,
+	)
+	{
+	}
 
-    /**
-     * Создает DTO из валидированного payload.
-     *
-     * @param  array{login:string}  $payload
-     */
-    public static function fromArray(array $payload): self
-    {
-        return new self(
-            login: $payload['login'],
-        );
-    }
+	/**
+	 * Создает DTO из валидированного payload.
+	 *
+	 * @param array{login:string} $payload
+	 */
+	public static function fromArray(array $payload): self
+	{
+		return new self(
+			login: $payload['login'],
+		);
+	}
 }

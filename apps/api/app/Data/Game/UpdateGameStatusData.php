@@ -9,22 +9,24 @@ namespace App\Data\Game;
  */
 final readonly class UpdateGameStatusData
 {
-    /**
-     * Создает DTO смены статуса игры.
-     */
-    public function __construct(
-        public string $status,
-    ) {}
+	/**
+	 * Создает DTO смены статуса игры.
+	 */
+	public function __construct(
+		public string $status,
+	)
+	{
+	}
 
-    /**
-     * Создает DTO из валидированного payload.
-     *
-     * @param  array{status:string}  $payload
-     */
-    public static function fromArray(array $payload): self
-    {
-        return new self(
-            status: $payload['status'],
-        );
-    }
+	/**
+	 * Создает DTO из валидированного payload.
+	 *
+	 * @param array{status:string} $payload
+	 */
+	public static function fromArray(array $payload): self
+	{
+		return new self(
+			status: $payload['status'],
+		);
+	}
 }

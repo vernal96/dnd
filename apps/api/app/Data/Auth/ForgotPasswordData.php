@@ -9,22 +9,24 @@ namespace App\Data\Auth;
  */
 final readonly class ForgotPasswordData
 {
-    /**
-     * Создает DTO для запроса на восстановление пароля.
-     */
-    public function __construct(
-        public string $email,
-    ) {}
+	/**
+	 * Создает DTO для запроса на восстановление пароля.
+	 */
+	public function __construct(
+		public string $email,
+	)
+	{
+	}
 
-    /**
-     * Создает DTO из валидированного payload.
-     *
-     * @param  array{email:string}  $payload
-     */
-    public static function fromArray(array $payload): self
-    {
-        return new self(
-            email: $payload['email'],
-        );
-    }
+	/**
+	 * Создает DTO из валидированного payload.
+	 *
+	 * @param array{email:string} $payload
+	 */
+	public static function fromArray(array $payload): self
+	{
+		return new self(
+			email: $payload['email'],
+		);
+	}
 }

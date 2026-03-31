@@ -11,23 +11,23 @@ use Illuminate\Foundation\Http\FormRequest;
  */
 final class InviteGameMemberRequest extends FormRequest
 {
-    /**
-     * Определяет, разрешено ли выполнение запроса.
-     */
-    public function authorize(): bool
-    {
-        return true;
-    }
+	/**
+	 * Определяет, разрешено ли выполнение запроса.
+	 */
+	public function authorize(): bool
+	{
+		return true;
+	}
 
-    /**
-     * Возвращает правила валидации для приглашения участника.
-     *
-     * @return array<string, array<int, string>>
-     */
-    public function rules(): array
-    {
-        return [
-            'login' => ['required', 'string', 'min:3', 'max:255'],
-        ];
-    }
+	/**
+	 * Возвращает правила валидации для приглашения участника.
+	 *
+	 * @return array
+	 */
+	public function rules(): array
+	{
+		return [
+			'login' => ['required', 'string', 'min:3', 'max:255'],
+		];
+	}
 }

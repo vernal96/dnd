@@ -26,32 +26,32 @@ use Illuminate\Support\Carbon;
  */
 class SceneTemplateCell extends Model
 {
-    use HasFactory;
+	use HasFactory;
 
-    protected $table = 'scene_template_cells';
+	protected $table = 'scene_template_cells';
 
-    protected $fillable = [
-        'scene_template_id',
-        'x',
-        'y',
-        'terrain_type',
-        'elevation',
-        'is_passable',
-        'blocks_vision',
-        'props',
-    ];
+	protected $fillable = [
+		'scene_template_id',
+		'x',
+		'y',
+		'terrain_type',
+		'elevation',
+		'is_passable',
+		'blocks_vision',
+		'props',
+	];
 
-    protected $casts = [
-        'is_passable' => 'boolean',
-        'blocks_vision' => 'boolean',
-        'props' => 'array',
-    ];
+	protected $casts = [
+		'is_passable' => 'boolean',
+		'blocks_vision' => 'boolean',
+		'props' => 'array',
+	];
 
-    /**
-     * Возвращает шаблон сцены, которому принадлежит клетка.
-     */
-    public function sceneTemplate(): BelongsTo
-    {
-        return $this->belongsTo(SceneTemplate::class, 'scene_template_id', 'id');
-    }
+	/**
+	 * Возвращает шаблон сцены, которому принадлежит клетка.
+	 */
+	public function sceneTemplate(): BelongsTo
+	{
+		return $this->belongsTo(SceneTemplate::class, 'scene_template_id', 'id');
+	}
 }

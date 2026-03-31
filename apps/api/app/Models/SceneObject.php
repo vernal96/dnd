@@ -29,36 +29,36 @@ use Illuminate\Support\Carbon;
  */
 class SceneObject extends Model
 {
-    use HasFactory;
+	use HasFactory;
 
-    protected $table = 'scene_objects';
+	protected $table = 'scene_objects';
 
-    protected $fillable = [
-        'scene_template_id',
-        'kind',
-        'name',
-        'x',
-        'y',
-        'width',
-        'height',
-        'is_hidden',
-        'is_interactive',
-        'state',
-        'trigger_rules',
-    ];
+	protected $fillable = [
+		'scene_template_id',
+		'kind',
+		'name',
+		'x',
+		'y',
+		'width',
+		'height',
+		'is_hidden',
+		'is_interactive',
+		'state',
+		'trigger_rules',
+	];
 
-    protected $casts = [
-        'is_hidden' => 'boolean',
-        'is_interactive' => 'boolean',
-        'state' => 'array',
-        'trigger_rules' => 'array',
-    ];
+	protected $casts = [
+		'is_hidden' => 'boolean',
+		'is_interactive' => 'boolean',
+		'state' => 'array',
+		'trigger_rules' => 'array',
+	];
 
-    /**
-     * Возвращает шаблон сцены, которому принадлежит этот объект.
-     */
-    public function sceneTemplate(): BelongsTo
-    {
-        return $this->belongsTo(SceneTemplate::class, 'scene_template_id', 'id');
-    }
+	/**
+	 * Возвращает шаблон сцены, которому принадлежит этот объект.
+	 */
+	public function sceneTemplate(): BelongsTo
+	{
+		return $this->belongsTo(SceneTemplate::class, 'scene_template_id', 'id');
+	}
 }

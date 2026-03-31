@@ -23,53 +23,53 @@ use App\Domain\Catalog\CharacterClasses\WizardCharacterClass;
  */
 final class CharacterClassCatalog
 {
-    /**
-     * Возвращает все активные классы персонажей справочника.
-     *
-     * @return list<AbstractCharacterClass>
-     */
-    public function getActiveClasses(): array
-    {
-        return array_values(array_filter(
-            $this->getAllClasses(),
-            static fn (AbstractCharacterClass $characterClass): bool => $characterClass->isActive(),
-        ));
-    }
+	/**
+	 * Возвращает один активный класс персонажа по коду.
+	 */
+	public function findActiveClassByCode(string $code): ?AbstractCharacterClass
+	{
+		foreach ($this->getActiveClasses() as $characterClass) {
+			if ($characterClass->getCode() === $code) {
+				return $characterClass;
+			}
+		}
 
-    /**
-     * Возвращает один активный класс персонажа по коду.
-     */
-    public function findActiveClassByCode(string $code): ?AbstractCharacterClass
-    {
-        foreach ($this->getActiveClasses() as $characterClass) {
-            if ($characterClass->getCode() === $code) {
-                return $characterClass;
-            }
-        }
+		return null;
+	}
 
-        return null;
-    }
+	/**
+	 * Возвращает все активные классы персонажей справочника.
+	 *
+	 * @return list<AbstractCharacterClass>
+	 */
+	public function getActiveClasses(): array
+	{
+		return array_values(array_filter(
+			$this->getAllClasses(),
+			static fn(AbstractCharacterClass $characterClass): bool => $characterClass->isActive(),
+		));
+	}
 
-    /**
-     * Возвращает полный кодовый справочник классов персонажей.
-     *
-     * @return list<AbstractCharacterClass>
-     */
-    private function getAllClasses(): array
-    {
-        return [
-            new BarbarianCharacterClass,
-            new BardCharacterClass,
-            new ClericCharacterClass,
-            new DruidCharacterClass,
-            new FighterCharacterClass,
-            new MonkCharacterClass,
-            new PaladinCharacterClass,
-            new RangerCharacterClass,
-            new RogueCharacterClass,
-            new SorcererCharacterClass,
-            new WarlockCharacterClass,
-            new WizardCharacterClass,
-        ];
-    }
+	/**
+	 * Возвращает полный кодовый справочник классов персонажей.
+	 *
+	 * @return list<AbstractCharacterClass>
+	 */
+	private function getAllClasses(): array
+	{
+		return [
+			new BarbarianCharacterClass,
+			new BardCharacterClass,
+			new ClericCharacterClass,
+			new DruidCharacterClass,
+			new FighterCharacterClass,
+			new MonkCharacterClass,
+			new PaladinCharacterClass,
+			new RangerCharacterClass,
+			new RogueCharacterClass,
+			new SorcererCharacterClass,
+			new WarlockCharacterClass,
+			new WizardCharacterClass,
+		];
+	}
 }

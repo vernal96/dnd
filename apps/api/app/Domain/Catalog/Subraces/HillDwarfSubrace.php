@@ -11,28 +11,28 @@ use App\Domain\Catalog\AbstractSubrace;
  */
 final class HillDwarfSubrace extends AbstractSubrace
 {
-    /**
-     * Возвращает код подрасы.
-     */
-    public function getCode(): string
-    {
-        return 'hill-dwarf';
-    }
+	/**
+	 * Возвращает код подрасы.
+	 */
+	public function getCode(): string
+	{
+		return 'hill-dwarf';
+	}
 
-    /**
-     * Возвращает название подрасы.
-     */
-    public function getName(): string
-    {
-        return 'Холмовой дварф';
-    }
+	/**
+	 * Возвращает название подрасы.
+	 */
+	public function getName(): string
+	{
+		return 'Холмовой дварф';
+	}
 
-    /**
-     * Возвращает описание подрасы.
-     */
-    public function getDescription(): ?string
-    {
-        return 'Крепкие дварфы с упором на выносливость и традицию кланов.';
-    }
+	/**
+	 * Возвращает описание подрасы.
+	 */
+	public function getDescription(): string
+	{
+		return 'Крепкие дварфы с упором на выносливость и традицию кланов.';
+	}
 
 }

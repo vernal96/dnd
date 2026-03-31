@@ -9,41 +9,41 @@ namespace App\Domain\Catalog;
  */
 abstract class AbstractSubrace
 {
-    /**
-     * Возвращает код подрасы.
-     */
-    abstract public function getCode(): string;
+	/**
+	 * Преобразует подрасу в ответ API.
+	 *
+	 * @return array{code: string, name: string, description: ?string, isActive: bool}
+	 */
+	public function toArray(): array
+	{
+		return [
+			'code' => $this->getCode(),
+			'name' => $this->getName(),
+			'description' => $this->getDescription(),
+			'isActive' => $this->isActive(),
+		];
+	}
 
-    /**
-     * Возвращает название подрасы.
-     */
-    abstract public function getName(): string;
+	/**
+	 * Возвращает код подрасы.
+	 */
+	abstract public function getCode(): string;
 
-    /**
-     * Возвращает описание подрасы.
-     */
-    abstract public function getDescription(): ?string;
+	/**
+	 * Возвращает название подрасы.
+	 */
+	abstract public function getName(): string;
 
-    /**
-     * Возвращает признак активности подрасы.
-     */
-    public function isActive(): bool
-    {
-        return true;
-    }
+	/**
+	 * Возвращает описание подрасы.
+	 */
+	abstract public function getDescription(): ?string;
 
-    /**
-     * Преобразует подрасу в ответ API.
-     *
-     * @return array{code:string,name:string,description:?string,isActive:bool}
-     */
-    public function toArray(): array
-    {
-        return [
-            'code' => $this->getCode(),
-            'name' => $this->getName(),
-            'description' => $this->getDescription(),
-            'isActive' => $this->isActive(),
-        ];
-    }
+	/**
+	 * Возвращает признак активности подрасы.
+	 */
+	public function isActive(): bool
+	{
+		return true;
+	}
 }

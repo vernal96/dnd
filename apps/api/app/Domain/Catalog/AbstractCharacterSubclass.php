@@ -9,56 +9,54 @@ namespace App\Domain\Catalog;
  */
 abstract class AbstractCharacterSubclass
 {
-    /**
-     * Возвращает код подкласса персонажа.
-     */
-    final public function getCode(): string
-    {
-        return static::CODE;
-    }
+	protected const string CODE = '';
+	protected const string NAME = '';
+	protected const ?string DESCRIPTION = null;
 
-    /**
-     * Возвращает название подкласса персонажа.
-     */
-    final public function getName(): string
-    {
-        return static::NAME;
-    }
+	/**
+	 * Преобразует подкласс персонажа в ответ API.
+	 *
+	 * @return array{code: string, name: string, description: ?string, isActive: bool}
+	 */
+	public function toArray(): array
+	{
+		return [
+			'code' => $this->getCode(),
+			'name' => $this->getName(),
+			'description' => $this->getDescription(),
+			'isActive' => $this->isActive(),
+		];
+	}
 
-    /**
-     * Возвращает описание подкласса персонажа.
-     */
-    final public function getDescription(): ?string
-    {
-        return static::DESCRIPTION;
-    }
+	/**
+	 * Возвращает код подкласса персонажа.
+	 */
+	final public function getCode(): string
+	{
+		return static::CODE;
+	}
 
-    /**
-     * Возвращает признак активности подкласса персонажа.
-     */
-    public function isActive(): bool
-    {
-        return true;
-    }
+	/**
+	 * Возвращает название подкласса персонажа.
+	 */
+	final public function getName(): string
+	{
+		return static::NAME;
+	}
 
-    /**
-     * Преобразует подкласс персонажа в ответ API.
-     *
-     * @return array{code:string,name:string,description:?string,isActive:bool}
-     */
-    public function toArray(): array
-    {
-        return [
-            'code' => $this->getCode(),
-            'name' => $this->getName(),
-            'description' => $this->getDescription(),
-            'isActive' => $this->isActive(),
-        ];
-    }
+	/**
+	 * Возвращает описание подкласса персонажа.
+	 */
+	final public function getDescription(): ?string
+	{
+		return static::DESCRIPTION;
+	}
 
-    protected const string CODE = '';
-
-    protected const string NAME = '';
-
-    protected const ?string DESCRIPTION = null;
+	/**
+	 * Возвращает признак активности подкласса персонажа.
+	 */
+	public function isActive(): bool
+	{
+		return true;
+	}
 }

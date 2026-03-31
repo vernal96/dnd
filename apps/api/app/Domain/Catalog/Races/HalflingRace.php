@@ -14,40 +14,40 @@ use App\Domain\Catalog\Subraces\StoutHalflingSubrace;
  */
 final class HalflingRace extends AbstractRace
 {
-    /**
-     * Возвращает код расы.
-     */
-    public function getCode(): string
-    {
-        return 'halfling';
-    }
+	/**
+	 * Возвращает код расы.
+	 */
+	public function getCode(): string
+	{
+		return 'halfling';
+	}
 
-    /**
-     * Возвращает название расы.
-     */
-    public function getName(): string
-    {
-        return 'Полурослик';
-    }
+	/**
+	 * Возвращает название расы.
+	 */
+	public function getName(): string
+	{
+		return 'Полурослик';
+	}
 
-    /**
-     * Возвращает описание расы.
-     */
-    public function getDescription(): ?string
-    {
-        return 'Небольшой, ловкий и удачливый народ, ценящий дом, дорогу и простые радости.';
-    }
+	/**
+	 * Возвращает описание расы.
+	 */
+	public function getDescription(): string
+	{
+		return 'Небольшой, ловкий и удачливый народ, ценящий дом, дорогу и простые радости.';
+	}
 
-    /**
-     * Возвращает подрасы полурослика.
-     *
-     * @return list<AbstractSubrace>
-     */
-    public function getSubraces(): array
-    {
-        return [
-            new LightfootHalflingSubrace,
-            new StoutHalflingSubrace,
-        ];
-    }
+	/**
+	 * Возвращает подрасы полурослика.
+	 *
+	 * @return list<AbstractSubrace>
+	 */
+	public function getSubraces(): array
+	{
+		return [
+			new LightfootHalflingSubrace,
+			new StoutHalflingSubrace,
+		];
+	}
 }

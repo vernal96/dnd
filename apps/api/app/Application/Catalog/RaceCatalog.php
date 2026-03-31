@@ -10,8 +10,8 @@ use App\Domain\Catalog\Races\DwarfRace;
 use App\Domain\Catalog\Races\ElfRace;
 use App\Domain\Catalog\Races\GnomeRace;
 use App\Domain\Catalog\Races\HalfElfRace;
-use App\Domain\Catalog\Races\HalfOrcRace;
 use App\Domain\Catalog\Races\HalflingRace;
+use App\Domain\Catalog\Races\HalfOrcRace;
 use App\Domain\Catalog\Races\HumanRace;
 use App\Domain\Catalog\Races\TieflingRace;
 
@@ -20,50 +20,50 @@ use App\Domain\Catalog\Races\TieflingRace;
  */
 final class RaceCatalog
 {
-    /**
-     * Возвращает все активные расы справочника.
-     *
-     * @return list<AbstractRace>
-     */
-    public function getActiveRaces(): array
-    {
-        return array_values(array_filter(
-            $this->getAllRaces(),
-            static fn (AbstractRace $race): bool => $race->isActive(),
-        ));
-    }
+	/**
+	 * Возвращает одну активную расу по коду.
+	 */
+	public function findActiveRaceByCode(string $code): ?AbstractRace
+	{
+		foreach ($this->getActiveRaces() as $race) {
+			if ($race->getCode() === $code) {
+				return $race;
+			}
+		}
 
-    /**
-     * Возвращает одну активную расу по коду.
-     */
-    public function findActiveRaceByCode(string $code): ?AbstractRace
-    {
-        foreach ($this->getActiveRaces() as $race) {
-            if ($race->getCode() === $code) {
-                return $race;
-            }
-        }
+		return null;
+	}
 
-        return null;
-    }
+	/**
+	 * Возвращает все активные расы справочника.
+	 *
+	 * @return list<AbstractRace>
+	 */
+	public function getActiveRaces(): array
+	{
+		return array_values(array_filter(
+			$this->getAllRaces(),
+			static fn(AbstractRace $race): bool => $race->isActive(),
+		));
+	}
 
-    /**
-     * Возвращает полный кодовый справочник рас.
-     *
-     * @return list<AbstractRace>
-     */
-    private function getAllRaces(): array
-    {
-        return [
-            new HumanRace,
-            new ElfRace,
-            new DwarfRace,
-            new HalflingRace,
-            new GnomeRace,
-            new DragonbornRace,
-            new HalfElfRace,
-            new HalfOrcRace,
-            new TieflingRace,
-        ];
-    }
+	/**
+	 * Возвращает полный кодовый справочник рас.
+	 *
+	 * @return list<AbstractRace>
+	 */
+	private function getAllRaces(): array
+	{
+		return [
+			new HumanRace,
+			new ElfRace,
+			new DwarfRace,
+			new HalflingRace,
+			new GnomeRace,
+			new DragonbornRace,
+			new HalfElfRace,
+			new HalfOrcRace,
+			new TieflingRace,
+		];
+	}
 }

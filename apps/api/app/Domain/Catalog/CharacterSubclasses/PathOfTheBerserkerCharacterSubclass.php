@@ -11,9 +11,9 @@ use App\Domain\Catalog\AbstractCharacterSubclass;
  */
 final class PathOfTheBerserkerCharacterSubclass extends AbstractCharacterSubclass
 {
-    protected const string CODE = 'path-of-the-berserker';
+	protected const string CODE = 'path-of-the-berserker';
 
-    protected const string NAME = 'Путь берсерка';
+	protected const string NAME = 'Путь берсерка';
 
-    protected const ?string DESCRIPTION = 'Варвар, доводящий ярость до предельной разрушительной яркости.';
+	protected const ?string DESCRIPTION = 'Варвар, доводящий ярость до предельной разрушительной яркости.';
 }

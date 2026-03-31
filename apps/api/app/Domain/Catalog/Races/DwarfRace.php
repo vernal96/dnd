@@ -14,40 +14,40 @@ use App\Domain\Catalog\Subraces\MountainDwarfSubrace;
  */
 final class DwarfRace extends AbstractRace
 {
-    /**
-     * Возвращает код расы.
-     */
-    public function getCode(): string
-    {
-        return 'dwarf';
-    }
+	/**
+	 * Возвращает код расы.
+	 */
+	public function getCode(): string
+	{
+		return 'dwarf';
+	}
 
-    /**
-     * Возвращает название расы.
-     */
-    public function getName(): string
-    {
-        return 'Дварф';
-    }
+	/**
+	 * Возвращает название расы.
+	 */
+	public function getName(): string
+	{
+		return 'Дварф';
+	}
 
-    /**
-     * Возвращает описание расы.
-     */
-    public function getDescription(): ?string
-    {
-        return 'Выносливая раса мастеров и воинов, привыкшая к подземельям, ремеслу и дисциплине.';
-    }
+	/**
+	 * Возвращает описание расы.
+	 */
+	public function getDescription(): string
+	{
+		return 'Выносливая раса мастеров и воинов, привыкшая к подземельям, ремеслу и дисциплине.';
+	}
 
-    /**
-     * Возвращает подрасы дварфа.
-     *
-     * @return list<AbstractSubrace>
-     */
-    public function getSubraces(): array
-    {
-        return [
-            new HillDwarfSubrace,
-            new MountainDwarfSubrace,
-        ];
-    }
+	/**
+	 * Возвращает подрасы дварфа.
+	 *
+	 * @return list<AbstractSubrace>
+	 */
+	public function getSubraces(): array
+	{
+		return [
+			new HillDwarfSubrace,
+			new MountainDwarfSubrace,
+		];
+	}
 }

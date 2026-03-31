@@ -11,28 +11,28 @@ use App\Domain\Catalog\AbstractSubrace;
  */
 final class LightfootHalflingSubrace extends AbstractSubrace
 {
-    /**
-     * Возвращает код подрасы.
-     */
-    public function getCode(): string
-    {
-        return 'lightfoot-halfling';
-    }
+	/**
+	 * Возвращает код подрасы.
+	 */
+	public function getCode(): string
+	{
+		return 'lightfoot-halfling';
+	}
 
-    /**
-     * Возвращает название подрасы.
-     */
-    public function getName(): string
-    {
-        return 'Легконогий';
-    }
+	/**
+	 * Возвращает название подрасы.
+	 */
+	public function getName(): string
+	{
+		return 'Легконогий';
+	}
 
-    /**
-     * Возвращает описание подрасы.
-     */
-    public function getDescription(): ?string
-    {
-        return 'Общительные и проворные полурослики, склонные к путешествиям и дипломатии.';
-    }
+	/**
+	 * Возвращает описание подрасы.
+	 */
+	public function getDescription(): string
+	{
+		return 'Общительные и проворные полурослики, склонные к путешествиям и дипломатии.';
+	}
 
 }

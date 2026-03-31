@@ -16,42 +16,42 @@ use App\Domain\Catalog\CharacterSubclasses\GreatOldOnePatronCharacterSubclass;
  */
 final class WarlockCharacterClass extends AbstractCharacterClass
 {
-    /**
-     * Возвращает код класса персонажа.
-     */
-    public function getCode(): string
-    {
-        return 'warlock';
-    }
+	/**
+	 * Возвращает код класса персонажа.
+	 */
+	public function getCode(): string
+	{
+		return 'warlock';
+	}
 
-    /**
-     * Возвращает название класса персонажа.
-     */
-    public function getName(): string
-    {
-        return 'Колдун / Чернокнижник';
-    }
+	/**
+	 * Возвращает название класса персонажа.
+	 */
+	public function getName(): string
+	{
+		return 'Колдун / Чернокнижник';
+	}
 
-    /**
-     * Возвращает описание класса персонажа.
-     */
-    public function getDescription(): ?string
-    {
-        return 'Заклинатель, получивший силу через договор с могущественным потусторонним покровителем.';
-    }
+	/**
+	 * Возвращает описание класса персонажа.
+	 */
+	public function getDescription(): string
+	{
+		return 'Заклинатель, получивший силу через договор с могущественным потусторонним покровителем.';
+	}
 
-    /**
-     * Возвращает подклассы колдуна.
-     *
-     * @return list<AbstractCharacterSubclass>
-     */
-    public function getSubclasses(): array
-    {
-        return [
-            new ArchfeyPatronCharacterSubclass,
-            new CelestialPatronCharacterSubclass,
-            new FiendPatronCharacterSubclass,
-            new GreatOldOnePatronCharacterSubclass,
-        ];
-    }
+	/**
+	 * Возвращает подклассы колдуна.
+	 *
+	 * @return list<AbstractCharacterSubclass>
+	 */
+	public function getSubclasses(): array
+	{
+		return [
+			new ArchfeyPatronCharacterSubclass,
+			new CelestialPatronCharacterSubclass,
+			new FiendPatronCharacterSubclass,
+			new GreatOldOnePatronCharacterSubclass,
+		];
+	}
 }

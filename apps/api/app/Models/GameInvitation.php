@@ -25,46 +25,46 @@ use Illuminate\Support\Carbon;
  */
 class GameInvitation extends Model
 {
-    use HasFactory;
+	use HasFactory;
 
-    protected $table = 'game_invitations';
+	protected $table = 'game_invitations';
 
-    protected $fillable = [
-        'game_id',
-        'gm_user_id',
-        'invited_user_id',
-        'token',
-        'status',
-        'sent_at',
-        'responded_at',
-    ];
+	protected $fillable = [
+		'game_id',
+		'gm_user_id',
+		'invited_user_id',
+		'token',
+		'status',
+		'sent_at',
+		'responded_at',
+	];
 
-    protected $casts = [
-        'sent_at' => 'datetime',
-        'responded_at' => 'datetime',
-    ];
+	protected $casts = [
+		'sent_at' => 'datetime',
+		'responded_at' => 'datetime',
+	];
 
-    /**
-     * Возвращает игру, к которой относится приглашение.
-     */
-    public function game(): BelongsTo
-    {
-        return $this->belongsTo(Game::class, 'game_id', 'id');
-    }
+	/**
+	 * Возвращает игру, к которой относится приглашение.
+	 */
+	public function game(): BelongsTo
+	{
+		return $this->belongsTo(Game::class, 'game_id', 'id');
+	}
 
-    /**
-     * Возвращает мастера, который отправил приглашение.
-     */
-    public function gm(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'gm_user_id', 'id');
-    }
+	/**
+	 * Возвращает мастера, который отправил приглашение.
+	 */
+	public function gm(): BelongsTo
+	{
+		return $this->belongsTo(User::class, 'gm_user_id', 'id');
+	}
 
-    /**
-     * Возвращает пользователя, которому адресовано приглашение.
-     */
-    public function invitedUser(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'invited_user_id', 'id');
-    }
+	/**
+	 * Возвращает пользователя, которому адресовано приглашение.
+	 */
+	public function invitedUser(): BelongsTo
+	{
+		return $this->belongsTo(User::class, 'invited_user_id', 'id');
+	}
 }

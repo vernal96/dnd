@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Application\Catalog\CharacterClassCatalog;
-use App\Domain\Catalog\AbstractCharacterClass;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ApiPayloadResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 
@@ -15,37 +15,36 @@ use Illuminate\Http\Response;
  */
 final class CharacterClassController extends Controller
 {
-    /**
-     * Создает контроллер справочника классов персонажей.
-     */
-    public function __construct(
-        private readonly CharacterClassCatalog $characterClassCatalog,
-    ) {}
+	/**
+	 * Создает контроллер справочника классов персонажей.
+	 */
+	public function __construct(
+		private readonly CharacterClassCatalog $characterClassCatalog,
+	)
+	{
+	}
 
-    /**
-     * Возвращает список активных классов персонажей вместе с подклассами.
-     */
-    public function index(): JsonResponse
-    {
-        return response()->json(array_map(
-            static fn (AbstractCharacterClass $characterClass): array => $characterClass->toArray(),
-            $this->characterClassCatalog->getActiveClasses(),
-        ));
-    }
+	/**
+	 * Возвращает список активных классов персонажей вместе с подклассами.
+	 */
+	public function index(): JsonResponse
+	{
+		return ApiPayloadResource::collectionJson($this->characterClassCatalog->getActiveClasses());
+	}
 
-    /**
-     * Возвращает один активный класс персонажа вместе с его подклассами.
-     */
-    public function show(string $characterClass): JsonResponse
-    {
-        $classDefinition = $this->characterClassCatalog->findActiveClassByCode($characterClass);
+	/**
+	 * Возвращает один активный класс персонажа вместе с его подклассами.
+	 */
+	public function show(string $characterClass): JsonResponse
+	{
+		$classDefinition = $this->characterClassCatalog->findActiveClassByCode($characterClass);
 
-        if ($classDefinition === null) {
-            return response()->json([
-                'message' => 'Класс персонажа не найден.',
-            ], Response::HTTP_NOT_FOUND);
-        }
+		if ($classDefinition === null) {
+			return ApiPayloadResource::json([
+				'message' => 'Класс персонажа не найден.',
+			], Response::HTTP_NOT_FOUND);
+		}
 
-        return response()->json($classDefinition->toArray());
-    }
+		return ApiPayloadResource::json($classDefinition);
+	}
 }

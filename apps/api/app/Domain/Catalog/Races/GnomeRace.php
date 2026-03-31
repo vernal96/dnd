@@ -14,40 +14,40 @@ use App\Domain\Catalog\Subraces\RockGnomeSubrace;
  */
 final class GnomeRace extends AbstractRace
 {
-    /**
-     * Возвращает код расы.
-     */
-    public function getCode(): string
-    {
-        return 'gnome';
-    }
+	/**
+	 * Возвращает код расы.
+	 */
+	public function getCode(): string
+	{
+		return 'gnome';
+	}
 
-    /**
-     * Возвращает название расы.
-     */
-    public function getName(): string
-    {
-        return 'Гном';
-    }
+	/**
+	 * Возвращает название расы.
+	 */
+	public function getName(): string
+	{
+		return 'Гном';
+	}
 
-    /**
-     * Возвращает описание расы.
-     */
-    public function getDescription(): ?string
-    {
-        return 'Любознательная и изобретательная раса, сочетающая острый ум, ремесло и чувство чудесного.';
-    }
+	/**
+	 * Возвращает описание расы.
+	 */
+	public function getDescription(): string
+	{
+		return 'Любознательная и изобретательная раса, сочетающая острый ум, ремесло и чувство чудесного.';
+	}
 
-    /**
-     * Возвращает подрасы гнома.
-     *
-     * @return list<AbstractSubrace>
-     */
-    public function getSubraces(): array
-    {
-        return [
-            new ForestGnomeSubrace,
-            new RockGnomeSubrace,
-        ];
-    }
+	/**
+	 * Возвращает подрасы гнома.
+	 *
+	 * @return list<AbstractSubrace>
+	 */
+	public function getSubraces(): array
+	{
+		return [
+			new ForestGnomeSubrace,
+			new RockGnomeSubrace,
+		];
+	}
 }

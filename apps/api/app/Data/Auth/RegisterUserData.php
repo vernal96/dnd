@@ -9,26 +9,28 @@ namespace App\Data\Auth;
  */
 final readonly class RegisterUserData
 {
-    /**
-     * Создает DTO данных регистрации.
-     */
-    public function __construct(
-        public string $login,
-        public string $email,
-        public string $password,
-    ) {}
+	/**
+	 * Создает DTO данных регистрации.
+	 */
+	public function __construct(
+		public string $login,
+		public string $email,
+		public string $password,
+	)
+	{
+	}
 
-    /**
-     * Создает DTO из валидированного payload.
-     *
-     * @param  array{login:string,email:string,password:string}  $payload
-     */
-    public static function fromArray(array $payload): self
-    {
-        return new self(
-            login: $payload['login'],
-            email: $payload['email'],
-            password: $payload['password'],
-        );
-    }
+	/**
+	 * Создает DTO из валидированного payload.
+	 *
+	 * @param array{login:string,email:string,password:string} $payload
+	 */
+	public static function fromArray(array $payload): self
+	{
+		return new self(
+			login: $payload['login'],
+			email: $payload['email'],
+			password: $payload['password'],
+		);
+	}
 }

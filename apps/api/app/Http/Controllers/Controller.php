@@ -7,4 +7,6 @@ namespace App\Http\Controllers;
 /**
  * Base controller for HTTP entry points.
  */
-abstract class Controller {}
+abstract class Controller
+{
+}

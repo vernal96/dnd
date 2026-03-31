@@ -15,41 +15,41 @@ use App\Domain\Catalog\Subraces\WoodElfSubrace;
  */
 final class ElfRace extends AbstractRace
 {
-    /**
-     * Возвращает код расы.
-     */
-    public function getCode(): string
-    {
-        return 'elf';
-    }
+	/**
+	 * Возвращает код расы.
+	 */
+	public function getCode(): string
+	{
+		return 'elf';
+	}
 
-    /**
-     * Возвращает название расы.
-     */
-    public function getName(): string
-    {
-        return 'Эльф';
-    }
+	/**
+	 * Возвращает название расы.
+	 */
+	public function getName(): string
+	{
+		return 'Эльф';
+	}
 
-    /**
-     * Возвращает описание расы.
-     */
-    public function getDescription(): ?string
-    {
-        return 'Древняя и изящная раса с сильной связью с природой, магией и традициями.';
-    }
+	/**
+	 * Возвращает описание расы.
+	 */
+	public function getDescription(): string
+	{
+		return 'Древняя и изящная раса с сильной связью с природой, магией и традициями.';
+	}
 
-    /**
-     * Возвращает подрасы эльфа.
-     *
-     * @return list<AbstractSubrace>
-     */
-    public function getSubraces(): array
-    {
-        return [
-            new HighElfSubrace,
-            new WoodElfSubrace,
-            new DrowElfSubrace,
-        ];
-    }
+	/**
+	 * Возвращает подрасы эльфа.
+	 *
+	 * @return list<AbstractSubrace>
+	 */
+	public function getSubraces(): array
+	{
+		return [
+			new HighElfSubrace,
+			new WoodElfSubrace,
+			new DrowElfSubrace,
+		];
+	}
 }

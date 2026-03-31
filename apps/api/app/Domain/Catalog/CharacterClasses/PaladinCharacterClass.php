@@ -16,42 +16,42 @@ use App\Domain\Catalog\CharacterSubclasses\OathOfVengeanceCharacterSubclass;
  */
 final class PaladinCharacterClass extends AbstractCharacterClass
 {
-    /**
-     * Возвращает код класса персонажа.
-     */
-    public function getCode(): string
-    {
-        return 'paladin';
-    }
+	/**
+	 * Возвращает код класса персонажа.
+	 */
+	public function getCode(): string
+	{
+		return 'paladin';
+	}
 
-    /**
-     * Возвращает название класса персонажа.
-     */
-    public function getName(): string
-    {
-        return 'Паладин';
-    }
+	/**
+	 * Возвращает название класса персонажа.
+	 */
+	public function getName(): string
+	{
+		return 'Паладин';
+	}
 
-    /**
-     * Возвращает описание класса персонажа.
-     */
-    public function getDescription(): ?string
-    {
-        return 'Священный воитель, следующий клятве и соединяющий веру, сталь и исцеляющий свет.';
-    }
+	/**
+	 * Возвращает описание класса персонажа.
+	 */
+	public function getDescription(): string
+	{
+		return 'Священный воитель, следующий клятве и соединяющий веру, сталь и исцеляющий свет.';
+	}
 
-    /**
-     * Возвращает подклассы паладина.
-     *
-     * @return list<AbstractCharacterSubclass>
-     */
-    public function getSubclasses(): array
-    {
-        return [
-            new OathOfDevotionCharacterSubclass,
-            new OathOfGloryCharacterSubclass,
-            new OathOfTheAncientsCharacterSubclass,
-            new OathOfVengeanceCharacterSubclass,
-        ];
-    }
+	/**
+	 * Возвращает подклассы паладина.
+	 *
+	 * @return list<AbstractCharacterSubclass>
+	 */
+	public function getSubclasses(): array
+	{
+		return [
+			new OathOfDevotionCharacterSubclass,
+			new OathOfGloryCharacterSubclass,
+			new OathOfTheAncientsCharacterSubclass,
+			new OathOfVengeanceCharacterSubclass,
+		];
+	}
 }

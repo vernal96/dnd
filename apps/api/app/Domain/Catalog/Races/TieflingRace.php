@@ -11,28 +11,28 @@ use App\Domain\Catalog\AbstractRace;
  */
 final class TieflingRace extends AbstractRace
 {
-    /**
-     * Возвращает код расы.
-     */
-    public function getCode(): string
-    {
-        return 'tiefling';
-    }
+	/**
+	 * Возвращает код расы.
+	 */
+	public function getCode(): string
+	{
+		return 'tiefling';
+	}
 
-    /**
-     * Возвращает название расы.
-     */
-    public function getName(): string
-    {
-        return 'Тифлинг';
-    }
+	/**
+	 * Возвращает название расы.
+	 */
+	public function getName(): string
+	{
+		return 'Тифлинг';
+	}
 
-    /**
-     * Возвращает описание расы.
-     */
-    public function getDescription(): ?string
-    {
-        return 'Носители инфернального наследия, сочетающие внутреннюю силу, харизму и печать чуждости.';
-    }
+	/**
+	 * Возвращает описание расы.
+	 */
+	public function getDescription(): string
+	{
+		return 'Носители инфернального наследия, сочетающие внутреннюю силу, харизму и печать чуждости.';
+	}
 
 }

@@ -12,26 +12,26 @@ use Illuminate\Validation\Rules\Password;
  */
 final class ResetPasswordRequest extends FormRequest
 {
-    /**
-     * Определяет, разрешено ли выполнение запроса.
-     */
-    public function authorize(): bool
-    {
-        return true;
-    }
+	/**
+	 * Определяет, разрешено ли выполнение запроса.
+	 */
+	public function authorize(): bool
+	{
+		return true;
+	}
 
-    /**
-     * Возвращает правила валидации для завершения сброса пароля.
-     *
-     * @return array<string, array<int, Password|string>>
-     */
-    public function rules(): array
-    {
-        return [
-            'token' => ['required', 'string'],
-            'email' => ['required', 'email:rfc', 'max:255'],
-            'password' => ['required', 'string', 'confirmed', Password::min(8)],
-            'password_confirmation' => ['required', 'string'],
-        ];
-    }
+	/**
+	 * Возвращает правила валидации для завершения сброса пароля.
+	 *
+	 * @return array
+	 */
+	public function rules(): array
+	{
+		return [
+			'token' => ['required', 'string'],
+			'email' => ['required', 'email:rfc', 'max:255'],
+			'password' => ['required', 'string', 'confirmed', Password::min(8)],
+			'password_confirmation' => ['required', 'string'],
+		];
+	}
 }

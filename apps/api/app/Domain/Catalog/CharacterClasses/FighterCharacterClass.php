@@ -16,42 +16,42 @@ use App\Domain\Catalog\CharacterSubclasses\PsiWarriorCharacterSubclass;
  */
 final class FighterCharacterClass extends AbstractCharacterClass
 {
-    /**
-     * Возвращает код класса персонажа.
-     */
-    public function getCode(): string
-    {
-        return 'fighter';
-    }
+	/**
+	 * Возвращает код класса персонажа.
+	 */
+	public function getCode(): string
+	{
+		return 'fighter';
+	}
 
-    /**
-     * Возвращает название класса персонажа.
-     */
-    public function getName(): string
-    {
-        return 'Воин';
-    }
+	/**
+	 * Возвращает название класса персонажа.
+	 */
+	public function getName(): string
+	{
+		return 'Воин';
+	}
 
-    /**
-     * Возвращает описание класса персонажа.
-     */
-    public function getDescription(): ?string
-    {
-        return 'Универсальный мастер боя, добивающийся победы тренировкой, дисциплиной и техникой.';
-    }
+	/**
+	 * Возвращает описание класса персонажа.
+	 */
+	public function getDescription(): string
+	{
+		return 'Универсальный мастер боя, добивающийся победы тренировкой, дисциплиной и техникой.';
+	}
 
-    /**
-     * Возвращает подклассы воина.
-     *
-     * @return list<AbstractCharacterSubclass>
-     */
-    public function getSubclasses(): array
-    {
-        return [
-            new BattleMasterCharacterSubclass,
-            new ChampionCharacterSubclass,
-            new EldritchKnightCharacterSubclass,
-            new PsiWarriorCharacterSubclass,
-        ];
-    }
+	/**
+	 * Возвращает подклассы воина.
+	 *
+	 * @return list<AbstractCharacterSubclass>
+	 */
+	public function getSubclasses(): array
+	{
+		return [
+			new BattleMasterCharacterSubclass,
+			new ChampionCharacterSubclass,
+			new EldritchKnightCharacterSubclass,
+			new PsiWarriorCharacterSubclass,
+		];
+	}
 }

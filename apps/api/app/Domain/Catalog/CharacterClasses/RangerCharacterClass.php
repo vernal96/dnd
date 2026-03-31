@@ -16,42 +16,42 @@ use App\Domain\Catalog\CharacterSubclasses\HunterCharacterSubclass;
  */
 final class RangerCharacterClass extends AbstractCharacterClass
 {
-    /**
-     * Возвращает код класса персонажа.
-     */
-    public function getCode(): string
-    {
-        return 'ranger';
-    }
+	/**
+	 * Возвращает код класса персонажа.
+	 */
+	public function getCode(): string
+	{
+		return 'ranger';
+	}
 
-    /**
-     * Возвращает название класса персонажа.
-     */
-    public function getName(): string
-    {
-        return 'Следопыт';
-    }
+	/**
+	 * Возвращает название класса персонажа.
+	 */
+	public function getName(): string
+	{
+		return 'Следопыт';
+	}
 
-    /**
-     * Возвращает описание класса персонажа.
-     */
-    public function getDescription(): ?string
-    {
-        return 'Охотник и разведчик приграничья, совмещающий меткость, выживание и магию пути.';
-    }
+	/**
+	 * Возвращает описание класса персонажа.
+	 */
+	public function getDescription(): string
+	{
+		return 'Охотник и разведчик приграничья, совмещающий меткость, выживание и магию пути.';
+	}
 
-    /**
-     * Возвращает подклассы следопыта.
-     *
-     * @return list<AbstractCharacterSubclass>
-     */
-    public function getSubclasses(): array
-    {
-        return [
-            new BeastMasterCharacterSubclass,
-            new FeyWandererCharacterSubclass,
-            new GloomStalkerCharacterSubclass,
-            new HunterCharacterSubclass,
-        ];
-    }
+	/**
+	 * Возвращает подклассы следопыта.
+	 *
+	 * @return list<AbstractCharacterSubclass>
+	 */
+	public function getSubclasses(): array
+	{
+		return [
+			new BeastMasterCharacterSubclass,
+			new FeyWandererCharacterSubclass,
+			new GloomStalkerCharacterSubclass,
+			new HunterCharacterSubclass,
+		];
+	}
 }

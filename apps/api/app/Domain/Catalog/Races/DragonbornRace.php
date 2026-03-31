@@ -11,28 +11,28 @@ use App\Domain\Catalog\AbstractRace;
  */
 final class DragonbornRace extends AbstractRace
 {
-    /**
-     * Возвращает код расы.
-     */
-    public function getCode(): string
-    {
-        return 'dragonborn';
-    }
+	/**
+	 * Возвращает код расы.
+	 */
+	public function getCode(): string
+	{
+		return 'dragonborn';
+	}
 
-    /**
-     * Возвращает название расы.
-     */
-    public function getName(): string
-    {
-        return 'Драконорождённый';
-    }
+	/**
+	 * Возвращает название расы.
+	 */
+	public function getName(): string
+	{
+		return 'Драконорождённый';
+	}
 
-    /**
-     * Возвращает описание расы.
-     */
-    public function getDescription(): ?string
-    {
-        return 'Гордый народ с драконьим наследием, для которого честь, сила и происхождение имеют особый вес.';
-    }
+	/**
+	 * Возвращает описание расы.
+	 */
+	public function getDescription(): string
+	{
+		return 'Гордый народ с драконьим наследием, для которого честь, сила и происхождение имеют особый вес.';
+	}
 
 }

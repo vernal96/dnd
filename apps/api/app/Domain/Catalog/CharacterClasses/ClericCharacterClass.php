@@ -16,42 +16,42 @@ use App\Domain\Catalog\CharacterSubclasses\WarDomainCharacterSubclass;
  */
 final class ClericCharacterClass extends AbstractCharacterClass
 {
-    /**
-     * Возвращает код класса персонажа.
-     */
-    public function getCode(): string
-    {
-        return 'cleric';
-    }
+	/**
+	 * Возвращает код класса персонажа.
+	 */
+	public function getCode(): string
+	{
+		return 'cleric';
+	}
 
-    /**
-     * Возвращает название класса персонажа.
-     */
-    public function getName(): string
-    {
-        return 'Жрец';
-    }
+	/**
+	 * Возвращает название класса персонажа.
+	 */
+	public function getName(): string
+	{
+		return 'Жрец';
+	}
 
-    /**
-     * Возвращает описание класса персонажа.
-     */
-    public function getDescription(): ?string
-    {
-        return 'Проводник божественной силы, сочетающий молитвы, поддержку и священное возмездие.';
-    }
+	/**
+	 * Возвращает описание класса персонажа.
+	 */
+	public function getDescription(): string
+	{
+		return 'Проводник божественной силы, сочетающий молитвы, поддержку и священное возмездие.';
+	}
 
-    /**
-     * Возвращает подклассы жреца.
-     *
-     * @return list<AbstractCharacterSubclass>
-     */
-    public function getSubclasses(): array
-    {
-        return [
-            new LifeDomainCharacterSubclass,
-            new LightDomainCharacterSubclass,
-            new TrickeryDomainCharacterSubclass,
-            new WarDomainCharacterSubclass,
-        ];
-    }
+	/**
+	 * Возвращает подклассы жреца.
+	 *
+	 * @return list<AbstractCharacterSubclass>
+	 */
+	public function getSubclasses(): array
+	{
+		return [
+			new LifeDomainCharacterSubclass,
+			new LightDomainCharacterSubclass,
+			new TrickeryDomainCharacterSubclass,
+			new WarDomainCharacterSubclass,
+		];
+	}
 }

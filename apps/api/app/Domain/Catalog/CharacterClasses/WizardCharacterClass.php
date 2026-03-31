@@ -16,42 +16,42 @@ use App\Domain\Catalog\CharacterSubclasses\IllusionistCharacterSubclass;
  */
 final class WizardCharacterClass extends AbstractCharacterClass
 {
-    /**
-     * Возвращает код класса персонажа.
-     */
-    public function getCode(): string
-    {
-        return 'wizard';
-    }
+	/**
+	 * Возвращает код класса персонажа.
+	 */
+	public function getCode(): string
+	{
+		return 'wizard';
+	}
 
-    /**
-     * Возвращает название класса персонажа.
-     */
-    public function getName(): string
-    {
-        return 'Волшебник';
-    }
+	/**
+	 * Возвращает название класса персонажа.
+	 */
+	public function getName(): string
+	{
+		return 'Волшебник';
+	}
 
-    /**
-     * Возвращает описание класса персонажа.
-     */
-    public function getDescription(): ?string
-    {
-        return 'Учёный магии, добивающийся могущества дисциплиной, исследованиями и точным знанием заклинаний.';
-    }
+	/**
+	 * Возвращает описание класса персонажа.
+	 */
+	public function getDescription(): string
+	{
+		return 'Учёный магии, добивающийся могущества дисциплиной, исследованиями и точным знанием заклинаний.';
+	}
 
-    /**
-     * Возвращает подклассы волшебника.
-     *
-     * @return list<AbstractCharacterSubclass>
-     */
-    public function getSubclasses(): array
-    {
-        return [
-            new AbjurerCharacterSubclass,
-            new DivinerCharacterSubclass,
-            new EvokerCharacterSubclass,
-            new IllusionistCharacterSubclass,
-        ];
-    }
+	/**
+	 * Возвращает подклассы волшебника.
+	 *
+	 * @return list<AbstractCharacterSubclass>
+	 */
+	public function getSubclasses(): array
+	{
+		return [
+			new AbjurerCharacterSubclass,
+			new DivinerCharacterSubclass,
+			new EvokerCharacterSubclass,
+			new IllusionistCharacterSubclass,
+		];
+	}
 }

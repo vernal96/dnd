@@ -26,53 +26,53 @@ use Illuminate\Support\Carbon;
  */
 class SceneTemplate extends Model
 {
-    use HasFactory;
+	use HasFactory;
 
-    protected $table = 'scene_templates';
+	protected $table = 'scene_templates';
 
-    protected $fillable = [
-        'created_by',
-        'name',
-        'description',
-        'width',
-        'height',
-        'status',
-        'metadata',
-    ];
+	protected $fillable = [
+		'created_by',
+		'name',
+		'description',
+		'width',
+		'height',
+		'status',
+		'metadata',
+	];
 
-    protected $casts = [
-        'metadata' => 'array',
-    ];
+	protected $casts = [
+		'metadata' => 'array',
+	];
 
-    /**
-     * Возвращает автора, создавшего шаблон.
-     */
-    public function author(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'created_by');
-    }
+	/**
+	 * Возвращает автора, создавшего шаблон.
+	 */
+	public function author(): BelongsTo
+	{
+		return $this->belongsTo(User::class, 'created_by');
+	}
 
-    /**
-     * Возвращает клетки ландшафта, из которых состоит сетка шаблона.
-     */
-    public function cells(): HasMany
-    {
-        return $this->hasMany(SceneTemplateCell::class, 'scene_template_id', 'id');
-    }
+	/**
+	 * Возвращает клетки ландшафта, из которых состоит сетка шаблона.
+	 */
+	public function cells(): HasMany
+	{
+		return $this->hasMany(SceneTemplateCell::class, 'scene_template_id', 'id');
+	}
 
-    /**
-     * Возвращает объекты сцены, размещенные на шаблоне.
-     */
-    public function objects(): HasMany
-    {
-        return $this->hasMany(SceneObject::class, 'scene_template_id', 'id');
-    }
+	/**
+	 * Возвращает объекты сцены, размещенные на шаблоне.
+	 */
+	public function objects(): HasMany
+	{
+		return $this->hasMany(SceneObject::class, 'scene_template_id', 'id');
+	}
 
-    /**
-     * Возвращает runtime-состояния сцен, созданные из шаблона.
-     */
-    public function sceneStates(): HasMany
-    {
-        return $this->hasMany(GameSceneState::class, 'scene_template_id', 'id');
-    }
+	/**
+	 * Возвращает runtime-состояния сцен, созданные из шаблона.
+	 */
+	public function sceneStates(): HasMany
+	{
+		return $this->hasMany(GameSceneState::class, 'scene_template_id', 'id');
+	}
 }

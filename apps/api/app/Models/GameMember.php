@@ -23,35 +23,35 @@ use Illuminate\Support\Carbon;
  */
 class GameMember extends Model
 {
-    use HasFactory;
+	use HasFactory;
 
-    protected $table = 'game_members';
+	protected $table = 'game_members';
 
-    protected $fillable = [
-        'game_id',
-        'user_id',
-        'role',
-        'status',
-        'joined_at',
-    ];
+	protected $fillable = [
+		'game_id',
+		'user_id',
+		'role',
+		'status',
+		'joined_at',
+	];
 
-    protected $casts = [
-        'joined_at' => 'datetime',
-    ];
+	protected $casts = [
+		'joined_at' => 'datetime',
+	];
 
-    /**
-     * Возвращает игру, на которую ссылается эта строка участия.
-     */
-    public function game(): BelongsTo
-    {
-        return $this->belongsTo(Game::class, 'game_id', 'id');
-    }
+	/**
+	 * Возвращает игру, на которую ссылается эта строка участия.
+	 */
+	public function game(): BelongsTo
+	{
+		return $this->belongsTo(Game::class, 'game_id', 'id');
+	}
 
-    /**
-     * Возвращает пользователя, привязанного к этой строке участия.
-     */
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'user_id', 'id');
-    }
+	/**
+	 * Возвращает пользователя, привязанного к этой строке участия.
+	 */
+	public function user(): BelongsTo
+	{
+		return $this->belongsTo(User::class, 'user_id', 'id');
+	}
 }

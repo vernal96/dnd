@@ -16,42 +16,42 @@ use App\Domain\Catalog\CharacterSubclasses\WildMagicCharacterSubclass;
  */
 final class SorcererCharacterClass extends AbstractCharacterClass
 {
-    /**
-     * Возвращает код класса персонажа.
-     */
-    public function getCode(): string
-    {
-        return 'sorcerer';
-    }
+	/**
+	 * Возвращает код класса персонажа.
+	 */
+	public function getCode(): string
+	{
+		return 'sorcerer';
+	}
 
-    /**
-     * Возвращает название класса персонажа.
-     */
-    public function getName(): string
-    {
-        return 'Чародей';
-    }
+	/**
+	 * Возвращает название класса персонажа.
+	 */
+	public function getName(): string
+	{
+		return 'Чародей';
+	}
 
-    /**
-     * Возвращает описание класса персонажа.
-     */
-    public function getDescription(): ?string
-    {
-        return 'Носитель врожденной магии, чья сила исходит из крови, судьбы или иного внутреннего источника.';
-    }
+	/**
+	 * Возвращает описание класса персонажа.
+	 */
+	public function getDescription(): string
+	{
+		return 'Носитель врожденной магии, чья сила исходит из крови, судьбы или иного внутреннего источника.';
+	}
 
-    /**
-     * Возвращает подклассы чародея.
-     *
-     * @return list<AbstractCharacterSubclass>
-     */
-    public function getSubclasses(): array
-    {
-        return [
-            new AberrantSorceryCharacterSubclass,
-            new ClockworkSorceryCharacterSubclass,
-            new DraconicSorceryCharacterSubclass,
-            new WildMagicCharacterSubclass,
-        ];
-    }
+	/**
+	 * Возвращает подклассы чародея.
+	 *
+	 * @return list<AbstractCharacterSubclass>
+	 */
+	public function getSubclasses(): array
+	{
+		return [
+			new AberrantSorceryCharacterSubclass,
+			new ClockworkSorceryCharacterSubclass,
+			new DraconicSorceryCharacterSubclass,
+			new WildMagicCharacterSubclass,
+		];
+	}
 }

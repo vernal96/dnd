@@ -9,74 +9,74 @@ namespace App\Domain\Catalog;
  */
 abstract class AbstractRace
 {
-    /**
-     * Возвращает код расы.
-     */
-    abstract public function getCode(): string;
+	/**
+	 * Преобразует расу в ответ API.
+	 *
+	 * @return array{
+	 *     code: string,
+	 *     name: string,
+	 *     description: ?string,
+	 *     isActive: bool,
+	 *     subraces: list<array{code: string, name: string, description: ?string, isActive: bool}>
+	 * }
+	 */
+	public function toArray(): array
+	{
+		return [
+			'code' => $this->getCode(),
+			'name' => $this->getName(),
+			'description' => $this->getDescription(),
+			'isActive' => $this->isActive(),
+			'subraces' => array_map(
+				static fn(AbstractSubrace $subrace): array => $subrace->toArray(),
+				$this->getActiveSubraces(),
+			),
+		];
+	}
 
-    /**
-     * Возвращает название расы.
-     */
-    abstract public function getName(): string;
+	/**
+	 * Возвращает код расы.
+	 */
+	abstract public function getCode(): string;
 
-    /**
-     * Возвращает описание расы.
-     */
-    abstract public function getDescription(): ?string;
+	/**
+	 * Возвращает название расы.
+	 */
+	abstract public function getName(): string;
 
-    /**
-     * Возвращает подрасы текущей расы.
-     *
-     * @return list<AbstractSubrace>
-     */
-    public function getSubraces(): array
-    {
-        return [];
-    }
+	/**
+	 * Возвращает описание расы.
+	 */
+	abstract public function getDescription(): ?string;
 
-    /**
-     * Возвращает признак активности расы.
-     */
-    public function isActive(): bool
-    {
-        return true;
-    }
+	/**
+	 * Возвращает признак активности расы.
+	 */
+	public function isActive(): bool
+	{
+		return true;
+	}
 
-    /**
-     * Возвращает только активные подрасы текущей расы.
-     *
-     * @return list<AbstractSubrace>
-     */
-    public function getActiveSubraces(): array
-    {
-        return array_values(array_filter(
-            $this->getSubraces(),
-            static fn (AbstractSubrace $subrace): bool => $subrace->isActive(),
-        ));
-    }
+	/**
+	 * Возвращает только активные подрасы текущей расы.
+	 *
+	 * @return list<AbstractSubrace>
+	 */
+	public function getActiveSubraces(): array
+	{
+		return array_values(array_filter(
+			$this->getSubraces(),
+			static fn(AbstractSubrace $subrace): bool => $subrace->isActive(),
+		));
+	}
 
-    /**
-     * Преобразует расу в ответ API.
-     *
-     * @return array{
-     *     code:string,
-     *     name:string,
-     *     description:?string,
-     *     isActive:bool,
-     *     subraces:list<array{code:string,name:string,description:?string,isActive:bool}>
-     * }
-     */
-    public function toArray(): array
-    {
-        return [
-            'code' => $this->getCode(),
-            'name' => $this->getName(),
-            'description' => $this->getDescription(),
-            'isActive' => $this->isActive(),
-            'subraces' => array_map(
-                static fn (AbstractSubrace $subrace): array => $subrace->toArray(),
-                $this->getActiveSubraces(),
-            ),
-        ];
-    }
+	/**
+	 * Возвращает подрасы текущей расы.
+	 *
+	 * @return list<AbstractSubrace>
+	 */
+	public function getSubraces(): array
+	{
+		return [];
+	}
 }

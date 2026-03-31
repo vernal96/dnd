@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Application\Catalog\RaceCatalog;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ApiPayloadResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 
@@ -14,37 +15,36 @@ use Illuminate\Http\Response;
  */
 final class RaceController extends Controller
 {
-    /**
-     * Создает контроллер справочника рас.
-     */
-    public function __construct(
-        private readonly RaceCatalog $raceCatalog,
-    ) {}
+	/**
+	 * Создает контроллер справочника рас.
+	 */
+	public function __construct(
+		private readonly RaceCatalog $raceCatalog,
+	)
+	{
+	}
 
-    /**
-     * Возвращает список активных рас вместе с подрасами.
-     */
-    public function index(): JsonResponse
-    {
-        return response()->json(array_map(
-            static fn ($race): array => $race->toArray(),
-            $this->raceCatalog->getActiveRaces(),
-        ));
-    }
+	/**
+	 * Возвращает список активных рас вместе с подрасами.
+	 */
+	public function index(): JsonResponse
+	{
+		return ApiPayloadResource::collectionJson($this->raceCatalog->getActiveRaces());
+	}
 
-    /**
-     * Возвращает одну активную расу вместе с ее подрасами.
-     */
-    public function show(string $race): JsonResponse
-    {
-        $raceDefinition = $this->raceCatalog->findActiveRaceByCode($race);
+	/**
+	 * Возвращает одну активную расу вместе с ее подрасами.
+	 */
+	public function show(string $race): JsonResponse
+	{
+		$raceDefinition = $this->raceCatalog->findActiveRaceByCode($race);
 
-        if ($raceDefinition === null) {
-            return response()->json([
-                'message' => 'Раса не найдена.',
-            ], Response::HTTP_NOT_FOUND);
-        }
+		if ($raceDefinition === null) {
+			return ApiPayloadResource::json([
+				'message' => 'Раса не найдена.',
+			], Response::HTTP_NOT_FOUND);
+		}
 
-        return response()->json($raceDefinition->toArray());
-    }
+		return ApiPayloadResource::json($raceDefinition);
+	}
 }
