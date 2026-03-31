@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\Races;
 
-use App\Data\Catalog\AbilityBonusesData;
 use App\Data\Catalog\AbilityBonusChoiceData;
+use App\Data\Catalog\AbilityBonusesData;
 use App\Domain\Catalog\AbstractRace;
 
 /**

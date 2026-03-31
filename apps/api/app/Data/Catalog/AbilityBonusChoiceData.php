@@ -15,8 +15,8 @@ final readonly class AbilityBonusChoiceData
 	 * @param list<string> $abilities
 	 */
 	public function __construct(
-		public int $count,
-		public int $value,
+		public int   $count,
+		public int   $value,
 		public array $abilities,
 	)
 	{

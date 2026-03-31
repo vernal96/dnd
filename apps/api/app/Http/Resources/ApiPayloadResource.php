@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use JsonSerializable;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Универсальный API-ресурс для DTO, доменных объектов, массивов и Eloquent-моделей.
@@ -18,7 +19,7 @@ final class ApiPayloadResource extends JsonResource
 	/**
 	 * Возвращает JSON-ответ для одного ресурса.
 	 */
-	public static function json(mixed $payload, int $status = JsonResponse::HTTP_OK): JsonResponse
+	public static function json(mixed $payload, int $status = Response::HTTP_OK): JsonResponse
 	{
 		return self::make($payload)
 			->response()
@@ -28,7 +29,7 @@ final class ApiPayloadResource extends JsonResource
 	/**
 	 * Возвращает JSON-ответ для коллекции ресурсов.
 	 */
-	public static function collectionJson(mixed $payload, int $status = JsonResponse::HTTP_OK): JsonResponse
+	public static function collectionJson(mixed $payload, int $status = Response::HTTP_OK): JsonResponse
 	{
 		return self::collection($payload)
 			->response()
@@ -38,6 +39,7 @@ final class ApiPayloadResource extends JsonResource
 	/**
 	 * Преобразует ресурс в массив ответа.
 	 *
+	 * @param Request $request
 	 * @return array
 	 */
 	public function toArray(Request $request): array

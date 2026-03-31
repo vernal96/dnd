@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog;
 
-use App\Data\Catalog\AbilityBonusesData;
 use App\Data\Catalog\AbilityBonusChoiceData;
+use App\Data\Catalog\AbilityBonusesData;
 
 /**
  * Базовая сущность расы, реализуемая конкретными классами.

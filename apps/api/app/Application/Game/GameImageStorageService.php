@@ -99,6 +99,18 @@ final class GameImageStorageService
 	}
 
 	/**
+	 * Возвращает MIME-тип файла или безопасное значение по умолчанию.
+	 */
+	private function resolveMimeType(Filesystem $disk, string $path): string
+	{
+		$mimeType = $disk->mimeType($path);
+
+		return is_string($mimeType) && $mimeType !== ''
+			? $mimeType
+			: 'application/octet-stream';
+	}
+
+	/**
 	 * Сохраняет новое изображение в каталог указанной игры.
 	 *
 	 * @throws RuntimeException Если игра не найдена или файл не удалось сохранить.
@@ -164,17 +176,5 @@ final class GameImageStorageService
 			fileName: $safeFileName,
 			mimeType: $this->resolveMimeType($disk, $path),
 		);
-	}
-
-	/**
-	 * Возвращает MIME-тип файла или безопасное значение по умолчанию.
-	 */
-	private function resolveMimeType(Filesystem $disk, string $path): string
-	{
-		$mimeType = $disk->mimeType($path);
-
-		return is_string($mimeType) && $mimeType !== ''
-			? $mimeType
-			: 'application/octet-stream';
 	}
 }
