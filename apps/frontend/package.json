@@ -1,0 +1,9 @@
+{
+  "name": "dnd-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Placeholder for the Canvas/UI frontend.",
+  "scripts": {
+    "dev": "node -e \"console.log('Frontend placeholder. Replace with actual implementation.'); setInterval(() => {}, 1 << 30)\""
+  }
+}

@@ -1,0 +1,277 @@
+name: dnd-service
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: dnd-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-dnd}
+      POSTGRES_USER: ${POSTGRES_USER:-dnd}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dnd}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dnd} -d ${POSTGRES_DB:-dnd}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dnd
+
+  redis:
+    image: redis:7-alpine
+    container_name: dnd-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dnd
+
+  kafka:
+    image: apache/kafka:3.8.0
+    container_name: dnd-kafka
+    restart: unless-stopped
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      CLUSTER_ID: ${KAFKA_KRAFT_CLUSTER_ID:-abcdefghijklmnopqrstuv}
+    ports:
+      - "${KAFKA_PORT:-9092}:9092"
+    volumes:
+      - kafka_data:/tmp/kraft-combined-logs
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1",
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+    networks:
+      - dnd
+
+  init-kafka-topics:
+    image: apache/kafka:3.8.0
+    container_name: dnd-kafka-topics
+    restart: "no"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    command:
+      - /bin/bash
+      - -lc
+      - |
+        topics=(
+          game.events
+          game.audit
+          game.notifications
+          game.analytics
+          game.saves
+        )
+        for topic in "$${topics[@]}"; do
+          /opt/kafka/bin/kafka-topics.sh \
+            --if-not-exists \
+            --create \
+            --topic "$$topic" \
+            --partitions "${KAFKA_TOPIC_PARTITIONS:-3}" \
+            --replication-factor 1 \
+            --bootstrap-server kafka:9092
+        done
+    networks:
+      - dnd
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: dnd-api
+    profiles: ["app"]
+    restart: unless-stopped
+    working_dir: /var/www/html
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      APP_PORT: ${API_PORT:-8080}
+      APP_DEBUG: "true"
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ${POSTGRES_DB:-dnd}
+      DB_USERNAME: ${POSTGRES_USER:-dnd}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-dnd}
+      CACHE_STORE: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: database
+      DATABASE_URL: postgres://${POSTGRES_USER:-dnd}:${POSTGRES_PASSWORD:-dnd}@postgres:5432/${POSTGRES_DB:-dnd}
+      REDIS_URL: redis://redis:6379
+      KAFKA_BROKERS: kafka:9092
+    volumes:
+      - ./apps/api:/var/www/html
+    command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
+    ports:
+      - "${API_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - dnd
+
+  realtime:
+    image: node:22-alpine
+    container_name: dnd-realtime
+    profiles: ["app"]
+    restart: unless-stopped
+    working_dir: /workspace/apps/realtime
+    environment:
+      NODE_ENV: development
+      PORT: ${REALTIME_PORT:-8081}
+      REDIS_URL: redis://redis:6379
+      KAFKA_BROKERS: kafka:9092
+      API_BASE_URL: http://api:${API_PORT:-8080}
+    volumes:
+      - ./apps/realtime:/workspace/apps/realtime
+    command:
+      - /bin/sh
+      - -lc
+      - |
+        if [ -f package.json ]; then
+          npm install && npm run dev -- --host 0.0.0.0 --port ${REALTIME_PORT:-8081}
+        else
+          echo "apps/realtime is empty; attach your WebSocket service here."
+          tail -f /dev/null
+        fi
+    ports:
+      - "${REALTIME_PORT:-8081}:8081"
+    depends_on:
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      api:
+        condition: service_started
+    networks:
+      - dnd
+
+  worker:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: dnd-worker
+    profiles: ["app"]
+    restart: unless-stopped
+    working_dir: /var/www/html
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ${POSTGRES_DB:-dnd}
+      DB_USERNAME: ${POSTGRES_USER:-dnd}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-dnd}
+      CACHE_STORE: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: database
+      DATABASE_URL: postgres://${POSTGRES_USER:-dnd}:${POSTGRES_PASSWORD:-dnd}@postgres:5432/${POSTGRES_DB:-dnd}
+      REDIS_URL: redis://redis:6379
+      KAFKA_BROKERS: kafka:9092
+    volumes:
+      - ./apps/api:/var/www/html
+    command:
+      - /bin/sh
+      - -lc
+      - |
+        echo "Worker image is ready. Replace this command with Kafka consumers, projections or queue workers."
+        tail -f /dev/null
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - dnd
+
+  frontend:
+    image: node:22-alpine
+    container_name: dnd-frontend
+    profiles: ["app"]
+    restart: unless-stopped
+    working_dir: /workspace/apps/frontend
+    environment:
+      NODE_ENV: development
+      PORT: ${FRONTEND_PORT:-5173}
+      VITE_API_URL: http://localhost:${API_PORT:-8080}
+      VITE_WS_URL: ws://localhost:${REALTIME_PORT:-8081}
+    volumes:
+      - ./apps/frontend:/workspace/apps/frontend
+    command:
+      - /bin/sh
+      - -lc
+      - |
+        if [ -f package.json ]; then
+          npm install && npm run dev -- --host 0.0.0.0 --port ${FRONTEND_PORT:-5173}
+        else
+          echo "apps/frontend is empty; attach your Canvas/UI frontend here."
+          tail -f /dev/null
+        fi
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    depends_on:
+      api:
+        condition: service_started
+      realtime:
+        condition: service_started
+    networks:
+      - dnd
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: dnd-kafka-ui
+    profiles: ["tools"]
+    restart: unless-stopped
+    environment:
+      KAFKA_CLUSTERS_0_NAME: dnd-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    ports:
+      - "${KAFKA_UI_PORT:-8090}:8080"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - dnd
+
+volumes:
+  postgres_data:
+  redis_data:
+  kafka_data:
+
+networks:
+  dnd:
+    driver: bridge

@@ -1,0 +1,9 @@
+{
+  "name": "dnd-realtime",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Placeholder for the WebSocket/realtime layer.",
+  "scripts": {
+    "dev": "node -e \"console.log('Realtime service placeholder. Replace with actual implementation.'); setInterval(() => {}, 1 << 30)\""
+  }
+}
