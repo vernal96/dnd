@@ -11,5 +11,11 @@ export default defineConfig({
   },
   server: {
     host: true,
+    hmr: {
+      clientPort: 80,
+      host: 'localhost',
+      path: '/vite-hmr',
+      protocol: 'ws',
+    },
   },
 });

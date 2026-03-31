@@ -13,7 +13,7 @@ final readonly class RegisterUserData
      * Создает DTO данных регистрации.
      */
     public function __construct(
-        public string $heroName,
+        public string $login,
         public string $email,
         public string $password,
     ) {}
@@ -21,12 +21,12 @@ final readonly class RegisterUserData
     /**
      * Создает DTO из валидированного payload.
      *
-     * @param  array{hero_name:string,email:string,password:string}  $payload
+     * @param  array{login:string,email:string,password:string}  $payload
      */
     public static function fromArray(array $payload): self
     {
         return new self(
-            heroName: $payload['hero_name'],
+            login: $payload['login'],
             email: $payload['email'],
             password: $payload['password'],
         );

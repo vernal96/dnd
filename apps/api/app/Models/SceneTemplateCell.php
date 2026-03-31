@@ -7,9 +7,22 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * One terrain cell inside a scene template grid.
+ *
+ * @property int $id
+ * @property int $scene_template_id
+ * @property int $x
+ * @property int $y
+ * @property string $terrain_type
+ * @property int $elevation
+ * @property bool $is_passable
+ * @property bool $blocks_vision
+ * @property array<string, mixed>|null $props
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 class SceneTemplateCell extends Model
 {

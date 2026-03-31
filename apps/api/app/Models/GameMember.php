@@ -7,9 +7,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * User membership inside a concrete game.
+ *
+ * @property int $id
+ * @property int $game_id
+ * @property int $user_id
+ * @property string $role
+ * @property string $status
+ * @property Carbon|null $joined_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 class GameMember extends Model
 {

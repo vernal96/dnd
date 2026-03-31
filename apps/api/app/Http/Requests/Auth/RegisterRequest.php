@@ -29,7 +29,7 @@ final class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'hero_name' => ['required', 'string', 'min:2', 'max:80'],
+            'login' => ['required', 'string', 'min:3', 'max:80', Rule::unique('users', 'name')],
             'email' => ['required', 'email:rfc', 'max:255', Rule::unique('users', 'email')],
             'password' => ['required', 'string', Password::min(8)],
         ];

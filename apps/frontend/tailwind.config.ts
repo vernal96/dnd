@@ -19,8 +19,8 @@ const config: Config = {
         '4xl': '2rem',
       },
       fontFamily: {
-        display: ['Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', 'Georgia', 'serif'],
-        body: ['Trebuchet MS', 'Segoe UI', 'Tahoma', 'sans-serif'],
+        display: ['Vollkorn Display', 'Vollkorn', 'Georgia', 'serif'],
+        body: ['Vollkorn', 'Georgia', 'serif'],
       },
       backgroundImage: {
         'rune-grid':

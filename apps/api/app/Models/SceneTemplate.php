@@ -8,9 +8,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * Authored scene blueprint used as the source for runtime states.
+ *
+ * @property int $id
+ * @property int|null $created_by
+ * @property string $name
+ * @property string|null $description
+ * @property int $width
+ * @property int $height
+ * @property string $status
+ * @property array<string, mixed>|null $metadata
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 class SceneTemplate extends Model
 {

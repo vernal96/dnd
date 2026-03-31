@@ -18,6 +18,7 @@ final readonly class AuthenticatedUserData
         public int $id,
         public string $name,
         public string $email,
+        public bool $canAccessGm,
     ) {}
 
     /**
@@ -29,13 +30,14 @@ final readonly class AuthenticatedUserData
             id: $user->getKey(),
             name: $user->name,
             email: $user->email,
+            canAccessGm: (bool) $user->can_access_gm,
         );
     }
 
     /**
      * Преобразует DTO в массив для JSON-ответа.
      *
-     * @return array{id:int,name:string,email:string}
+     * @return array{id:int,name:string,email:string,canAccessGm:bool}
      */
     public function toArray(): array
     {
@@ -43,6 +45,7 @@ final readonly class AuthenticatedUserData
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
+            'canAccessGm' => $this->canAccessGm,
         ];
     }
 }

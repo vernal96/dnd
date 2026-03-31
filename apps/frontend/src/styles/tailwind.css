@@ -2,13 +2,125 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Vollkorn';
+  src: url('@/fonts/Vollkorn-Regular_0.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vollkorn';
+  src: url('@/fonts/Vollkorn-Italic_0.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vollkorn';
+  src: url('@/fonts/Vollkorn-Medium_0.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vollkorn';
+  src: url('@/fonts/Vollkorn-MediumItalic_0.ttf') format('truetype');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vollkorn';
+  src: url('@/fonts/Vollkorn-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vollkorn';
+  src: url('@/fonts/Vollkorn-SemiBoldItalic.ttf') format('truetype');
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vollkorn';
+  src: url('@/fonts/Vollkorn-Bold_0.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vollkorn';
+  src: url('@/fonts/Vollkorn-BoldItalic_0.ttf') format('truetype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vollkorn';
+  src: url('@/fonts/Vollkorn-ExtraBold.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vollkorn';
+  src: url('@/fonts/Vollkorn-ExtraBoldItalic.ttf') format('truetype');
+  font-weight: 800;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vollkorn Display';
+  src: url('@/fonts/Vollkorn-Regular_0.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vollkorn Display';
+  src: url('@/fonts/Vollkorn-Medium_0.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vollkorn Display';
+  src: url('@/fonts/Vollkorn-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vollkorn Display';
+  src: url('@/fonts/Vollkorn-Bold_0.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 @layer base {
   :root {
     color: #f8ecd5;
     background:
       radial-gradient(circle at top, rgba(255, 221, 168, 0.7), transparent 42%),
       linear-gradient(180deg, #f8efdd 0%, #ebd8bb 48%, #dcc49b 100%);
-    font-family: 'Trebuchet MS', 'Segoe UI', Tahoma, sans-serif;
+    font-family: 'Vollkorn', 'Segoe UI', Tahoma, serif;
   }
 
   * {
@@ -22,12 +134,14 @@
   }
 
   body {
-    @apply m-0 min-h-screen overflow-x-hidden text-slate-100 antialiased;
+    @apply m-0 min-h-screen overflow-x-hidden font-body text-slate-100 antialiased;
     background-attachment: fixed;
   }
 
   button,
-  input {
+  input,
+  select,
+  textarea {
     font: inherit;
   }
 }
@@ -66,16 +180,20 @@
     @apply relative rounded-[1.35rem] border border-amber-100/10 bg-white/5 backdrop-blur-sm;
   }
 
-  .auth-input-shell {
+  .form-control-shell {
     @apply flex items-center gap-3 rounded-2xl border border-amber-100/10 bg-slate-950/45 px-4 py-3 text-sm text-slate-100 transition duration-200;
   }
 
-  .auth-input-shell:focus-within {
+  .form-control-shell:focus-within {
     @apply border-amber-300/40 shadow-glow;
   }
 
-  .auth-input {
+  .form-control {
     @apply w-full border-0 bg-transparent p-0 text-[0.96rem] text-slate-50 placeholder:text-slate-400 focus:outline-none focus:ring-0;
+  }
+
+  .form-textarea {
+    @apply min-h-[112px] resize-y;
   }
 
   .cta-primary {

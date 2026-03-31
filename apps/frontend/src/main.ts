@@ -2,6 +2,10 @@ import { createSSRApp } from 'vue';
 import { createMemoryHistory, createRouter, createWebHistory } from 'vue-router';
 import App from '@/App.vue';
 import AuthPage from '@/pages/AuthPage.vue';
+import GmGamePage from '@/pages/GmGamePage.vue';
+import GmCabinetPage from '@/pages/GmCabinetPage.vue';
+import PlayerCabinetPage from '@/pages/PlayerCabinetPage.vue';
+import ResetPasswordPage from '@/pages/ResetPasswordPage.vue';
 import '@/styles/tailwind.css';
 
 /**
@@ -16,6 +20,26 @@ export function createApplication() {
         path: '/',
         name: 'auth',
         component: AuthPage,
+      },
+      {
+        path: '/reset-password',
+        name: 'reset-password',
+        component: ResetPasswordPage,
+      },
+      {
+        path: '/cabinet/player',
+        name: 'player-cabinet',
+        component: PlayerCabinetPage,
+      },
+      {
+        path: '/cabinet/gm',
+        name: 'gm-cabinet',
+        component: GmCabinetPage,
+      },
+      {
+        path: '/cabinet/gm/games/:id',
+        name: 'gm-game',
+        component: GmGamePage,
       },
     ],
   });

@@ -22,9 +22,16 @@ final class EnsureFrontendOrigin
     public function handle(Request $request, Closure $next): Response
     {
         $allowedOrigins = $this->resolveAllowedOrigins();
+        $requestHost = rtrim($request->getSchemeAndHttpHost(), '/');
         $requestOrigin = $this->resolveRequestOrigin($request);
 
-        if ($requestOrigin === null || ! in_array($requestOrigin, $allowedOrigins, true)) {
+        if ($requestOrigin !== null && ! in_array($requestOrigin, $allowedOrigins, true)) {
+            return new JsonResponse([
+                'message' => 'Доступ к API разрешен только для доверенного frontend-origin.',
+            ], 403);
+        }
+
+        if ($requestOrigin === null && ! in_array($requestHost, $allowedOrigins, true)) {
             return new JsonResponse([
                 'message' => 'Доступ к API разрешен только для доверенного frontend-origin.',
             ], 403);
@@ -65,7 +72,9 @@ final class EnsureFrontendOrigin
         $refererHeader = $request->headers->get('Referer');
 
         if (! is_string($refererHeader) || $refererHeader === '') {
-            return null;
+            $requestHost = $request->getSchemeAndHttpHost();
+
+            return $requestHost !== '' ? rtrim($requestHost, '/') : null;
         }
 
         $scheme = parse_url($refererHeader, PHP_URL_SCHEME);

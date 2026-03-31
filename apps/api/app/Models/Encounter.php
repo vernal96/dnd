@@ -8,9 +8,23 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * Combat layer attached to a concrete game scene state.
+ *
+ * @property int $id
+ * @property int $game_id
+ * @property int $game_scene_state_id
+ * @property int|null $current_participant_id
+ * @property string $status
+ * @property int $round
+ * @property string|null $trigger_type
+ * @property array<string, mixed>|null $payload
+ * @property Carbon|null $started_at
+ * @property Carbon|null $resolved_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 class Encounter extends Model
 {

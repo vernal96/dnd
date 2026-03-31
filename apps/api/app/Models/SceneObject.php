@@ -7,9 +7,25 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * Interactive or static object defined on a scene template.
+ *
+ * @property int $id
+ * @property int $scene_template_id
+ * @property string $kind
+ * @property string|null $name
+ * @property int|null $x
+ * @property int|null $y
+ * @property int $width
+ * @property int $height
+ * @property bool $is_hidden
+ * @property bool $is_interactive
+ * @property array<string, mixed>|null $state
+ * @property array<string, mixed>|null $trigger_rules
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 class SceneObject extends Model
 {

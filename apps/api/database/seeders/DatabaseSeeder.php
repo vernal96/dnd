@@ -7,6 +7,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 /**
  * Seeds the minimal local development dataset.
@@ -20,11 +21,26 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        User::query()->updateOrCreate(
+            [
+                'email' => 'player@tavern.local',
+            ],
+            [
+                'name' => 'player',
+                'password' => Hash::make('password'),
+                'can_access_gm' => false,
+            ],
+        );
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        User::query()->updateOrCreate(
+            [
+                'email' => 'gm@tavern.local',
+            ],
+            [
+                'name' => 'gm',
+                'password' => Hash::make('password'),
+                'can_access_gm' => true,
+            ],
+        );
     }
 }

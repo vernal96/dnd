@@ -1,20 +1,31 @@
 import { computed, ref } from 'vue';
+import { usePlayerInvitations } from '@/composables/usePlayerInvitations';
 import * as authApi from '@/services/authApi';
-import type { AuthSessionResponse, LoginPayload, RegisterPayload, SessionUser } from '@/types/auth';
+import { disconnectRealtime } from '@/composables/useRealtimeSocket';
+import type {
+  AuthSessionResponse,
+  ForgotPasswordPayload,
+  LoginPayload,
+  RegisterPayload,
+  ResetPasswordPayload,
+  SessionUser,
+} from '@/types/auth';
+
+const session = ref<AuthSessionResponse>({
+  authenticated: false,
+  csrfToken: '',
+  user: null,
+});
+const isPending = ref(false);
+const feedbackMessage = ref('');
+const feedbackTone = ref<'error' | 'success' | 'neutral'>('neutral');
+const hasLoadedSession = ref(false);
 
 /**
  * Управляет состоянием auth-сессии на клиенте.
  */
 export function useAuthSession() {
-  const session = ref<AuthSessionResponse>({
-    authenticated: false,
-    csrfToken: '',
-    user: null,
-  });
-  const isPending = ref(false);
-  const feedbackMessage = ref('');
-  const feedbackTone = ref<'error' | 'success' | 'neutral'>('neutral');
-
+  const { resetInvitations } = usePlayerInvitations();
   const currentUser = computed<SessionUser | null>(() => session.value.user);
   const isAuthenticated = computed<boolean>(() => session.value.authenticated);
 
@@ -32,10 +43,23 @@ export function useAuthSession() {
   async function loadSession(): Promise<void> {
     try {
       session.value = await authApi.fetchSession();
+      hasLoadedSession.value = true;
+      clearFeedback();
     } catch (error) {
       feedbackMessage.value = (error as Error).message;
       feedbackTone.value = 'error';
     }
+  }
+
+  /**
+   * Гарантирует, что состояние сессии было загружено хотя бы один раз.
+   */
+  async function ensureSessionLoaded(): Promise<void> {
+    if (hasLoadedSession.value) {
+      return;
+    }
+
+    await loadSession();
   }
 
   /**
@@ -47,7 +71,8 @@ export function useAuthSession() {
 
     try {
       session.value = await authApi.login(payload);
-      feedbackMessage.value = 'Печать гильдии подтверждена. Врата мира открыты.';
+      hasLoadedSession.value = true;
+      feedbackMessage.value = 'Вход выполнен.';
       feedbackTone.value = 'success';
     } catch (error) {
       feedbackMessage.value = (error as Error).message;
@@ -66,7 +91,46 @@ export function useAuthSession() {
 
     try {
       session.value = await authApi.register(payload);
-      feedbackMessage.value = 'Герой занесен в летопись. Сессия активирована.';
+      hasLoadedSession.value = true;
+      feedbackMessage.value = 'Аккаунт создан.';
+      feedbackTone.value = 'success';
+    } catch (error) {
+      feedbackMessage.value = (error as Error).message;
+      feedbackTone.value = 'error';
+    } finally {
+      isPending.value = false;
+    }
+  }
+
+  /**
+   * Отправляет запрос на восстановление пароля.
+   */
+  async function requestPasswordReset(payload: ForgotPasswordPayload): Promise<void> {
+    isPending.value = true;
+    clearFeedback();
+
+    try {
+      const response = await authApi.forgotPassword(payload);
+      feedbackMessage.value = response.message;
+      feedbackTone.value = 'success';
+    } catch (error) {
+      feedbackMessage.value = (error as Error).message;
+      feedbackTone.value = 'error';
+    } finally {
+      isPending.value = false;
+    }
+  }
+
+  /**
+   * Завершает сброс пароля по токену из письма.
+   */
+  async function resetUserPassword(payload: ResetPasswordPayload): Promise<void> {
+    isPending.value = true;
+    clearFeedback();
+
+    try {
+      const response = await authApi.resetPassword(payload);
+      feedbackMessage.value = response.message;
       feedbackTone.value = 'success';
     } catch (error) {
       feedbackMessage.value = (error as Error).message;
@@ -85,12 +149,15 @@ export function useAuthSession() {
 
     try {
       await authApi.logout();
+      disconnectRealtime();
+      resetInvitations();
       session.value = {
         authenticated: false,
         csrfToken: '',
         user: null,
       };
-      feedbackMessage.value = 'Свиток доступа запечатан. До новой встречи в гильдии.';
+      hasLoadedSession.value = true;
+      feedbackMessage.value = 'Вы вышли из аккаунта.';
       feedbackTone.value = 'success';
     } catch (error) {
       feedbackMessage.value = (error as Error).message;
@@ -103,6 +170,7 @@ export function useAuthSession() {
   return {
     clearFeedback,
     currentUser,
+    ensureSessionLoaded,
     feedbackMessage,
     feedbackTone,
     isAuthenticated,
@@ -110,6 +178,8 @@ export function useAuthSession() {
     loadSession,
     loginUser,
     logoutUser,
+    requestPasswordReset,
+    resetUserPassword,
     registerUser,
   };
 }

@@ -9,9 +9,23 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * Root aggregate for one campaign or play session.
+ *
+ * @property int $id
+ * @property string $title
+ * @property string|null $description
+ * @property int $gm_user_id
+ * @property string $status
+ * @property int|null $active_scene_state_id
+ * @property Carbon|null $started_at
+ * @property Carbon|null $paused_at
+ * @property Carbon|null $completed_at
+ * @property array<string, mixed>|null $settings
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 class Game extends Model
 {
@@ -60,6 +74,14 @@ class Game extends Model
     public function members(): HasMany
     {
         return $this->hasMany(GameMember::class, 'game_id', 'id');
+    }
+
+    /**
+     * Возвращает приглашения пользователей в эту игру.
+     */
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(GameInvitation::class, 'game_id', 'id');
     }
 
     /**

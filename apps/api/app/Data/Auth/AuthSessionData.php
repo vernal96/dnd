@@ -43,7 +43,7 @@ final readonly class AuthSessionData
     /**
      * Преобразует DTO в массив для JSON-ответа.
      *
-     * @return array{authenticated:bool,user:array{id:int,name:string,email:string}|null,csrfToken:string}
+     * @return array{authenticated:bool,user:array{id:int,name:string,email:string,canAccessGm:bool}|null,csrfToken:string}
      */
     public function toArray(): array
     {

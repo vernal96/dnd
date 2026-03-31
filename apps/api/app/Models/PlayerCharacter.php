@@ -8,9 +8,25 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * Persistent player-owned character that survives between games.
+ *
+ * @property int $id
+ * @property int $user_id
+ * @property string $name
+ * @property string|null $race
+ * @property string|null $class
+ * @property int $level
+ * @property int $experience
+ * @property string $status
+ * @property array<string, mixed>|null $base_stats
+ * @property array<string, mixed>|null $derived_stats
+ * @property array<string, mixed>|null $unlocked_skills
+ * @property array<string, mixed>|null $meta
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 class PlayerCharacter extends Model
 {

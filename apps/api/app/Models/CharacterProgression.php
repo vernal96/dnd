@@ -7,9 +7,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * Audit trail of permanent player character progression events.
+ *
+ * @property int $id
+ * @property int $player_character_id
+ * @property string $event_type
+ * @property int|null $level_before
+ * @property int|null $level_after
+ * @property int|null $experience_before
+ * @property int|null $experience_after
+ * @property array<string, mixed>|null $payload
+ * @property Carbon $occurred_at
  */
 class CharacterProgression extends Model
 {

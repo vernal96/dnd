@@ -8,9 +8,25 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * Runtime scene snapshot that belongs to a specific game.
+ *
+ * @property int $id
+ * @property int $game_id
+ * @property int $scene_template_id
+ * @property string $status
+ * @property int $version
+ * @property array<string, mixed>|null $grid_state
+ * @property array<string, mixed>|null $objects_state
+ * @property array<string, mixed>|null $visibility_state
+ * @property array<string, mixed>|null $effects_state
+ * @property array<string, mixed>|null $runtime_state
+ * @property Carbon|null $loaded_at
+ * @property Carbon|null $resolved_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 class GameSceneState extends Model
 {

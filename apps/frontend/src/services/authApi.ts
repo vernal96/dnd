@@ -1,66 +1,27 @@
-import type { AuthSessionResponse, LoginPayload, RegisterPayload } from '@/types/auth';
-
-const apiBaseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:8080';
-let csrfToken = '';
-
-/**
- * Выполняет запрос к backend auth API с cookie-сессией.
- */
-async function request<TResponse>(path: string, init?: RequestInit): Promise<TResponse> {
-  if ((init?.method ?? 'GET').toUpperCase() !== 'GET' && csrfToken === '') {
-    await fetchSession();
-  }
-
-  const headers = new Headers(init?.headers);
-  headers.set('Accept', 'application/json');
-
-  if (init?.body !== undefined) {
-    headers.set('Content-Type', 'application/json');
-  }
-
-  if (csrfToken !== '') {
-    headers.set('X-CSRF-TOKEN', csrfToken);
-  }
-
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    ...init,
-    credentials: 'include',
-    headers,
-  });
-
-  if (response.status === 204) {
-    return undefined as TResponse;
-  }
-
-  const payload = (await response.json()) as Record<string, unknown>;
-
-  if (!response.ok) {
-    const message = typeof payload.message === 'string' ? payload.message : 'Не удалось выполнить запрос.';
-    throw new Error(message);
-  }
-
-  if (typeof payload.csrfToken === 'string') {
-    csrfToken = payload.csrfToken;
-  }
-
-  return payload as TResponse;
-}
+import type {
+  AuthSessionResponse,
+  ForgotPasswordPayload,
+  LoginPayload,
+  RegisterPayload,
+  ResetPasswordPayload,
+} from '@/types/auth';
+import { fetchWithSession, resetHttpCsrfToken } from '@/services/httpApi';
 
 /**
  * Возвращает текущее состояние пользовательской сессии.
  */
 export function fetchSession(): Promise<AuthSessionResponse> {
-  return request<AuthSessionResponse>('/api/auth/session');
+  return fetchWithSession<AuthSessionResponse>('/auth/session');
 }
 
 /**
  * Выполняет вход пользователя.
  */
 export function login(payload: LoginPayload): Promise<AuthSessionResponse> {
-  return request<AuthSessionResponse>('/api/auth/login', {
+  return fetchWithSession<AuthSessionResponse>('/auth/login', {
     method: 'POST',
     body: JSON.stringify({
-      email: payload.email,
+      login: payload.login,
       password: payload.password,
       remember: payload.remember,
     }),
@@ -71,10 +32,10 @@ export function login(payload: LoginPayload): Promise<AuthSessionResponse> {
  * Регистрирует нового пользователя.
  */
 export function register(payload: RegisterPayload): Promise<AuthSessionResponse> {
-  return request<AuthSessionResponse>('/api/auth/register', {
+  return fetchWithSession<AuthSessionResponse>('/auth/register', {
     method: 'POST',
     body: JSON.stringify({
-      hero_name: payload.heroName,
+      login: payload.login,
       email: payload.email,
       password: payload.password,
     }),
@@ -85,7 +46,38 @@ export function register(payload: RegisterPayload): Promise<AuthSessionResponse>
  * Завершает активную пользовательскую сессию.
  */
 export function logout(): Promise<void> {
-  return request<void>('/api/auth/logout', {
+  const logoutRequest = fetchWithSession<void>('/auth/logout', {
     method: 'POST',
+  });
+
+  resetHttpCsrfToken();
+
+  return logoutRequest;
+}
+
+/**
+ * Запрашивает восстановление пароля для указанного email.
+ */
+export function forgotPassword(payload: ForgotPasswordPayload): Promise<{ message: string }> {
+  return fetchWithSession<{ message: string }>('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({
+      email: payload.email,
+    }),
+  });
+}
+
+/**
+ * Завершает сброс пароля по токену из письма.
+ */
+export function resetPassword(payload: ResetPasswordPayload): Promise<{ message: string }> {
+  return fetchWithSession<{ message: string }>('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({
+      token: payload.token,
+      email: payload.email,
+      password: payload.password,
+      password_confirmation: payload.passwordConfirmation,
+    }),
   });
 }

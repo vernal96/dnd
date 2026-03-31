@@ -1,3 +1,4 @@
+import { createServer as createHttpServer, Server } from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import express from 'express';
@@ -53,6 +54,7 @@ async function bootstrap(): Promise<void> {
   const isProduction = process.env.NODE_ENV === 'production';
   const { host, port } = resolveServerOptions();
   const app = express();
+  const httpServer = createHttpServer(app);
   let viteServer: ViteDevServer | undefined;
 
   if (!isProduction) {
@@ -61,6 +63,13 @@ async function bootstrap(): Promise<void> {
       appType: 'custom',
       server: {
         middlewareMode: true,
+        hmr: {
+          clientPort: 80,
+          host: 'localhost',
+          path: '/vite-hmr',
+          protocol: 'ws',
+          server: httpServer as Server,
+        },
       },
     });
 
@@ -97,9 +106,9 @@ async function bootstrap(): Promise<void> {
     }
   });
 
-  app.listen(port, host, () => {
+  httpServer.listen(port, host, () => {
     // eslint-disable-next-line no-console
-    console.log(`Table of Adventures frontend is listening on http://${host}:${port}`);
+    console.log(`Своя Таверна frontend is listening on http://${host}:${port}`);
   });
 }
 

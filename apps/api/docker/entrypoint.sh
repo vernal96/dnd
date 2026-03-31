@@ -22,4 +22,9 @@ fi
 
 php artisan config:clear >/dev/null 2>&1 || true
 
+if [ "${APP_ENV:-local}" = "local" ]; then
+  php artisan migrate --force
+  php artisan app:ensure-local-users --no-interaction
+fi
+
 exec "$@"

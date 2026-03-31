@@ -8,9 +8,33 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * Runtime actor placed inside a concrete game scene state.
+ *
+ * @property int $id
+ * @property int $game_id
+ * @property int|null $game_scene_state_id
+ * @property int|null $player_character_id
+ * @property int|null $controlled_by_user_id
+ * @property string $kind
+ * @property string $controller_type
+ * @property string $name
+ * @property string|null $faction
+ * @property string|null $social_state
+ * @property string $status
+ * @property int|null $x
+ * @property int|null $y
+ * @property int|null $initiative
+ * @property int|null $hp_current
+ * @property int|null $hp_max
+ * @property bool $is_hidden
+ * @property array<string, mixed>|null $resources
+ * @property array<string, mixed>|null $temporary_effects
+ * @property array<string, mixed>|null $runtime_state
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 class ActorInstance extends Model
 {

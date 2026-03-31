@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "SSR frontend for Table of Adventures.",
+  "description": "SSR frontend for Своя Таверна.",
   "scripts": {
     "dev": "tsx watch --clear-screen=false server.ts",
     "build": "vite build --outDir dist/client --ssrManifest && vite build --ssr src/entry-server.ts --outDir dist/server",

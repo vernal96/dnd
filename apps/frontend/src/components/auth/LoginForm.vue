@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { KeyRound, Mail, ScrollText } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
-import AuthField from '@/components/auth/AuthField.vue';
+import FormTextInput from '@/components/form/FormTextInput.vue';
 import type { LoginPayload } from '@/types/auth';
 
 defineProps<{
@@ -9,16 +9,16 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{
+  forgotPassword: [];
   submit: [payload: LoginPayload];
-  switchMode: [];
 }>();
 
-const email = ref('');
+const login = ref('');
 const password = ref('');
 const remember = ref(true);
 const localError = ref('');
 
-const isDisabled = computed<boolean>(() => email.value.trim() === '' || password.value.trim() === '');
+const isDisabled = computed<boolean>(() => login.value.trim() === '' || password.value.trim() === '');
 
 /**
  * Валидирует поля формы и отправляет payload входа наружу.
@@ -27,13 +27,13 @@ function submitForm(): void {
   localError.value = '';
 
   if (isDisabled.value) {
-    localError.value = 'Заполни email и пароль, чтобы открыть врата гильдии.';
+    localError.value = 'Заполни логин или email и пароль, чтобы открыть врата гильдии.';
 
     return;
   }
 
   emit('submit', {
-    email: email.value.trim(),
+    login: login.value.trim(),
     password: password.value,
     remember: remember.value,
   });
@@ -42,28 +42,28 @@ function submitForm(): void {
 
 <template>
   <form
-    class="space-y-5"
+    class="space-y-3.5"
     @submit.prevent="submitForm"
   >
-    <div class="space-y-2">
-      <h2 class="font-display text-[1.6rem] text-amber-50">
+    <div class="space-y-1.5">
+      <h2 class="font-display text-[1.34rem] text-amber-50">
         Вход в гильдию
       </h2>
-      <p class="text-sm leading-6 text-slate-300">
+      <p class="text-sm leading-5 text-slate-300">
         Продолжи приключение с того места, где остановился.
       </p>
     </div>
 
-    <AuthField
-      v-model="email"
-      autocomplete="email"
-      label="Email"
-      name="email"
-      placeholder="hero@guild.quest"
+    <FormTextInput
+      v-model="login"
+      autocomplete="username"
+      label="Логин или email"
+      name="login"
+      placeholder="alrik или hero@guild.quest"
       :icon="Mail"
     />
 
-    <AuthField
+    <FormTextInput
       v-model="password"
       autocomplete="current-password"
       label="Пароль"
@@ -91,6 +91,7 @@ function submitForm(): void {
       <button
         class="text-sm text-amber-200/80 transition hover:text-amber-100"
         type="button"
+        @click="emit('forgotPassword')"
       >
         Забыли пароль?
       </button>
@@ -103,21 +104,13 @@ function submitForm(): void {
       {{ localError }}
     </p>
 
-    <div class="space-y-3">
+    <div>
       <button
         class="cta-primary w-full"
         :disabled="pending"
         type="submit"
       >
         {{ pending ? 'Открываем врата...' : 'Войти в мир' }}
-      </button>
-
-      <button
-        class="cta-secondary w-full"
-        type="button"
-        @click="emit('switchMode')"
-      >
-        У меня еще нет аккаунта
       </button>
     </div>
   </form>

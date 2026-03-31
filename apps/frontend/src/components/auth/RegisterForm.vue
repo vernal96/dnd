@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { KeyRound, Mail, UserRound } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
-import AuthField from '@/components/auth/AuthField.vue';
+import FormTextInput from '@/components/form/FormTextInput.vue';
 import type { RegisterPayload } from '@/types/auth';
 
 defineProps<{
@@ -10,16 +10,15 @@ defineProps<{
 
 const emit = defineEmits<{
   submit: [payload: RegisterPayload];
-  switchMode: [];
 }>();
 
-const heroName = ref('');
+const login = ref('');
 const email = ref('');
 const password = ref('');
 const localError = ref('');
 
 const isDisabled = computed<boolean>(() => {
-  return heroName.value.trim() === '' || email.value.trim() === '' || password.value.trim().length < 8;
+  return login.value.trim() === '' || email.value.trim() === '' || password.value.trim().length < 8;
 });
 
 /**
@@ -28,8 +27,8 @@ const isDisabled = computed<boolean>(() => {
 function submitForm(): void {
   localError.value = '';
 
-  if (heroName.value.trim() === '' || email.value.trim() === '') {
-    localError.value = 'Имя героя и email обязательны для записи в летопись.';
+  if (login.value.trim() === '' || email.value.trim() === '') {
+    localError.value = 'Логин и email обязательны для регистрации.';
 
     return;
   }
@@ -42,7 +41,7 @@ function submitForm(): void {
 
   emit('submit', {
     email: email.value.trim(),
-    heroName: heroName.value.trim(),
+    login: login.value.trim(),
     password: password.value,
   });
 }
@@ -50,37 +49,37 @@ function submitForm(): void {
 
 <template>
   <form
-    class="space-y-5"
+    class="space-y-3.5"
     @submit.prevent="submitForm"
   >
-    <div class="space-y-2">
-      <h2 class="font-display text-[1.6rem] text-amber-50">
-        Создание героя
+    <div class="space-y-1.5">
+      <h2 class="font-display text-[1.34rem] text-amber-50">
+        Регистрация
       </h2>
-      <p class="text-sm leading-6 text-slate-300">
-        Открой доступ к играм, персонажам и кабинету мастера.
+      <p class="text-sm leading-5 text-slate-300">
+        Создай учетную запись и получи доступ к личному кабинету.
       </p>
     </div>
 
-    <AuthField
-      v-model="heroName"
-      autocomplete="nickname"
-      label="Имя героя"
-      name="heroName"
-      placeholder="Например, Лира Звездная"
+    <FormTextInput
+      v-model="login"
+      autocomplete="username"
+      label="Логин"
+      name="login"
+      placeholder="Например, alrik"
       :icon="UserRound"
     />
 
-    <AuthField
+    <FormTextInput
       v-model="email"
       autocomplete="email"
       label="Email"
       name="email"
-      placeholder="hero@guild.quest"
+      placeholder="login@table.quest"
       :icon="Mail"
     />
 
-    <AuthField
+    <FormTextInput
       v-model="password"
       autocomplete="new-password"
       label="Пароль"
@@ -90,10 +89,6 @@ function submitForm(): void {
       :icon="KeyRound"
     />
 
-    <div class="rounded-[1.4rem] border border-amber-200/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] px-4 py-3 text-sm leading-6 text-slate-300">
-      Один аккаунт подходит и для игрока, и для мастера.
-    </div>
-
     <p
       v-if="localError"
       class="rounded-2xl border border-rose-300/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200"
@@ -101,21 +96,13 @@ function submitForm(): void {
       {{ localError }}
     </p>
 
-    <div class="space-y-3">
+    <div>
       <button
         class="cta-primary w-full"
         :disabled="pending || isDisabled"
         type="submit"
       >
-        {{ pending ? 'Записываем героя...' : 'Создать аккаунт' }}
-      </button>
-
-      <button
-        class="cta-secondary w-full"
-        type="button"
-        @click="emit('switchMode')"
-      >
-        У меня уже есть аккаунт
+        {{ pending ? 'Создаем аккаунт...' : 'Создать аккаунт' }}
       </button>
     </div>
   </form>
