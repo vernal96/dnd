@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\ActorInstanceController;
 use App\Http\Controllers\Api\AuthSessionController;
+use App\Http\Controllers\Api\CharacterClassController;
 use App\Http\Controllers\Api\GameController;
 use App\Http\Controllers\Api\GameImageController;
 use App\Http\Controllers\Api\GameInvitationController;
@@ -45,6 +46,8 @@ Route::middleware([
 ])->group(function (): void {
     Route::get('/races', [RaceController::class, 'index']);
     Route::get('/races/{race}', [RaceController::class, 'show'])->where('race', '[a-z0-9-]+');
+    Route::get('/character-classes', [CharacterClassController::class, 'index']);
+    Route::get('/character-classes/{characterClass}', [CharacterClassController::class, 'show'])->where('characterClass', '[a-z0-9-]+');
 
     Route::get('/games', [GameController::class, 'index']);
     Route::post('/games', [GameController::class, 'store']);

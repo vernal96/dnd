@@ -1,0 +1,53 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\Catalog\Races;
+
+use App\Domain\Catalog\AbstractRace;
+use App\Domain\Catalog\AbstractSubrace;
+use App\Domain\Catalog\Subraces\ForestGnomeSubrace;
+use App\Domain\Catalog\Subraces\RockGnomeSubrace;
+
+/**
+ * Сущность расы гнома.
+ */
+final class GnomeRace extends AbstractRace
+{
+    /**
+     * Возвращает код расы.
+     */
+    public function getCode(): string
+    {
+        return 'gnome';
+    }
+
+    /**
+     * Возвращает название расы.
+     */
+    public function getName(): string
+    {
+        return 'Гном';
+    }
+
+    /**
+     * Возвращает описание расы.
+     */
+    public function getDescription(): ?string
+    {
+        return 'Любознательная и изобретательная раса, сочетающая острый ум, ремесло и чувство чудесного.';
+    }
+
+    /**
+     * Возвращает подрасы гнома.
+     *
+     * @return list<AbstractSubrace>
+     */
+    public function getSubraces(): array
+    {
+        return [
+            new ForestGnomeSubrace,
+            new RockGnomeSubrace,
+        ];
+    }
+}

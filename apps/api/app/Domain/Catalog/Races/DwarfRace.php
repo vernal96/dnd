@@ -39,14 +39,6 @@ final class DwarfRace extends AbstractRace
     }
 
     /**
-     * Возвращает порядок отображения расы.
-     */
-    public function getSortOrder(): int
-    {
-        return 30;
-    }
-
-    /**
      * Возвращает подрасы дварфа.
      *
      * @return list<AbstractSubrace>

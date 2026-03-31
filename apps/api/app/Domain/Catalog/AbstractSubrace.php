@@ -25,11 +25,6 @@ abstract class AbstractSubrace
     abstract public function getDescription(): ?string;
 
     /**
-     * Возвращает порядок отображения подрасы.
-     */
-    abstract public function getSortOrder(): int;
-
-    /**
      * Возвращает признак активности подрасы.
      */
     public function isActive(): bool
@@ -40,7 +35,7 @@ abstract class AbstractSubrace
     /**
      * Преобразует подрасу в ответ API.
      *
-     * @return array{code:string,name:string,description:?string,sortOrder:int,isActive:bool}
+     * @return array{code:string,name:string,description:?string,isActive:bool}
      */
     public function toArray(): array
     {
@@ -48,7 +43,6 @@ abstract class AbstractSubrace
             'code' => $this->getCode(),
             'name' => $this->getName(),
             'description' => $this->getDescription(),
-            'sortOrder' => $this->getSortOrder(),
             'isActive' => $this->isActive(),
         ];
     }

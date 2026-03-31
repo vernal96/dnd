@@ -35,11 +35,4 @@ final class WoodElfSubrace extends AbstractSubrace
         return 'Эльфы чащ, следопыты и хранители диких земель.';
     }
 
-    /**
-     * Возвращает порядок отображения подрасы.
-     */
-    public function getSortOrder(): int
-    {
-        return 20;
-    }
 }

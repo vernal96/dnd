@@ -5,9 +5,15 @@ declare(strict_types=1);
 namespace App\Application\Catalog;
 
 use App\Domain\Catalog\AbstractRace;
+use App\Domain\Catalog\Races\DragonbornRace;
 use App\Domain\Catalog\Races\DwarfRace;
 use App\Domain\Catalog\Races\ElfRace;
+use App\Domain\Catalog\Races\GnomeRace;
+use App\Domain\Catalog\Races\HalfElfRace;
+use App\Domain\Catalog\Races\HalfOrcRace;
+use App\Domain\Catalog\Races\HalflingRace;
 use App\Domain\Catalog\Races\HumanRace;
+use App\Domain\Catalog\Races\TieflingRace;
 
 /**
  * Хранит кодовый справочник рас и подрас.
@@ -52,6 +58,12 @@ final class RaceCatalog
             new HumanRace,
             new ElfRace,
             new DwarfRace,
+            new HalflingRace,
+            new GnomeRace,
+            new DragonbornRace,
+            new HalfElfRace,
+            new HalfOrcRace,
+            new TieflingRace,
         ];
     }
 }

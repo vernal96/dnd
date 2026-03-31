@@ -35,11 +35,4 @@ final class HillDwarfSubrace extends AbstractSubrace
         return 'Крепкие дварфы с упором на выносливость и традицию кланов.';
     }
 
-    /**
-     * Возвращает порядок отображения подрасы.
-     */
-    public function getSortOrder(): int
-    {
-        return 10;
-    }
 }

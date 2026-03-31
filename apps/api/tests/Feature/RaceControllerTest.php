@@ -66,9 +66,18 @@ final class RaceControllerTest extends TestCase
             ->assertOk()
             ->assertJsonPath('0.code', 'human')
             ->assertJsonPath('0.name', 'Человек')
+            ->assertJsonPath('0.subraces.0.code', 'standard-human')
+            ->assertJsonPath('0.subraces.1.code', 'variant-human')
             ->assertJsonPath('1.code', 'elf')
             ->assertJsonPath('1.subraces.0.code', 'high-elf')
-            ->assertJsonPath('1.subraces.1.code', 'wood-elf');
+            ->assertJsonPath('1.subraces.1.code', 'wood-elf')
+            ->assertJsonPath('1.subraces.2.code', 'drow')
+            ->assertJsonPath('3.code', 'halfling')
+            ->assertJsonPath('4.code', 'gnome')
+            ->assertJsonPath('5.code', 'dragonborn')
+            ->assertJsonPath('6.code', 'half-elf')
+            ->assertJsonPath('7.code', 'half-orc')
+            ->assertJsonPath('8.code', 'tiefling');
     }
 
     /**

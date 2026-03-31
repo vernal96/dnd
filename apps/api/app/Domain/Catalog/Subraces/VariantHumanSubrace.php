@@ -35,11 +35,4 @@ final class VariantHumanSubrace extends AbstractSubrace
         return 'Люди с усиленной гибкостью развития и ранней специализацией.';
     }
 
-    /**
-     * Возвращает порядок отображения подрасы.
-     */
-    public function getSortOrder(): int
-    {
-        return 10;
-    }
 }

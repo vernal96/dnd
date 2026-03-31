@@ -35,11 +35,4 @@ final class MountainDwarfSubrace extends AbstractSubrace
         return 'Тяжеловооруженные дварфы крепостей и кузниц.';
     }
 
-    /**
-     * Возвращает порядок отображения подрасы.
-     */
-    public function getSortOrder(): int
-    {
-        return 20;
-    }
 }

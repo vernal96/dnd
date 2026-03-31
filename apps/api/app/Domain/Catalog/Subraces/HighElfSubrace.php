@@ -35,11 +35,4 @@ final class HighElfSubrace extends AbstractSubrace
         return 'Эльфы учености, магии и древних башен.';
     }
 
-    /**
-     * Возвращает порядок отображения подрасы.
-     */
-    public function getSortOrder(): int
-    {
-        return 10;
-    }
 }

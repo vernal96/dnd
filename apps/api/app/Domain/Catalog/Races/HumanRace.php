@@ -6,6 +6,7 @@ namespace App\Domain\Catalog\Races;
 
 use App\Domain\Catalog\AbstractRace;
 use App\Domain\Catalog\AbstractSubrace;
+use App\Domain\Catalog\Subraces\StandardHumanSubrace;
 use App\Domain\Catalog\Subraces\VariantHumanSubrace;
 
 /**
@@ -38,14 +39,6 @@ final class HumanRace extends AbstractRace
     }
 
     /**
-     * Возвращает порядок отображения расы.
-     */
-    public function getSortOrder(): int
-    {
-        return 10;
-    }
-
-    /**
      * Возвращает подрасы человека.
      *
      * @return list<AbstractSubrace>
@@ -53,6 +46,7 @@ final class HumanRace extends AbstractRace
     public function getSubraces(): array
     {
         return [
+            new StandardHumanSubrace,
             new VariantHumanSubrace,
         ];
     }

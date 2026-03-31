@@ -6,6 +6,7 @@ namespace App\Domain\Catalog\Races;
 
 use App\Domain\Catalog\AbstractRace;
 use App\Domain\Catalog\AbstractSubrace;
+use App\Domain\Catalog\Subraces\DrowElfSubrace;
 use App\Domain\Catalog\Subraces\HighElfSubrace;
 use App\Domain\Catalog\Subraces\WoodElfSubrace;
 
@@ -39,14 +40,6 @@ final class ElfRace extends AbstractRace
     }
 
     /**
-     * Возвращает порядок отображения расы.
-     */
-    public function getSortOrder(): int
-    {
-        return 20;
-    }
-
-    /**
      * Возвращает подрасы эльфа.
      *
      * @return list<AbstractSubrace>
@@ -56,6 +49,7 @@ final class ElfRace extends AbstractRace
         return [
             new HighElfSubrace,
             new WoodElfSubrace,
+            new DrowElfSubrace,
         ];
     }
 }

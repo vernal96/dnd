@@ -1,0 +1,53 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\Catalog\Races;
+
+use App\Domain\Catalog\AbstractRace;
+use App\Domain\Catalog\AbstractSubrace;
+use App\Domain\Catalog\Subraces\LightfootHalflingSubrace;
+use App\Domain\Catalog\Subraces\StoutHalflingSubrace;
+
+/**
+ * Сущность расы полурослика.
+ */
+final class HalflingRace extends AbstractRace
+{
+    /**
+     * Возвращает код расы.
+     */
+    public function getCode(): string
+    {
+        return 'halfling';
+    }
+
+    /**
+     * Возвращает название расы.
+     */
+    public function getName(): string
+    {
+        return 'Полурослик';
+    }
+
+    /**
+     * Возвращает описание расы.
+     */
+    public function getDescription(): ?string
+    {
+        return 'Небольшой, ловкий и удачливый народ, ценящий дом, дорогу и простые радости.';
+    }
+
+    /**
+     * Возвращает подрасы полурослика.
+     *
+     * @return list<AbstractSubrace>
+     */
+    public function getSubraces(): array
+    {
+        return [
+            new LightfootHalflingSubrace,
+            new StoutHalflingSubrace,
+        ];
+    }
+}

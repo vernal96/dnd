@@ -25,11 +25,6 @@ abstract class AbstractRace
     abstract public function getDescription(): ?string;
 
     /**
-     * Возвращает порядок отображения расы.
-     */
-    abstract public function getSortOrder(): int;
-
-    /**
      * Возвращает подрасы текущей расы.
      *
      * @return list<AbstractSubrace>
@@ -67,9 +62,8 @@ abstract class AbstractRace
      *     code:string,
      *     name:string,
      *     description:?string,
-     *     sortOrder:int,
      *     isActive:bool,
-     *     subraces:list<array{code:string,name:string,description:?string,sortOrder:int,isActive:bool}>
+     *     subraces:list<array{code:string,name:string,description:?string,isActive:bool}>
      * }
      */
     public function toArray(): array
@@ -78,7 +72,6 @@ abstract class AbstractRace
             'code' => $this->getCode(),
             'name' => $this->getName(),
             'description' => $this->getDescription(),
-            'sortOrder' => $this->getSortOrder(),
             'isActive' => $this->isActive(),
             'subraces' => array_map(
                 static fn (AbstractSubrace $subrace): array => $subrace->toArray(),
