@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\Subraces;
 
+use App\Data\Catalog\AbilityBonusesData;
 use App\Domain\Catalog\AbstractSubrace;
 
 /**
@@ -33,6 +34,15 @@ final class HillDwarfSubrace extends AbstractSubrace
 	public function getDescription(): string
 	{
 		return 'Крепкие дварфы с упором на выносливость и традицию кланов.';
+	}
+
+	/**
+	 * Возвращает фиксированные бонусы характеристик холмового дварфа.
+	 *
+	 */
+	public function getAbilityBonuses(): AbilityBonusesData
+	{
+		return new AbilityBonusesData(wisdom: 1);
 	}
 
 }

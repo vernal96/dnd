@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\Races;
 
+use App\Data\Catalog\AbilityBonusesData;
 use App\Domain\Catalog\AbstractRace;
 use App\Domain\Catalog\AbstractSubrace;
 use App\Domain\Catalog\Subraces\LightfootHalflingSubrace;
@@ -36,6 +37,15 @@ final class HalflingRace extends AbstractRace
 	public function getDescription(): string
 	{
 		return 'Небольшой, ловкий и удачливый народ, ценящий дом, дорогу и простые радости.';
+	}
+
+	/**
+	 * Возвращает фиксированные бонусы характеристик полурослика.
+	 *
+	 */
+	public function getAbilityBonuses(): AbilityBonusesData
+	{
+		return new AbilityBonusesData(dexterity: 2);
 	}
 
 	/**

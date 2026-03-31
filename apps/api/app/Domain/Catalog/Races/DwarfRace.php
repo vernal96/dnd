@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\Races;
 
+use App\Data\Catalog\AbilityBonusesData;
 use App\Domain\Catalog\AbstractRace;
 use App\Domain\Catalog\AbstractSubrace;
 use App\Domain\Catalog\Subraces\HillDwarfSubrace;
@@ -36,6 +37,14 @@ final class DwarfRace extends AbstractRace
 	public function getDescription(): string
 	{
 		return 'Выносливая раса мастеров и воинов, привыкшая к подземельям, ремеслу и дисциплине.';
+	}
+
+	/**
+	 * Возвращает фиксированные бонусы характеристик дварфа.
+	 */
+	public function getAbilityBonuses(): AbilityBonusesData
+	{
+		return new AbilityBonusesData(constitution: 2);
 	}
 
 	/**

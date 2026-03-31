@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\Races;
 
+use App\Data\Catalog\AbilityBonusesData;
 use App\Domain\Catalog\AbstractRace;
 
 /**
@@ -33,6 +34,18 @@ final class TieflingRace extends AbstractRace
 	public function getDescription(): string
 	{
 		return 'Носители инфернального наследия, сочетающие внутреннюю силу, харизму и печать чуждости.';
+	}
+
+	/**
+	 * Возвращает фиксированные бонусы характеристик тифлинга.
+	 *
+	 */
+	public function getAbilityBonuses(): AbilityBonusesData
+	{
+		return new AbilityBonusesData(
+			intelligence: 1,
+			charisma: 2,
+		);
 	}
 
 }

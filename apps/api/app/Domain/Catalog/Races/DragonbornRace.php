@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\Races;
 
+use App\Data\Catalog\AbilityBonusesData;
 use App\Domain\Catalog\AbstractRace;
 
 /**
@@ -33,6 +34,18 @@ final class DragonbornRace extends AbstractRace
 	public function getDescription(): string
 	{
 		return 'Гордый народ с драконьим наследием, для которого честь, сила и происхождение имеют особый вес.';
+	}
+
+	/**
+	 * Возвращает фиксированные бонусы характеристик драконорождённого.
+	 *
+	 */
+	public function getAbilityBonuses(): AbilityBonusesData
+	{
+		return new AbilityBonusesData(
+			strength: 2,
+			charisma: 1,
+		);
 	}
 
 }

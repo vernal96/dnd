@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\Races;
 
+use App\Data\Catalog\AbilityBonusesData;
 use App\Domain\Catalog\AbstractRace;
 
 /**
@@ -33,6 +34,18 @@ final class HalfOrcRace extends AbstractRace
 	public function getDescription(): string
 	{
 		return 'Сильные и стойкие воины, привыкшие выживать между суровостью и предубеждением.';
+	}
+
+	/**
+	 * Возвращает фиксированные бонусы характеристик полуорка.
+	 *
+	 */
+	public function getAbilityBonuses(): AbilityBonusesData
+	{
+		return new AbilityBonusesData(
+			strength: 2,
+			constitution: 1,
+		);
 	}
 
 }

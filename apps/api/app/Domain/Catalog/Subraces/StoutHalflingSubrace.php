@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\Subraces;
 
+use App\Data\Catalog\AbilityBonusesData;
 use App\Domain\Catalog\AbstractSubrace;
 
 /**
@@ -33,6 +34,15 @@ final class StoutHalflingSubrace extends AbstractSubrace
 	public function getDescription(): string
 	{
 		return 'Более крепкие и стойкие полурослики с выраженной выживаемостью.';
+	}
+
+	/**
+	 * Возвращает фиксированные бонусы характеристик коренастого полурослика.
+	 *
+	 */
+	public function getAbilityBonuses(): AbilityBonusesData
+	{
+		return new AbilityBonusesData(constitution: 1);
 	}
 
 }
