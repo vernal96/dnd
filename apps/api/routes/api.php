@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\GameController;
 use App\Http\Controllers\Api\GameImageController;
 use App\Http\Controllers\Api\GameInvitationController;
 use App\Http\Controllers\Api\GameSceneStateController;
+use App\Http\Controllers\Api\ItemController;
 use App\Http\Controllers\Api\RaceController;
 use App\Http\Controllers\Api\SceneTemplateController;
 use App\Http\Middleware\EnsureFrontendOrigin;
@@ -48,6 +49,8 @@ Route::middleware([
     Route::get('/races/{race}', [RaceController::class, 'show'])->where('race', '[a-z0-9-]+');
     Route::get('/character-classes', [CharacterClassController::class, 'index']);
     Route::get('/character-classes/{characterClass}', [CharacterClassController::class, 'show'])->where('characterClass', '[a-z0-9-]+');
+    Route::get('/items', [ItemController::class, 'index']);
+    Route::get('/items/{item}', [ItemController::class, 'show'])->where('item', '[a-z0-9-]+');
 
     Route::get('/games', [GameController::class, 'index']);
     Route::post('/games', [GameController::class, 'store']);
