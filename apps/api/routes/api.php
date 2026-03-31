@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Http\Controllers\Api\ActorInstanceController;
 use App\Http\Controllers\Api\GameController;
 use App\Http\Controllers\Api\GameSceneStateController;

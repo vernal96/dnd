@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -7,9 +9,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Combat layer attached to a concrete game scene state.
+ */
 class Encounter extends Model
 {
     use HasFactory;
+
+    protected $table = 'encounters';
 
     protected $fillable = [
         'game_id',
@@ -29,21 +36,33 @@ class Encounter extends Model
         'resolved_at' => 'datetime',
     ];
 
+    /**
+     * Возвращает игру, которой принадлежит encounter.
+     */
     public function game(): BelongsTo
     {
-        return $this->belongsTo(Game::class);
+        return $this->belongsTo(Game::class, 'game_id', 'id');
     }
 
+    /**
+     * Возвращает состояние сцены, на котором происходит encounter.
+     */
     public function sceneState(): BelongsTo
     {
         return $this->belongsTo(GameSceneState::class, 'game_scene_state_id');
     }
 
+    /**
+     * Возвращает всех участников, связанных с encounter.
+     */
     public function participants(): HasMany
     {
-        return $this->hasMany(EncounterParticipant::class);
+        return $this->hasMany(EncounterParticipant::class, 'encounter_id', 'id');
     }
 
+    /**
+     * Возвращает участника, чей ход сейчас активен.
+     */
     public function currentParticipant(): BelongsTo
     {
         return $this->belongsTo(EncounterParticipant::class, 'current_participant_id');

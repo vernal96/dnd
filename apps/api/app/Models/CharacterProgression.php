@@ -1,14 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Audit trail of permanent player character progression events.
+ */
 class CharacterProgression extends Model
 {
     use HasFactory;
+
+    protected $table = 'character_progression';
 
     public $timestamps = false;
 
@@ -28,6 +35,9 @@ class CharacterProgression extends Model
         'occurred_at' => 'datetime',
     ];
 
+    /**
+     * Возвращает персонажа игрока, которому принадлежит эта запись прогрессии.
+     */
     public function playerCharacter(): BelongsTo
     {
         return $this->belongsTo(PlayerCharacter::class);

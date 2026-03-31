@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
 use App\Models\User;
@@ -8,6 +10,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
+ * Builds explicit user fixtures for tests and local development.
+ *
  * @extends Factory<User>
  */
 class UserFactory extends Factory
@@ -18,7 +22,7 @@ class UserFactory extends Factory
     protected static ?string $password;
 
     /**
-     * Define the model's default state.
+     * Определяет состояние модели по умолчанию.
      *
      * @return array<string, mixed>
      */
@@ -34,7 +38,7 @@ class UserFactory extends Factory
     }
 
     /**
-     * Indicate that the model's email address should be unverified.
+     * Переводит фабрику в состояние с неподтвержденным адресом электронной почты.
      */
     public function unverified(): static
     {

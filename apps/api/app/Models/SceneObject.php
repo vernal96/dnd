@@ -1,14 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Interactive or static object defined on a scene template.
+ */
 class SceneObject extends Model
 {
     use HasFactory;
+
+    protected $table = 'scene_objects';
 
     protected $fillable = [
         'scene_template_id',
@@ -31,8 +38,11 @@ class SceneObject extends Model
         'trigger_rules' => 'array',
     ];
 
+    /**
+     * Возвращает шаблон сцены, которому принадлежит этот объект.
+     */
     public function sceneTemplate(): BelongsTo
     {
-        return $this->belongsTo(SceneTemplate::class);
+        return $this->belongsTo(SceneTemplate::class, 'scene_template_id', 'id');
     }
 }

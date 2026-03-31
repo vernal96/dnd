@@ -1,13 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Game;
 use Illuminate\Http\JsonResponse;
 
+/**
+ * Exposes game read models for the API.
+ */
 class GameController extends Controller
 {
+    /**
+     * Возвращает пагинированный список игр вместе с мастером и активной сценой.
+     */
     public function index(): JsonResponse
     {
         $games = Game::query()
@@ -18,6 +26,9 @@ class GameController extends Controller
         return response()->json($games);
     }
 
+    /**
+     * Возвращает одну игру вместе с участниками и шаблоном активной сцены.
+     */
     public function show(Game $game): JsonResponse
     {
         $game->load([

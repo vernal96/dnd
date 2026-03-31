@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -7,9 +9,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Authored scene blueprint used as the source for runtime states.
+ */
 class SceneTemplate extends Model
 {
     use HasFactory;
+
+    protected $table = 'scene_templates';
 
     protected $fillable = [
         'created_by',
@@ -25,23 +32,35 @@ class SceneTemplate extends Model
         'metadata' => 'array',
     ];
 
+    /**
+     * Возвращает автора, создавшего шаблон.
+     */
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /**
+     * Возвращает клетки ландшафта, из которых состоит сетка шаблона.
+     */
     public function cells(): HasMany
     {
-        return $this->hasMany(SceneTemplateCell::class);
+        return $this->hasMany(SceneTemplateCell::class, 'scene_template_id', 'id');
     }
 
+    /**
+     * Возвращает объекты сцены, размещенные на шаблоне.
+     */
     public function objects(): HasMany
     {
-        return $this->hasMany(SceneObject::class);
+        return $this->hasMany(SceneObject::class, 'scene_template_id', 'id');
     }
 
+    /**
+     * Возвращает runtime-состояния сцен, созданные из шаблона.
+     */
     public function sceneStates(): HasMany
     {
-        return $this->hasMany(GameSceneState::class);
+        return $this->hasMany(GameSceneState::class, 'scene_template_id', 'id');
     }
 }

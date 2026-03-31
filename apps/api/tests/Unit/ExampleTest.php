@@ -1,13 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Covers the base unit-test bootstrap.
+ */
 class ExampleTest extends TestCase
 {
     /**
-     * A basic test example.
+     * Проверяет базовую работоспособность unit-test окружения.
      */
     public function test_that_true_is_true(): void
     {

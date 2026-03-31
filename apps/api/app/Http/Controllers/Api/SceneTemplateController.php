@@ -1,13 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\SceneTemplate;
 use Illuminate\Http\JsonResponse;
 
+/**
+ * Exposes authored scene templates for the API.
+ */
 class SceneTemplateController extends Controller
 {
+    /**
+     * Возвращает пагинированный список шаблонов сцен со структурными счетчиками.
+     */
     public function index(): JsonResponse
     {
         $templates = SceneTemplate::query()
@@ -18,6 +26,9 @@ class SceneTemplateController extends Controller
         return response()->json($templates);
     }
 
+    /**
+     * Возвращает один шаблон сцены вместе с автором, клетками и объектами.
+     */
     public function show(SceneTemplate $sceneTemplate): JsonResponse
     {
         $sceneTemplate->load([
