@@ -2,8 +2,30 @@
   "name": "dnd-frontend",
   "private": true,
   "version": "0.1.0",
-  "description": "Placeholder for the Canvas/UI frontend.",
+  "type": "module",
+  "description": "SSR frontend for Table of Adventures.",
   "scripts": {
-    "dev": "node -e \"console.log('Frontend placeholder. Replace with actual implementation.'); setInterval(() => {}, 1 << 30)\""
+    "dev": "tsx watch --clear-screen=false server.ts",
+    "build": "vite build --outDir dist/client --ssrManifest && vite build --ssr src/entry-server.ts --outDir dist/server",
+    "preview": "NODE_ENV=production tsx server.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@vue/server-renderer": "^3.5.13",
+    "express": "^4.21.2",
+    "lucide-vue-next": "^0.503.0",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.13.10",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "vite": "^6.2.2"
   }
 }
