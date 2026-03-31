@@ -1,0 +1,71 @@
+export type GameMasterSummary = {
+  email: string;
+  id: number;
+  name: string;
+};
+
+export type GameMemberSummary = {
+  id: number;
+  joined_at: string | null;
+  role: string;
+  status: string;
+  user: GameMasterSummary;
+};
+
+export type GameInvitationSummary = {
+  game: Pick<GameSummary, 'description' | 'id' | 'status' | 'title'>;
+  gm: GameMasterSummary;
+  id: number;
+  invited_user_id: number;
+  responded_at: string | null;
+  sent_at: string | null;
+  status: string;
+  token: string;
+};
+
+export type GameSummary = {
+  created_at: string;
+  description: string | null;
+  gm: GameMasterSummary;
+  gm_user_id: number;
+  id: number;
+  members_count: number;
+  status: string;
+  title: string;
+  updated_at: string;
+};
+
+export type GameStatus = 'active' | 'completed' | 'draft' | 'paused';
+
+export type GameDetail = GameSummary & {
+  active_scene_state_id: number | null;
+  invitations: Array<{
+    id: number;
+    invited_user: GameMasterSummary;
+    responded_at: string | null;
+    sent_at: string | null;
+    status: string;
+    token: string;
+  }>;
+  members: GameMemberSummary[];
+  settings: Record<string, unknown> | null;
+};
+
+export type PaginatedGamesResponse = {
+  current_page: number;
+  data: GameSummary[];
+  last_page: number;
+  per_page: number;
+  total: number;
+};
+
+export type CreateGamePayload = {
+  description: string;
+  title: string;
+};
+
+export type InviteGameMemberPayload = {
+  login: string;
+};
+
+export type GameStatusFilter = 'active' | 'all' | 'completed' | 'draft' | 'paused';
