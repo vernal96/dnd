@@ -8,7 +8,7 @@ use App\Application\Catalog\CharacterClassCatalog;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApiPayloadResource;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
 /**
  * Отдает API справочника классов и подклассов персонажей.
@@ -42,7 +42,7 @@ final class CharacterClassController extends Controller
 		if ($classDefinition === null) {
 			return ApiPayloadResource::json([
 				'message' => 'Класс персонажа не найден.',
-			], Response::HTTP_NOT_FOUND);
+			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
 		return ApiPayloadResource::json($classDefinition);

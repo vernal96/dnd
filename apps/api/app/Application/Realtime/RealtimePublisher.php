@@ -6,7 +6,7 @@ namespace App\Application\Realtime;
 
 use App\Models\GameInvitation;
 use Illuminate\Support\Facades\Redis;
-use JsonException;
+use Throwable;
 
 /**
  * Публикует realtime-события для пользовательских кабинетов.
@@ -18,7 +18,7 @@ final class RealtimePublisher
 	/**
 	 * Публикует событие создания приглашения в игру.
 	 *
-	 * @throws JsonException Если сериализация payload завершилась ошибкой.
+	 * @throws Throwable Если сериализация payload завершилась ошибкой.
 	 */
 	public function publishInvitationCreated(GameInvitation $invitation): void
 	{
@@ -34,7 +34,7 @@ final class RealtimePublisher
 	 *
 	 * @param list<int> $targetUserIds
 	 *
-	 * @throws JsonException Если сериализация payload завершилась ошибкой.
+	 * @throws Throwable
 	 */
 	private function publish(string $event, array $targetUserIds, GameInvitation $invitation): void
 	{
@@ -51,13 +51,13 @@ final class RealtimePublisher
 			],
 		], JSON_THROW_ON_ERROR);
 
-		Redis::publish(self::CHANNEL_NAME, $payload);
+		Redis::command('publish', [self::CHANNEL_NAME, $payload]);
 	}
 
 	/**
 	 * Публикует событие принятия приглашения в игру.
 	 *
-	 * @throws JsonException Если сериализация payload завершилась ошибкой.
+	 * @throws Throwable Если сериализация payload завершилась ошибкой.
 	 */
 	public function publishInvitationAccepted(GameInvitation $invitation): void
 	{
@@ -71,7 +71,7 @@ final class RealtimePublisher
 	/**
 	 * Публикует событие отклонения приглашения в игру.
 	 *
-	 * @throws JsonException Если сериализация payload завершилась ошибкой.
+	 * @throws Throwable Если сериализация payload завершилась ошибкой.
 	 */
 	public function publishInvitationDeclined(GameInvitation $invitation): void
 	{

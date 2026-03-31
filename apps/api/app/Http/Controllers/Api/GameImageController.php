@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
 /**
  * Отдает API для хранения изображений игровых столов.
@@ -42,7 +43,7 @@ final class GameImageController extends Controller
 		if ($images === null) {
 			return ApiPayloadResource::json([
 				'message' => 'Игра не найдена.',
-			], Response::HTTP_NOT_FOUND);
+			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
 		return ApiPayloadResource::collectionJson($images);
@@ -67,10 +68,10 @@ final class GameImageController extends Controller
 		} catch (RuntimeException $exception) {
 			return ApiPayloadResource::json([
 				'message' => $exception->getMessage(),
-			], Response::HTTP_NOT_FOUND);
+			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::json($image, Response::HTTP_CREATED);
+		return ApiPayloadResource::json($image, ResponseAlias::HTTP_CREATED);
 	}
 
 	/**
@@ -85,7 +86,7 @@ final class GameImageController extends Controller
 		if ($imageFile === null) {
 			return ApiPayloadResource::json([
 				'message' => 'Изображение не найдено.',
-			], Response::HTTP_NOT_FOUND);
+			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
 		return response()->file($imageFile->absolutePath, [

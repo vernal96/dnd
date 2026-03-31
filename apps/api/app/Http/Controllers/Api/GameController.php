@@ -18,8 +18,8 @@ use App\Http\Requests\Game\UpdateGameStatusRequest;
 use App\Http\Resources\ApiPayloadResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
 use RuntimeException;
+use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 use Throwable;
 
 /**
@@ -88,7 +88,7 @@ final class GameController extends Controller
 		if ($gameModel === null) {
 			return ApiPayloadResource::json([
 				'message' => 'Игра не найдена.',
-			], Response::HTTP_NOT_FOUND);
+			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
 		return ApiPayloadResource::json($gameModel);
@@ -113,13 +113,13 @@ final class GameController extends Controller
 
 			return ApiPayloadResource::json([
 				'message' => 'Не удалось обновить статус игры.',
-			], Response::HTTP_INTERNAL_SERVER_ERROR);
+			], ResponseAlias::HTTP_INTERNAL_SERVER_ERROR);
 		}
 
 		if ($gameModel === null) {
 			return ApiPayloadResource::json([
 				'message' => 'Игра не найдена.',
-			], Response::HTTP_NOT_FOUND);
+			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
 		return ApiPayloadResource::json($gameModel);
@@ -142,19 +142,19 @@ final class GameController extends Controller
 		} catch (RuntimeException $exception) {
 			return ApiPayloadResource::json([
 				'message' => $exception->getMessage(),
-			], Response::HTTP_UNPROCESSABLE_ENTITY);
+			], ResponseAlias::HTTP_UNPROCESSABLE_ENTITY);
 		} catch (Throwable $throwable) {
 			report($throwable);
 
 			return ApiPayloadResource::json([
 				'message' => 'Не удалось отправить приглашение в игру.',
-			], Response::HTTP_INTERNAL_SERVER_ERROR);
+			], ResponseAlias::HTTP_INTERNAL_SERVER_ERROR);
 		}
 
 		if ($gameModel === null) {
 			return ApiPayloadResource::json([
 				'message' => 'Игра не найдена.',
-			], Response::HTTP_NOT_FOUND);
+			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
 		return ApiPayloadResource::json($gameModel);
@@ -173,19 +173,19 @@ final class GameController extends Controller
 		} catch (RuntimeException $exception) {
 			return ApiPayloadResource::json([
 				'message' => $exception->getMessage(),
-			], Response::HTTP_UNPROCESSABLE_ENTITY);
+			], ResponseAlias::HTTP_UNPROCESSABLE_ENTITY);
 		} catch (Throwable $throwable) {
 			report($throwable);
 
 			return ApiPayloadResource::json([
 				'message' => 'Не удалось удалить участника из игры.',
-			], Response::HTTP_INTERNAL_SERVER_ERROR);
+			], ResponseAlias::HTTP_INTERNAL_SERVER_ERROR);
 		}
 
 		if ($gameModel === null) {
 			return ApiPayloadResource::json([
 				'message' => 'Игра или участник не найдены.',
-			], Response::HTTP_NOT_FOUND);
+			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
 		return ApiPayloadResource::json($gameModel);
