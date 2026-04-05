@@ -42,5 +42,9 @@ class DatabaseSeeder extends Seeder
                 'can_access_gm' => true,
             ],
         );
+
+        $this->call([
+            LocalDevelopmentDemoSeeder::class,
+        ]);
     }
 }

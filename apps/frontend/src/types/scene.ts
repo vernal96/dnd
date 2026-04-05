@@ -15,6 +15,7 @@ export type SceneCell = {
 export type SceneSurfaceDefinition = {
   blocks_vision: boolean;
   code: 'fire' | 'grass' | 'ice' | 'poison' | 'soil' | 'stone' | 'water';
+  image_url: string | null;
   is_passable: boolean;
   name: string;
   tags: string[];
@@ -37,6 +38,7 @@ export type SceneObjectDefinition = {
   blocks_vision: boolean;
   code: 'barrel' | 'bush';
   height: number;
+  image_url: string | null;
   is_interactive: boolean;
   is_passable: boolean;
   name: string;
@@ -50,6 +52,11 @@ export type SceneViewportMetadata = {
   rotateX: number;
   rotateZ: number;
   zoom: number;
+};
+
+export type ScenePlayerSpawnPoint = {
+  x: number;
+  y: number;
 };
 
 export type SceneActorPlacement = {
@@ -69,6 +76,7 @@ export type SceneTemplateDetail = {
   height: number;
   id: number;
   metadata: {
+    player_spawn_point?: ScenePlayerSpawnPoint | null;
     viewport?: Partial<SceneViewportMetadata>;
   } | null;
   name: string;
@@ -111,6 +119,7 @@ export type UpdateScenePayload = {
   description: string;
   height: number;
   metadata: {
+    player_spawn_point?: ScenePlayerSpawnPoint | null;
     viewport: SceneViewportMetadata;
   };
   name: string;

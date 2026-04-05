@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Application\Game\GameInvitationService;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Game\AcceptGameInvitationRequest;
 use App\Http\Resources\ApiPayloadResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -40,15 +41,50 @@ final class GameInvitationController extends Controller
 	}
 
 	/**
-	 * Принимает приглашение и добавляет игрока в игру.
+	 * Возвращает персонажей игрока, которыми можно принять выбранное приглашение.
 	 */
-	public function accept(string $token, Request $request): JsonResponse
+	public function availableCharacters(string $token, Request $request): JsonResponse
 	{
 		/** @var User $user */
 		$user = $request->user('web');
 
 		try {
-			$invitation = $this->gameInvitationService->acceptInvitation($token, $user);
+			$characters = $this->gameInvitationService->getAvailableCharactersForInvitation($token, $user);
+		} catch (RuntimeException $exception) {
+			return ApiPayloadResource::json([
+				'message' => $exception->getMessage(),
+			], Response::HTTP_UNPROCESSABLE_ENTITY);
+		} catch (Throwable $throwable) {
+			report($throwable);
+
+			return ApiPayloadResource::json([
+				'message' => 'Не удалось загрузить доступных персонажей.',
+			], Response::HTTP_INTERNAL_SERVER_ERROR);
+		}
+
+		if ($characters === null) {
+			return ApiPayloadResource::json([
+				'message' => 'Приглашение не найдено.',
+			], Response::HTTP_NOT_FOUND);
+		}
+
+		return ApiPayloadResource::collectionJson($characters);
+	}
+
+	/**
+	 * Принимает приглашение и добавляет игрока в игру.
+	 */
+	public function accept(string $token, AcceptGameInvitationRequest $request): JsonResponse
+	{
+		/** @var User $user */
+		$user = $request->user('web');
+
+		try {
+			$invitation = $this->gameInvitationService->acceptInvitation(
+				$token,
+				(int) $request->validated('character_id'),
+				$user,
+			);
 		} catch (RuntimeException $exception) {
 			return ApiPayloadResource::json([
 				'message' => $exception->getMessage(),

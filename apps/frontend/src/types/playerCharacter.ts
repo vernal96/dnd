@@ -8,6 +8,8 @@ export type CharacterStats = {
 };
 
 export type PlayerCharacter = {
+    active_game_id: number | null;
+    active_game_title: string | null;
     base_stats: CharacterStats | null;
     character_class: string | null;
     character_class_name: string | null;
@@ -17,6 +19,7 @@ export type PlayerCharacter = {
     id: number;
     image_path: string | null;
     image_url: string | null;
+    is_available_for_join: boolean;
     level: number;
     name: string;
     race: string | null;

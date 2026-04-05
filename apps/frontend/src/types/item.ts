@@ -8,6 +8,7 @@ export type CatalogItem = {
     code: string;
     damageDice: string | null;
     description: string | null;
+    image_url: string | null;
     isActive: boolean;
     name: string;
     type: string;

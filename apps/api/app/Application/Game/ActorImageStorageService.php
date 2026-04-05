@@ -88,6 +88,29 @@ final class ActorImageStorageService
 	}
 
 	/**
+	 * Возвращает файл изображения NPC по имени без проверки владельца.
+	 */
+	public function findImageByFileName(string $fileName): ?GameImageFileData
+	{
+		$safeFileName = basename($fileName);
+		$disk = $this->getDisk();
+
+		foreach ($disk->allFiles('gm-actors') as $path) {
+			if (basename($path) !== $safeFileName) {
+				continue;
+			}
+
+			return new GameImageFileData(
+				absolutePath: $disk->path($path),
+				fileName: $safeFileName,
+				mimeType: $this->resolveMimeType($disk, $path),
+			);
+		}
+
+		return null;
+	}
+
+	/**
 	 * Возвращает файловый диск для хранения изображений NPC.
 	 */
 	private function getDisk(): Filesystem

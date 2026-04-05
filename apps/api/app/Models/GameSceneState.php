@@ -23,6 +23,7 @@ use Illuminate\Support\Carbon;
  * @property array<string, mixed>|null $visibility_state
  * @property array<string, mixed>|null $effects_state
  * @property array<string, mixed>|null $runtime_state
+ * @property array<int, array<string, mixed>> $item_drops
  * @property Carbon|null $loaded_at
  * @property Carbon|null $resolved_at
  * @property Carbon|null $created_at
@@ -58,6 +59,10 @@ class GameSceneState extends Model
 		'resolved_at' => 'datetime',
 	];
 
+	protected $appends = [
+		'item_drops',
+	];
+
 	/**
 	 * Возвращает игру, которой принадлежит это runtime-состояние сцены.
 	 */
@@ -88,5 +93,19 @@ class GameSceneState extends Model
 	public function encounters(): HasMany
 	{
 		return $this->hasMany(Encounter::class, 'game_scene_state_id', 'id');
+	}
+
+	/**
+	 * Возвращает runtime-дропы предметов, размещенные на сцене.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	public function getItemDropsAttribute(): array
+	{
+		$itemDrops = $this->runtime_state['item_drops'] ?? [];
+
+		return is_array($itemDrops)
+			? array_values(array_filter($itemDrops, static fn (mixed $drop): bool => is_array($drop)))
+			: [];
 	}
 }

@@ -14,10 +14,16 @@ final class IceSceneSurface implements SceneSurfaceDefinition
 		return 'ice';
 	}
 
-	public function toArray(): array
+	public function image(): string
+	{
+		return 'ice.png';
+	}
+
+	public function toArray(?callable $imageUrlResolver = null): array
 	{
 		return [
 			'code' => $this->code(),
+			'image_url' => is_callable($imageUrlResolver) ? $imageUrlResolver($this->image()) : null,
 			'name' => 'Лед',
 			'is_passable' => true,
 			'blocks_vision' => false,

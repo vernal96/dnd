@@ -33,12 +33,28 @@ final class SceneSurfaceCatalog
 	 *
 	 * @return array<int, array<string, mixed>>
 	 */
-	public static function all(): array
+	public static function all(?callable $imageUrlResolver = null): array
 	{
 		return array_map(
-			static fn (SceneSurfaceDefinition $definition): array => $definition->toArray(),
+			static fn (SceneSurfaceDefinition $definition): array => $definition->toArray($imageUrlResolver),
 			self::definitions(),
 		);
+	}
+
+	/**
+	 * Возвращает одну поверхность по коду.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	public static function resolve(string $code, ?callable $imageUrlResolver = null): ?array
+	{
+		foreach (self::all($imageUrlResolver) as $surface) {
+			if (($surface['code'] ?? null) === $code) {
+				return $surface;
+			}
+		}
+
+		return null;
 	}
 
 	/**

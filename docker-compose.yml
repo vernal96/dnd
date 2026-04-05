@@ -245,7 +245,6 @@ services:
       NODE_ENV: development
       PORT: ${FRONTEND_PORT:-5173}
       VITE_API_URL: /api
-      VITE_WS_URL: ws://localhost/realtime
     volumes:
       - ./apps/frontend:/workspace/apps/frontend
     command:

@@ -9,6 +9,7 @@ namespace App\Support\SceneCatalog\Objects;
  */
 final class BarrelSceneObject implements SceneObjectDefinition
 {
+
 	/**
 	 * Возвращает код authored-объекта.
 	 */
@@ -17,15 +18,21 @@ final class BarrelSceneObject implements SceneObjectDefinition
 		return 'barrel';
 	}
 
+	public function image(): string
+	{
+		return 'barrel.png';
+	}
+
 	/**
 	 * Возвращает серверное представление authored-объекта.
 	 *
 	 * @return array<string, mixed>
 	 */
-	public function toArray(): array
+	public function toArray(?callable $imageUrlResolver = null): array
 	{
 		return [
 			'code' => $this->code(),
+			'image_url' => is_callable($imageUrlResolver) ? $imageUrlResolver($this->image()) : null,
 			'name' => 'Бочка',
 			'width' => 1,
 			'height' => 1,

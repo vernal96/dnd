@@ -41,13 +41,13 @@ export function usePlayerInvitations() {
     /**
      * Принимает приглашение и обновляет локальное состояние списка.
      */
-    async function acceptInvitation(token: string): Promise<GameInvitationSummary> {
+    async function acceptInvitation(token: string, characterId: number): Promise<GameInvitationSummary> {
         invitationPendingToken.value = token;
         invitationPendingAction.value = 'accept';
         invitationError.value = '';
 
         try {
-            const invitation = await acceptPlayerInvitation(token);
+            const invitation = await acceptPlayerInvitation(token, characterId);
             invitations.value = invitations.value.map((item) =>
                 item.token === token
                     ? {

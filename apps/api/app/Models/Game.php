@@ -90,7 +90,7 @@ class Game extends Model
 	public function users(): BelongsToMany
 	{
 		return $this->belongsToMany(User::class, 'game_members', 'game_id', 'user_id', 'id', 'id')
-			->withPivot(['role', 'status', 'joined_at'])
+			->withPivot(['player_character_id', 'role', 'status', 'joined_at'])
 			->withTimestamps();
 	}
 

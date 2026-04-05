@@ -15,6 +15,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $game_id
  * @property int $user_id
+ * @property int|null $player_character_id
  * @property string $role
  * @property string $status
  * @property Carbon|null $joined_at
@@ -30,6 +31,7 @@ class GameMember extends Model
 	protected $fillable = [
 		'game_id',
 		'user_id',
+		'player_character_id',
 		'role',
 		'status',
 		'joined_at',
@@ -53,5 +55,13 @@ class GameMember extends Model
 	public function user(): BelongsTo
 	{
 		return $this->belongsTo(User::class, 'user_id', 'id');
+	}
+
+	/**
+	 * Возвращает персонажа игрока, выбранного для участия в игре.
+	 */
+	public function playerCharacter(): BelongsTo
+	{
+		return $this->belongsTo(PlayerCharacter::class, 'player_character_id', 'id');
 	}
 }

@@ -9,6 +9,7 @@ use App\Application\Catalog\CharacterClassCatalog;
 use App\Application\Catalog\RaceCatalog;
 use App\Data\Catalog\AbilityBonusesData;
 use App\Data\Player\CreatePlayerCharacterData;
+use App\Models\GameMember;
 use App\Models\PlayerCharacter;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -47,6 +48,48 @@ final class PlayerCharacterManagementService
 			->get()
 			->map(fn (PlayerCharacter $character): array => $this->buildCharacterPayload($character))
 			->all();
+	}
+
+	/**
+	 * Возвращает только тех персонажей игрока, которые можно использовать для входа в указанную игру.
+	 *
+	 * @return list<array<string, mixed>>
+	 */
+	public function getAvailableCharactersForGame(User $user, int $gameId): array
+	{
+		return PlayerCharacter::query()
+			->where('user_id', $user->id)
+			->orderByDesc('created_at')
+			->orderByDesc('id')
+			->get()
+			->filter(fn (PlayerCharacter $character): bool => $this->findBlockingMembership($character, $gameId) === null)
+			->map(fn (PlayerCharacter $character): array => $this->buildCharacterPayload($character))
+			->values()
+			->all();
+	}
+
+	/**
+	 * Проверяет, может ли игрок использовать персонажа для входа в указанную игру.
+	 */
+	public function assertCharacterCanJoinGame(int $characterId, int $gameId, User $user): PlayerCharacter
+	{
+		$character = PlayerCharacter::query()
+			->where('id', $characterId)
+			->where('user_id', $user->id)
+			->first();
+
+		if ($character === null) {
+			throw new RuntimeException('Выбранный персонаж не найден.');
+		}
+
+		$blockingMembership = $this->findBlockingMembership($character, $gameId);
+
+		if ($blockingMembership !== null) {
+			$gameTitle = $blockingMembership->game?->title ?? 'другой игре';
+			throw new RuntimeException('Этот персонаж уже участвует в игре "' . $gameTitle . '".');
+		}
+
+		return $character;
 	}
 
 	/**
@@ -198,6 +241,14 @@ final class PlayerCharacterManagementService
 	 */
 	private function buildCharacterPayload(PlayerCharacter $character): array
 	{
+		$activeMembership = GameMember::query()
+			->where('player_character_id', $character->id)
+			->where('status', 'active')
+			->whereHas('game', static function ($query): void {
+				$query->where('status', '!=', 'completed');
+			})
+			->with('game:id,title,status')
+			->first();
 		$race = is_string($character->race) && $character->race !== ''
 			? $this->raceCatalog->findActiveRaceByCode($character->race)
 			: null;
@@ -233,8 +284,27 @@ final class PlayerCharacterManagementService
 			'derived_stats' => $character->derived_stats,
 			'image_path' => $character->image_path,
 			'image_url' => $character->image_url,
+			'active_game_id' => $activeMembership?->game_id,
+			'active_game_title' => $activeMembership?->game?->title,
+			'is_available_for_join' => $activeMembership === null,
 			'created_at' => $character->created_at?->toJSON(),
 			'updated_at' => $character->updated_at?->toJSON(),
 		];
+	}
+
+	/**
+	 * Возвращает активное участие персонажа в другой незавершенной игре, если оно есть.
+	 */
+	private function findBlockingMembership(PlayerCharacter $character, int $gameId): ?GameMember
+	{
+		return GameMember::query()
+			->where('player_character_id', $character->id)
+			->where('status', 'active')
+			->where('game_id', '!=', $gameId)
+			->whereHas('game', static function ($query): void {
+				$query->where('status', '!=', 'completed');
+			})
+			->with('game:id,title,status')
+			->first();
 	}
 }

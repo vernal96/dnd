@@ -72,9 +72,7 @@ final class ActorImageController extends Controller
 	 */
 	public function show(string $image, Request $request): BinaryFileResponse|JsonResponse
 	{
-		/** @var User $user */
-		$user = $request->user('web');
-		$imageFile = $this->actorImageStorageService->findImage($image, $user);
+		$imageFile = $this->actorImageStorageService->findImageByFileName($image);
 
 		if ($imageFile === null) {
 			return ApiPayloadResource::json([

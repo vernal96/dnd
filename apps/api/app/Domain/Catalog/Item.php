@@ -98,6 +98,14 @@ abstract class Item implements JsonSerializable
 	}
 
 	/**
+	 * Возвращает имя файла изображения предмета в служебном каталоге.
+	 */
+	public function image(): ?string
+	{
+		return $this->getCode() . '.png';
+	}
+
+	/**
 	 * Возвращает признак активности предмета.
 	 */
 	public function isActive(): bool
@@ -121,10 +129,11 @@ abstract class Item implements JsonSerializable
 	 *     armorClassAbilityCap: ?int,
 	 *     armorClassBonus: ?int,
 	 *     description: ?string,
+	 *     image_url: ?string,
 	 *     isActive: bool
 	 * }
 	 */
-	public function toArray(): array
+	public function toArray(?callable $imageUrlResolver = null): array
 	{
 		return [
 			'code' => $this->getCode(),
@@ -142,6 +151,9 @@ abstract class Item implements JsonSerializable
 			'armorClassAbilityCap' => $this->getArmorClassAbilityCap(),
 			'armorClassBonus' => $this->getArmorClassBonus(),
 			'description' => $this->getDescription(),
+			'image_url' => is_callable($imageUrlResolver) && is_string($this->image())
+				? $imageUrlResolver($this->image())
+				: null,
 			'isActive' => $this->isActive(),
 		];
 	}
@@ -162,6 +174,7 @@ abstract class Item implements JsonSerializable
 	 *     armorClassAbilityCap: ?int,
 	 *     armorClassBonus: ?int,
 	 *     description: ?string,
+	 *     image_url: ?string,
 	 *     isActive: bool
 	 * }
 	 */

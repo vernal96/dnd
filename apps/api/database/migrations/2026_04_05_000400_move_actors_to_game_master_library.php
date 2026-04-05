@@ -16,6 +16,8 @@ return new class extends Migration
 	{
 		Schema::table('actors', function (Blueprint $table): void {
 			$table->foreignId('gm_user_id')->nullable()->after('id')->constrained('users')->cascadeOnUpdate()->cascadeOnDelete();
+			$table->index(['gm_user_id', 'kind']);
+			$table->index(['gm_user_id', 'name']);
 		});
 
 		DB::statement(<<<'SQL'
@@ -26,6 +28,8 @@ return new class extends Migration
 		SQL);
 
 		Schema::table('actors', function (Blueprint $table): void {
+			$table->dropIndex('actors_game_id_kind_index');
+			$table->dropIndex('actors_game_id_name_index');
 			$table->dropForeign(['game_id']);
 			$table->dropColumn('game_id');
 		});
@@ -38,6 +42,8 @@ return new class extends Migration
 	{
 		Schema::table('actors', function (Blueprint $table): void {
 			$table->foreignId('game_id')->nullable()->after('gm_user_id')->constrained('games')->cascadeOnUpdate()->cascadeOnDelete();
+			$table->index(['game_id', 'kind']);
+			$table->index(['game_id', 'name']);
 		});
 
 		DB::statement(<<<'SQL'
@@ -49,6 +55,8 @@ return new class extends Migration
 		SQL);
 
 		Schema::table('actors', function (Blueprint $table): void {
+			$table->dropIndex('actors_gm_user_id_kind_index');
+			$table->dropIndex('actors_gm_user_id_name_index');
 			$table->dropForeign(['gm_user_id']);
 			$table->dropColumn('gm_user_id');
 		});

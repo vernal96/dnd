@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Application\Realtime;
 
+use App\Models\Game;
 use App\Models\GameInvitation;
+use App\Models\GameSceneState;
+use App\Models\ActorInstance;
 use Illuminate\Support\Facades\Redis;
 use Throwable;
 
@@ -22,10 +25,17 @@ final class RealtimePublisher
 	 */
 	public function publishInvitationCreated(GameInvitation $invitation): void
 	{
-		$this->publish(
+		$this->publishMessage(
 			event: 'game-invitation.created',
 			targetUserIds: [$invitation->invited_user_id, $invitation->gm_user_id],
-			invitation: $invitation,
+			payload: [
+				'gameId' => $invitation->game_id,
+				'gmUserId' => $invitation->gm_user_id,
+				'invitationId' => $invitation->id,
+				'invitedUserId' => $invitation->invited_user_id,
+				'status' => $invitation->status,
+				'token' => $invitation->token,
+			],
 		);
 	}
 
@@ -36,19 +46,16 @@ final class RealtimePublisher
 	 *
 	 * @throws Throwable
 	 */
-	private function publish(string $event, array $targetUserIds, GameInvitation $invitation): void
+	private function publishMessage(string $event, array $targetUserIds, array $payload): void
 	{
+		if ($targetUserIds === []) {
+			return;
+		}
+
 		$payload = json_encode([
 			'event' => $event,
 			'targetUserIds' => array_values(array_unique($targetUserIds)),
-			'payload' => [
-				'gameId' => $invitation->game_id,
-				'gmUserId' => $invitation->gm_user_id,
-				'invitationId' => $invitation->id,
-				'invitedUserId' => $invitation->invited_user_id,
-				'status' => $invitation->status,
-				'token' => $invitation->token,
-			],
+			'payload' => $payload,
 		], JSON_THROW_ON_ERROR);
 
 		Redis::command('publish', [self::CHANNEL_NAME, $payload]);
@@ -61,10 +68,17 @@ final class RealtimePublisher
 	 */
 	public function publishInvitationAccepted(GameInvitation $invitation): void
 	{
-		$this->publish(
+		$this->publishMessage(
 			event: 'game-invitation.accepted',
 			targetUserIds: [$invitation->invited_user_id, $invitation->gm_user_id],
-			invitation: $invitation,
+			payload: [
+				'gameId' => $invitation->game_id,
+				'gmUserId' => $invitation->gm_user_id,
+				'invitationId' => $invitation->id,
+				'invitedUserId' => $invitation->invited_user_id,
+				'status' => $invitation->status,
+				'token' => $invitation->token,
+			],
 		);
 	}
 
@@ -75,10 +89,179 @@ final class RealtimePublisher
 	 */
 	public function publishInvitationDeclined(GameInvitation $invitation): void
 	{
-		$this->publish(
+		$this->publishMessage(
 			event: 'game-invitation.declined',
 			targetUserIds: [$invitation->invited_user_id, $invitation->gm_user_id],
-			invitation: $invitation,
+			payload: [
+				'gameId' => $invitation->game_id,
+				'gmUserId' => $invitation->gm_user_id,
+				'invitationId' => $invitation->id,
+				'invitedUserId' => $invitation->invited_user_id,
+				'status' => $invitation->status,
+				'token' => $invitation->token,
+			],
+		);
+	}
+
+	/**
+	 * Публикует событие запуска runtime-сцены игры для всех активных игроков стола.
+	 *
+	 * @throws Throwable Если сериализация payload завершилась ошибкой.
+	 */
+	public function publishGameSceneActivated(Game $game, GameSceneState $sceneState): void
+	{
+		$game->loadMissing('members');
+		$sceneState->loadMissing('sceneTemplate:id,name');
+
+		$targetUserIds = $game->members
+			->where('role', 'player')
+			->where('status', 'active')
+			->pluck('user_id')
+			->filter(static fn (mixed $userId): bool => is_int($userId))
+			->values()
+			->all();
+
+		$this->publishMessage(
+			event: 'game-scene.activated',
+			targetUserIds: $targetUserIds,
+			payload: [
+				'activeSceneStateId' => $sceneState->id,
+				'gameId' => $game->id,
+				'gmUserId' => $game->gm_user_id,
+				'sceneName' => $sceneState->sceneTemplate?->name,
+				'sceneStateId' => $sceneState->id,
+			],
+		);
+	}
+
+	/**
+	 * Публикует событие обновления активной runtime-сцены для всех участников игры.
+	 *
+	 * @throws Throwable Если сериализация payload завершилась ошибкой.
+	 */
+	public function publishGameSceneUpdated(Game $game, GameSceneState $sceneState): void
+	{
+		$game->loadMissing('members');
+		$sceneState->loadMissing('sceneTemplate:id,name');
+
+		$targetUserIds = $game->members
+			->where('status', 'active')
+			->pluck('user_id')
+			->filter(static fn (mixed $userId): bool => is_int($userId))
+			->push($game->gm_user_id)
+			->values()
+			->all();
+
+		$this->publishMessage(
+			event: 'game-scene.updated',
+			targetUserIds: $targetUserIds,
+			payload: [
+				'activeSceneStateId' => $sceneState->id,
+				'gameId' => $game->id,
+				'gmUserId' => $game->gm_user_id,
+				'sceneName' => $sceneState->sceneTemplate?->name,
+				'sceneStateId' => $sceneState->id,
+				'version' => $sceneState->version,
+			],
+		);
+	}
+
+	/**
+	 * Публикует событие перемещения runtime-актора.
+	 *
+	 * @throws Throwable Если сериализация payload завершилась ошибкой.
+	 */
+	public function publishRuntimeActorMoved(Game $game, GameSceneState $sceneState, ActorInstance $actorInstance): void
+	{
+		$this->publishGameSceneDelta($game, $sceneState, 'game-scene.actor-moved', [
+			'actor' => $actorInstance->toArray(),
+		]);
+	}
+
+	/**
+	 * Публикует событие появления runtime-актора на сцене.
+	 *
+	 * @throws Throwable Если сериализация payload завершилась ошибкой.
+	 */
+	public function publishRuntimeActorSpawned(Game $game, GameSceneState $sceneState, ActorInstance $actorInstance): void
+	{
+		$this->publishGameSceneDelta($game, $sceneState, 'game-scene.actor-spawned', [
+			'actor' => $actorInstance->toArray(),
+		]);
+	}
+
+	/**
+	 * Публикует событие изменения поверхности клетки.
+	 *
+	 * @throws Throwable Если сериализация payload завершилась ошибкой.
+	 */
+	public function publishRuntimeCellPainted(
+		Game $game,
+		GameSceneState $sceneState,
+		int $x,
+		int $y,
+		string $terrainType,
+		bool $isPassable,
+		bool $blocksVision,
+	): void
+	{
+		$this->publishGameSceneDelta($game, $sceneState, 'game-scene.cell-painted', [
+			'cell' => [
+				'x' => $x,
+				'y' => $y,
+				'terrain_type' => $terrainType,
+				'is_passable' => $isPassable,
+				'blocks_vision' => $blocksVision,
+			],
+		]);
+	}
+
+	/**
+	 * Публикует событие появления предмета на сцене.
+	 *
+	 * @param array{id:string,item_code:string,name:string,quantity:int,x:int,y:int,image_url:?string} $itemDrop
+	 *
+	 * @throws Throwable Если сериализация payload завершилась ошибкой.
+	 */
+	public function publishRuntimeItemDropped(Game $game, GameSceneState $sceneState, array $itemDrop): void
+	{
+		$this->publishGameSceneDelta($game, $sceneState, 'game-scene.item-dropped', [
+			'itemDrop' => $itemDrop,
+		]);
+	}
+
+	/**
+	 * Публикует versioned delta-событие runtime-сцены.
+	 *
+	 * @param array<string, mixed> $payload
+	 *
+	 * @throws Throwable
+	 */
+	private function publishGameSceneDelta(Game $game, GameSceneState $sceneState, string $event, array $payload): void
+	{
+		$game->loadMissing('members');
+		$sceneState->loadMissing('sceneTemplate:id,name');
+
+		$targetUserIds = $game->members
+			->where('status', 'active')
+			->pluck('user_id')
+			->filter(static fn (mixed $userId): bool => is_int($userId))
+			->push($game->gm_user_id)
+			->values()
+			->all();
+
+		$this->publishMessage(
+			event: $event,
+			targetUserIds: $targetUserIds,
+			payload: [
+				...$payload,
+				'activeSceneStateId' => $sceneState->id,
+				'gameId' => $game->id,
+				'gmUserId' => $game->gm_user_id,
+				'sceneName' => $sceneState->sceneTemplate?->name,
+				'sceneStateId' => $sceneState->id,
+				'version' => $sceneState->version,
+			],
 		);
 	}
 }

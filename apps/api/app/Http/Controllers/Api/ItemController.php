@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Application\Catalog\ItemCatalog;
+use App\Application\Catalog\ItemCatalogImageStorageService;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApiPayloadResource;
 use Illuminate\Http\JsonResponse;
@@ -20,6 +21,7 @@ final class ItemController extends Controller
 	 */
 	public function __construct(
 		private readonly ItemCatalog $itemCatalog,
+		private readonly ItemCatalogImageStorageService $itemCatalogImageStorageService,
 	)
 	{
 	}
@@ -29,7 +31,12 @@ final class ItemController extends Controller
 	 */
 	public function index(): JsonResponse
 	{
-		return ApiPayloadResource::collectionJson($this->itemCatalog->getActiveItems());
+		return ApiPayloadResource::json(array_map(
+			fn (\App\Domain\Catalog\Item $item): array => $item->toArray(
+				fn (string $fileName): string => $this->itemCatalogImageStorageService->buildImageUrl($fileName),
+			),
+			$this->itemCatalog->getActiveItems(),
+		));
 	}
 
 	/**
@@ -45,6 +52,8 @@ final class ItemController extends Controller
 			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::json($itemDefinition);
+		return ApiPayloadResource::json($itemDefinition->toArray(
+			fn (string $fileName): string => $this->itemCatalogImageStorageService->buildImageUrl($fileName),
+		));
 	}
 }

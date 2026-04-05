@@ -64,9 +64,7 @@ final class PlayerCharacterImageController extends Controller
 	 */
 	public function show(string $image, Request $request): BinaryFileResponse|JsonResponse
 	{
-		/** @var User $user */
-		$user = $request->user('web');
-		$imageFile = $this->playerCharacterImageStorageService->findImage($image, $user);
+		$imageFile = $this->playerCharacterImageStorageService->findImageByFileName($image);
 
 		if ($imageFile === null) {
 			return ApiPayloadResource::json([

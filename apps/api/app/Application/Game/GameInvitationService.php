@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Game;
 
 use App\Application\Realtime\RealtimePublisher;
+use App\Application\Player\PlayerCharacterManagementService;
 use App\Data\Game\InviteGameMemberData;
 use App\Models\Game;
 use App\Models\GameInvitation;
@@ -26,7 +27,8 @@ final readonly class GameInvitationService
 	 */
 	public function __construct(
 		private readonly GameManagementService $gameManagementService,
-		private readonly RealtimePublisher     $realtimePublisher,
+		private readonly RealtimePublisher $realtimePublisher,
+		private readonly PlayerCharacterManagementService $playerCharacterManagementService,
 	)
 	{
 	}
@@ -127,12 +129,38 @@ final readonly class GameInvitationService
 	}
 
 	/**
+	 * Возвращает персонажей игрока, доступных для принятия указанного приглашения.
+	 *
+	 * @return list<array<string, mixed>>|null
+	 */
+	public function getAvailableCharactersForInvitation(string $token, User $user): ?array
+	{
+		$invitation = GameInvitation::query()
+			->where('token', $token)
+			->first();
+
+		if ($invitation === null) {
+			return null;
+		}
+
+		if ($invitation->invited_user_id !== $user->id) {
+			throw new RuntimeException('Это приглашение принадлежит другому пользователю.');
+		}
+
+		if ($invitation->status !== 'pending') {
+			throw new RuntimeException('Это приглашение уже обработано.');
+		}
+
+		return $this->playerCharacterManagementService->getAvailableCharactersForGame($user, $invitation->game_id);
+	}
+
+	/**
 	 * Принимает приглашение игрока и добавляет его в игру.
 	 *
 	 * @throws RuntimeException Если приглашение не найдено, не принадлежит игроку или уже обработано.
 	 * @throws Throwable Если принятие приглашения завершилось технической ошибкой.
 	 */
-	public function acceptInvitation(string $token, User $user): ?GameInvitation
+	public function acceptInvitation(string $token, int $characterId, User $user): ?GameInvitation
 	{
 		/** @var GameInvitation|null $invitation */
 		$invitation = GameInvitation::query()
@@ -152,20 +180,33 @@ final readonly class GameInvitationService
 			throw new RuntimeException('Это приглашение уже обработано.');
 		}
 
-		DB::transaction(function () use ($invitation, $user): void {
+		$playerCharacter = $this->playerCharacterManagementService->assertCharacterCanJoinGame(
+			$characterId,
+			$invitation->game_id,
+			$user,
+		);
+
+		DB::transaction(function () use ($invitation, $user, $playerCharacter): void {
 			$memberExists = GameMember::query()
 				->where('game_id', $invitation->game_id)
 				->where('user_id', $user->id)
-				->exists();
+				->first();
 
-			if (!$memberExists) {
+			if (!$memberExists instanceof GameMember) {
 				GameMember::query()->create([
 					'game_id' => $invitation->game_id,
 					'user_id' => $user->id,
+					'player_character_id' => $playerCharacter->id,
 					'role' => 'player',
 					'status' => 'active',
 					'joined_at' => now(),
 				]);
+			} else {
+				$memberExists->forceFill([
+					'player_character_id' => $playerCharacter->id,
+					'status' => 'active',
+					'joined_at' => $memberExists->joined_at ?? now(),
+				])->save();
 			}
 
 			$invitation->fill([

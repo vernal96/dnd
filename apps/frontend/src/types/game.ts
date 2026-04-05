@@ -7,6 +7,22 @@ export type GameMasterSummary = {
 export type GameMemberSummary = {
     id: number;
     joined_at: string | null;
+    player_character: null | {
+        class: string | null;
+        created_at: string | null;
+        description: string | null;
+        experience: number;
+        id: number;
+        image_path: string | null;
+        image_url: string | null;
+        level: number;
+        name: string;
+        race: string | null;
+        status: string;
+        subrace: string | null;
+        updated_at: string | null;
+        user_id: number;
+    };
     role: string;
     status: string;
     user: GameMasterSummary;
@@ -70,6 +86,26 @@ export type GameDetail = GameSummary & {
     members: GameMemberSummary[];
     scene_states: GameSceneSummary[];
     settings: Record<string, unknown> | null;
+};
+
+export type PlayerActiveGameSummary = Pick<GameSummary, 'description' | 'id' | 'status' | 'title'> & {
+    active_scene_state: null | {
+        id: number;
+        loaded_at: string | null;
+        scene_template: {
+            height: number;
+            id: number;
+            name: string;
+            status: string;
+            width: number;
+        } | null;
+        scene_template_id: number;
+        status: string;
+        version: number;
+    };
+    active_scene_state_id: number;
+    gm: GameMasterSummary;
+    members: GameMemberSummary[];
 };
 
 export type PaginatedGamesResponse = {

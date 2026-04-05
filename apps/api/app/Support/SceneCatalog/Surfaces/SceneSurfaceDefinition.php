@@ -15,9 +15,14 @@ interface SceneSurfaceDefinition
 	public function code(): string;
 
 	/**
+	 * Возвращает путь картинки поверхности.
+	 */
+	public function image(): string;
+
+	/**
 	 * Возвращает серверное представление поверхности.
 	 *
 	 * @return array<string, mixed>
 	 */
-	public function toArray(): array;
+	public function toArray(?callable $imageUrlResolver = null): array;
 }

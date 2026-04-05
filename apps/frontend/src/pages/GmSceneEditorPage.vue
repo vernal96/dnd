@@ -8,9 +8,9 @@ import { fetchGameActors } from '@/services/actorApi';
 import { fetchSceneObjects, fetchSceneSurfaces } from '@/services/sceneCatalogApi';
 import { fetchGameScene, updateGameScene } from '@/services/sceneApi';
 import type { GameActor } from '@/types/actor';
-import type { SceneActorPlacement, SceneCell, SceneObject, SceneObjectDefinition, SceneSurfaceDefinition, SceneViewportMetadata } from '@/types/scene';
+import type { SceneActorPlacement, SceneCell, SceneObject, SceneObjectDefinition, ScenePlayerSpawnPoint, SceneSurfaceDefinition, SceneViewportMetadata } from '@/types/scene';
 
-type ToolSection = 'actors' | 'base' | 'help' | 'materials' | 'objects';
+type ToolSection = 'actors' | 'base' | 'help' | 'materials' | 'objects' | 'spawn';
 type PointerMode = 'pan' | 'rotate' | null;
 type CanvasPoint = {
   x: number;
@@ -37,15 +37,6 @@ const TILE_WORLD_SIZE = 112;
 const ELEVATION_STEP = 12;
 const MIN_CANVAS_HEIGHT = 520;
 const CANVAS_BACKGROUND = '#0a1120';
-const SURFACE_TEXTURES: Record<SceneSurfaceDefinition['code'], string> = {
-  fire: '/scene-textures/fire.png',
-  grass: '/scene-textures/grass.png',
-  ice: '/scene-textures/ice.png',
-  poison: '/scene-textures/poison.png',
-  soil: '/scene-textures/soil.png',
-  stone: '/scene-textures/stone.png',
-  water: '/scene-textures/water.png',
-};
 
 const route = useRoute();
 const router = useRouter();
@@ -69,7 +60,9 @@ const activeTerrain = ref<SceneSurfaceDefinition['code']>('grass');
 const activeObjectKind = ref<SceneObjectDefinition['code'] | null>(null);
 const activeActorId = ref<number | null>(null);
 const activeEraseMode = ref(false);
+const activePlayerSpawnMode = ref(false);
 const openToolSections = ref<ToolSection[]>([]);
+const playerSpawnPoint = ref<ScenePlayerSpawnPoint | null>(null);
 const viewport = ref<SceneViewportMetadata>({
   offsetX: 0,
   offsetY: 0,
@@ -102,6 +95,7 @@ const renderFrameId = ref<number | null>(null);
 let resizeObserver: ResizeObserver | null = null;
 
 const imageCache = new Map<string, HTMLImageElement>();
+const brokenImageUrls = new Set<string>();
 const loadingImageUrls = new Set<string>();
 
 const gameId = computed<number | null>(() => parseRouteParam(route.params.id));
@@ -308,6 +302,15 @@ function resolveObjectPreviewClass(code: SceneObjectDefinition['code']): string 
 }
 
 /**
+ * Возвращает загруженное изображение authored-объекта.
+ */
+function resolveSceneObjectImage(code: SceneObjectDefinition['code']): HTMLImageElement | null {
+  const objectDefinition = objectCatalog.value.find((item) => item.code === code);
+
+  return resolveCachedImage(objectDefinition?.image_url ?? null);
+}
+
+/**
  * Возвращает цвет поверхности для отрисовки на canvas.
  */
 function resolveSurfacePalette(code: string): {
@@ -336,16 +339,25 @@ function resolveSurfacePalette(code: string): {
 }
 
 /**
+ * Возвращает загруженное изображение поверхности.
+ */
+function resolveSurfaceTexture(code: SceneSurfaceDefinition['code']): HTMLImageElement | null {
+  const surfaceDefinition = surfaceCatalog.value.find((item) => item.code === code);
+
+  return resolveCachedImage(surfaceDefinition?.image_url ?? null);
+}
+
+/**
  * Загружает изображение по URL и кэширует его для canvas-рендера.
  */
 function resolveCachedImage(url: string | null | undefined): HTMLImageElement | null {
-  if (!url) {
+  if (!url || brokenImageUrls.has(url)) {
     return null;
   }
 
   const cachedImage = imageCache.get(url);
 
-  if (cachedImage) {
+  if (cachedImage && cachedImage.complete && cachedImage.naturalWidth > 0) {
     return cachedImage;
   }
 
@@ -359,6 +371,9 @@ function resolveCachedImage(url: string | null | undefined): HTMLImageElement | 
     };
     image.onerror = () => {
       loadingImageUrls.delete(url);
+      brokenImageUrls.add(url);
+      imageCache.delete(url);
+      scheduleCanvasRender();
     };
     image.src = url;
   }
@@ -397,6 +412,7 @@ async function loadScene(): Promise<void> {
     sceneCells.value = buildGridCells(gridWidth.value, gridHeight.value, scene.scene_template.cells);
     sceneObjects.value = scene.scene_template.objects.filter((object): object is SceneObject => object.x !== null && object.y !== null);
     sceneActorPlacements.value = scene.scene_template.actor_placements;
+    playerSpawnPoint.value = scene.scene_template.metadata?.player_spawn_point ?? null;
 
     const savedViewport = scene.scene_template.metadata?.viewport;
     viewport.value = {
@@ -433,6 +449,7 @@ async function handleSaveScene(): Promise<void> {
       width: gridWidth.value,
       height: gridHeight.value,
       metadata: {
+        player_spawn_point: playerSpawnPoint.value,
         viewport: viewport.value,
       },
       cells: sceneCells.value,
@@ -649,6 +666,12 @@ function handleCellAction(x: number, y: number): void {
   const hasObject = getObjectAtCell(x, y) !== undefined;
   const hasActor = getActorPlacementAtCell(x, y) !== undefined;
 
+  if (activePlayerSpawnMode.value) {
+    playerSpawnPoint.value = playerSpawnPoint.value?.x === x && playerSpawnPoint.value?.y === y ? null : {x, y};
+    activePlayerSpawnMode.value = false;
+    return;
+  }
+
   if (activeEraseMode.value) {
     eraseCellContent(x, y);
     return;
@@ -702,6 +725,7 @@ function handleCanvasMouseDown(event: MouseEvent): void {
       && activeObjectKind.value === null
       && activeActorId.value === null
       && !activeEraseMode.value
+      && !activePlayerSpawnMode.value
       && !hasEntity
     ) {
       isPaintDragging.value = true;
@@ -963,7 +987,7 @@ function tracePolygon(context: CanvasRenderingContext2D, corners: CanvasPoint[])
  */
 function drawCell(context: CanvasRenderingContext2D, projectedCell: ProjectedCell): void {
   const palette = resolveSurfacePalette(projectedCell.cell.terrain_type);
-  const textureImage = resolveCachedImage(SURFACE_TEXTURES[projectedCell.cell.terrain_type as SceneSurfaceDefinition['code']]);
+  const textureImage = resolveSurfaceTexture(projectedCell.cell.terrain_type as SceneSurfaceDefinition['code']);
   const gradient = context.createLinearGradient(
     projectedCell.bounds.minX,
     projectedCell.bounds.minY,
@@ -1214,6 +1238,58 @@ function drawBarrel(context: CanvasRenderingContext2D, projectedCell: ProjectedC
 }
 
 /**
+ * Отрисовывает authored-объект картинкой с fallback на старый procedural-рендер.
+ */
+function drawSceneObject(context: CanvasRenderingContext2D, projectedCell: ProjectedCell, objectKind: SceneObjectDefinition['code'], isSelected = false): void {
+  const image = resolveSceneObjectImage(objectKind);
+
+  if (image === null) {
+    if (objectKind === 'bush') {
+      drawBush(context, projectedCell, isSelected);
+    }
+
+    if (objectKind === 'barrel') {
+      drawBarrel(context, projectedCell, isSelected);
+    }
+
+    return;
+  }
+
+  const baseX = projectedCell.center.x;
+  const baseY = projectedCell.center.y - 6;
+  const tileWidth = projectedCell.bounds.maxX - projectedCell.bounds.minX;
+  const tileHeight = projectedCell.bounds.maxY - projectedCell.bounds.minY;
+  const maxWidth = Math.max(46, tileWidth * 0.92);
+  const maxHeight = Math.max(60, tileHeight * 1.55);
+  const sourceRatio = image.width / image.height;
+  let drawWidth = maxWidth;
+  let drawHeight = drawWidth / sourceRatio;
+
+  if (drawHeight > maxHeight) {
+    drawHeight = maxHeight;
+    drawWidth = drawHeight * sourceRatio;
+  }
+
+  const drawX = baseX - (drawWidth / 2);
+  const drawY = baseY - drawHeight;
+
+  context.save();
+  context.fillStyle = 'rgba(15, 23, 42, 0.34)';
+  context.beginPath();
+  context.ellipse(baseX, baseY + 6, drawWidth * 0.32, 10, 0, 0, Math.PI * 2);
+  context.fill();
+  context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+
+  if (isSelected) {
+    context.strokeStyle = 'rgba(250, 204, 21, 0.95)';
+    context.lineWidth = 3;
+    context.strokeRect(drawX - 2, drawY - 2, drawWidth + 4, drawHeight + 4);
+  }
+
+  context.restore();
+}
+
+/**
  * Возвращает загруженное изображение актора, если оно уже доступно.
  */
 function resolveActorImage(actor: GameActor): HTMLImageElement | null {
@@ -1225,6 +1301,7 @@ function resolveActorImage(actor: GameActor): HTMLImageElement | null {
  */
 function drawActor(context: CanvasRenderingContext2D, projectedCell: ProjectedCell, placement: SceneActorPlacement, isSelected = false): void {
   const { actor } = placement;
+  const isPlayerHero = actor.kind === 'player_character';
   const baseX = projectedCell.center.x;
   const baseY = projectedCell.center.y - 8;
   const cardSize = resolveActorCardSize(projectedCell);
@@ -1242,21 +1319,21 @@ function drawActor(context: CanvasRenderingContext2D, projectedCell: ProjectedCe
   context.fill();
 
   const baseGradient = context.createLinearGradient(0, -10, 0, 10);
-  baseGradient.addColorStop(0, '#efdbba');
-  baseGradient.addColorStop(0.35, '#c69a62');
-  baseGradient.addColorStop(1, '#5d381d');
+  baseGradient.addColorStop(0, isPlayerHero ? '#dbeafe' : '#efdbba');
+  baseGradient.addColorStop(0.35, isPlayerHero ? '#60a5fa' : '#c69a62');
+  baseGradient.addColorStop(1, isPlayerHero ? '#1e3a8a' : '#5d381d');
   context.fillStyle = baseGradient;
   context.beginPath();
   context.ellipse(0, 0, baseWidth * 0.45, 8.5, 0, 0, Math.PI * 2);
   context.fill();
 
-  context.strokeStyle = 'rgba(255, 240, 210, 0.45)';
+  context.strokeStyle = isPlayerHero ? 'rgba(219, 234, 254, 0.7)' : 'rgba(255, 240, 210, 0.45)';
   context.lineWidth = 1.4;
   context.stroke();
 
-  context.fillStyle = '#b08a57';
+  context.fillStyle = isPlayerHero ? '#60a5fa' : '#b08a57';
   context.fillRect(-2.2, -22, 4.4, 24);
-  context.fillStyle = '#f3d8a6';
+  context.fillStyle = isPlayerHero ? '#e0f2fe' : '#f3d8a6';
   context.fillRect(-0.9, -22, 1.8, 24);
 
   context.restore();
@@ -1266,10 +1343,10 @@ function drawActor(context: CanvasRenderingContext2D, projectedCell: ProjectedCe
   const cardY = cardTop;
   const radius = 12;
   const frameFill = context.createLinearGradient(cardX, cardY, cardX + cardSize.width, cardY + cardHeight);
-  frameFill.addColorStop(0, '#f5e7c8');
-  frameFill.addColorStop(0.3, '#c6975b');
-  frameFill.addColorStop(0.7, '#7e5734');
-  frameFill.addColorStop(1, '#f3ddb2');
+  frameFill.addColorStop(0, isPlayerHero ? '#eff6ff' : '#f5e7c8');
+  frameFill.addColorStop(0.3, isPlayerHero ? '#93c5fd' : '#c6975b');
+  frameFill.addColorStop(0.7, isPlayerHero ? '#1d4ed8' : '#7e5734');
+  frameFill.addColorStop(1, isPlayerHero ? '#dbeafe' : '#f3ddb2');
 
   context.fillStyle = frameFill;
   context.beginPath();
@@ -1352,10 +1429,10 @@ function drawActor(context: CanvasRenderingContext2D, projectedCell: ProjectedCe
   context.restore();
 
   context.save();
-  context.lineWidth = actor.kind === 'npc' ? 2.7 : 2.1;
-  context.strokeStyle = isSelected ? '#facc15' : actor.kind === 'npc' ? '#f6d48b' : '#f8fafc';
-  context.shadowBlur = 18;
-  context.shadowColor = 'rgba(15, 23, 42, 0.34)';
+  context.lineWidth = isSelected ? 3 : isPlayerHero ? 2.8 : actor.kind === 'npc' ? 2.7 : 2.1;
+  context.strokeStyle = isSelected ? '#facc15' : isPlayerHero ? '#bfdbfe' : actor.kind === 'npc' ? '#f6d48b' : '#f8fafc';
+  context.shadowBlur = isPlayerHero ? 26 : 18;
+  context.shadowColor = isPlayerHero ? 'rgba(96, 165, 250, 0.42)' : 'rgba(15, 23, 42, 0.34)';
   context.beginPath();
   context.moveTo(cardX + radius, cardY);
   context.lineTo(cardX + cardSize.width - radius, cardY);
@@ -1370,7 +1447,7 @@ function drawActor(context: CanvasRenderingContext2D, projectedCell: ProjectedCe
   context.stroke();
 
   context.lineWidth = 1;
-  context.strokeStyle = isSelected ? 'rgba(254, 240, 138, 0.85)' : 'rgba(255, 247, 228, 0.6)';
+  context.strokeStyle = isSelected ? 'rgba(254, 240, 138, 0.85)' : isPlayerHero ? 'rgba(224, 242, 254, 0.85)' : 'rgba(255, 247, 228, 0.6)';
   context.stroke();
   context.restore();
 }
@@ -1400,11 +1477,11 @@ function drawGhostPreview(context: CanvasRenderingContext2D, projectedCell: Proj
   }
 
   if (activeObjectKind.value === 'bush' && getObjectAtCell(projectedCell.cell.x, projectedCell.cell.y) === undefined) {
-    drawBush(context, projectedCell);
+    drawSceneObject(context, projectedCell, 'bush');
   }
 
   if (activeObjectKind.value === 'barrel' && getObjectAtCell(projectedCell.cell.x, projectedCell.cell.y) === undefined) {
-    drawBarrel(context, projectedCell);
+    drawSceneObject(context, projectedCell, 'barrel');
   }
 
   if (activeActorId.value !== null) {
@@ -1439,19 +1516,43 @@ function drawSceneEntities(context: CanvasRenderingContext2D, projectedCells: Pr
     const isSelected = selectedCellKey.value === resolveCellKey(placement.projectedCell.cell.x, placement.projectedCell.cell.y);
 
     if (placement.object) {
-      if (placement.object.kind === 'bush') {
-        drawBush(context, placement.projectedCell, isSelected);
-      }
-
-      if (placement.object.kind === 'barrel') {
-        drawBarrel(context, placement.projectedCell, isSelected);
-      }
+      drawSceneObject(context, placement.projectedCell, placement.object.kind, isSelected);
     }
 
     if (placement.actorPlacement) {
       drawActor(context, placement.projectedCell, placement.actorPlacement, isSelected);
     }
   }
+}
+
+/**
+ * Отрисовывает authored-точку спауна игроков.
+ */
+function drawPlayerSpawnMarker(context: CanvasRenderingContext2D, projectedCell: ProjectedCell): void {
+  const centerX = projectedCell.center.x;
+  const centerY = projectedCell.center.y - 24;
+
+  context.save();
+  context.fillStyle = 'rgba(16, 185, 129, 0.18)';
+  context.beginPath();
+  context.arc(centerX, centerY, 18, 0, Math.PI * 2);
+  context.fill();
+
+  context.strokeStyle = '#34d399';
+  context.lineWidth = 3;
+  context.beginPath();
+  context.arc(centerX, centerY, 14, 0, Math.PI * 2);
+  context.stroke();
+
+  context.strokeStyle = '#ecfdf5';
+  context.lineWidth = 2;
+  context.beginPath();
+  context.moveTo(centerX - 8, centerY);
+  context.lineTo(centerX + 8, centerY);
+  context.moveTo(centerX, centerY - 8);
+  context.lineTo(centerX, centerY + 8);
+  context.stroke();
+  context.restore();
 }
 
 /**
@@ -1482,9 +1583,17 @@ function renderCanvasScene(): void {
     drawCell(context, projectedCell);
   }
 
+  if (playerSpawnPoint.value !== null) {
+    const spawnProjection = projectedCells.find((projectedCell) => projectedCell.cell.x === playerSpawnPoint.value?.x && projectedCell.cell.y === playerSpawnPoint.value?.y);
+
+    if (spawnProjection) {
+      drawPlayerSpawnMarker(context, spawnProjection);
+    }
+  }
+
   drawSceneEntities(context, projectedCells);
 
-  if (hoveredCellKey.value !== null && (activeObjectKind.value !== null || activeActorId.value !== null || activeEraseMode.value)) {
+  if (hoveredCellKey.value !== null && (activeObjectKind.value !== null || activeActorId.value !== null || activeEraseMode.value || activePlayerSpawnMode.value)) {
     const hoveredProjection = projectedCells.find((projectedCell) => resolveCellKey(projectedCell.cell.x, projectedCell.cell.y) === hoveredCellKey.value);
 
     if (hoveredProjection) {
@@ -1535,6 +1644,8 @@ watch(
     activeObjectKind,
     activeActorId,
     activeEraseMode,
+    activePlayerSpawnMode,
+    playerSpawnPoint,
     hoveredCellKey,
     selectedCellKey,
   ],
@@ -1843,6 +1954,53 @@ onBeforeUnmount(() => {
                     <span class="text-sm text-amber-50">{{ surface.name }}</span>
                   </button>
                 </div>
+              </div>
+            </section>
+
+            <section class="rounded-[1.5rem] border border-amber-200/10 bg-slate-950/30 p-4">
+              <button
+                class="flex w-full items-center justify-between gap-3 text-left"
+                type="button"
+                @click="toggleToolSection('spawn')"
+              >
+                <span class="text-xs uppercase tracking-[0.2em] text-amber-200/50">Спаун игроков</span>
+                <span class="text-lg text-amber-100/70">{{ openToolSections.includes('spawn') ? '−' : '+' }}</span>
+              </button>
+
+              <div
+                v-if="openToolSections.includes('spawn')"
+                class="mt-4 space-y-4"
+              >
+                <div class="rounded-2xl border border-amber-200/10 bg-white/5 px-4 py-3 text-sm text-slate-300">
+                  <template v-if="playerSpawnPoint">
+                    Точка спауна: {{ playerSpawnPoint.x }},{{ playerSpawnPoint.y }}
+                  </template>
+                  <template v-else>
+                    Точка спауна еще не выбрана.
+                  </template>
+                </div>
+
+                <button
+                  :class="activePlayerSpawnMode ? 'border-emerald-300/35 bg-emerald-500/10 text-emerald-100' : 'border-amber-200/10 bg-white/5 text-slate-200'"
+                  class="flex w-full items-center justify-center rounded-2xl border px-4 py-3 text-sm transition hover:border-emerald-300/35"
+                  type="button"
+                  @click="activePlayerSpawnMode = !activePlayerSpawnMode; activeObjectKind = null; activeActorId = null; activeEraseMode = false"
+                >
+                  {{ activePlayerSpawnMode ? 'Кликни по клетке для точки спауна' : 'Выбрать точку спауна' }}
+                </button>
+
+                <button
+                  v-if="playerSpawnPoint"
+                  class="flex w-full items-center justify-center rounded-2xl border border-rose-300/15 bg-rose-500/10 px-4 py-3 text-sm text-rose-100 transition hover:bg-rose-500/20"
+                  type="button"
+                  @click="playerSpawnPoint = null; activePlayerSpawnMode = false"
+                >
+                  Очистить точку спауна
+                </button>
+
+                <p class="text-sm leading-6 text-slate-300">
+                  После запуска сцены герои игроков появятся рядом с этой клеткой, если она указана.
+                </p>
               </div>
             </section>
 

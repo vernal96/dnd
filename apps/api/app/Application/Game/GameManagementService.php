@@ -31,6 +31,8 @@ final class GameManagementService
 			->where('gm_user_id', $user->id)
 			->with([
 				'gm:id,name,email',
+				'members.user:id,name,email',
+				'members.playerCharacter:id,user_id,name,description,race,subrace,class,level,experience,status,image_path,created_at,updated_at',
 				'activeSceneState:id,game_id,scene_template_id,status,version',
 				'sceneStates:id,game_id,scene_template_id,status,version,created_at,updated_at',
 				'sceneStates.sceneTemplate:id,name,description,width,height,status,metadata,created_at,updated_at',
@@ -65,6 +67,7 @@ final class GameManagementService
 			$createdGame->members()->create([
 				'game_id' => $createdGame->id,
 				'user_id' => $user->id,
+				'player_character_id' => null,
 				'role' => 'gm',
 				'status' => 'active',
 				'joined_at' => now(),
@@ -75,6 +78,8 @@ final class GameManagementService
 
 		$game->load([
 			'gm:id,name,email',
+			'members.user:id,name,email',
+			'members.playerCharacter:id,user_id,name,description,race,subrace,class,level,experience,status,image_path,created_at,updated_at',
 			'activeSceneState:id,game_id,scene_template_id,status,version',
 			'sceneStates:id,game_id,scene_template_id,status,version,created_at,updated_at',
 			'sceneStates.sceneTemplate:id,name,description,width,height,status,metadata,created_at,updated_at',
@@ -121,6 +126,7 @@ final class GameManagementService
 			$game->load([
 			'gm:id,name,email',
 			'members.user:id,name,email',
+			'members.playerCharacter:id,user_id,name,description,race,subrace,class,level,experience,status,image_path,created_at,updated_at',
 			'invitations' => static function ($query): void {
 				$query
 					->where('status', 'pending')
@@ -188,6 +194,7 @@ final class GameManagementService
 			->with([
 				'gm:id,name,email',
 				'members.user:id,name,email',
+				'members.playerCharacter:id,user_id,name,description,race,subrace,class,level,experience,status,image_path,created_at,updated_at',
 				'invitations' => static function ($query): void {
 					$query
 						->where('status', 'pending')

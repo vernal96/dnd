@@ -28,10 +28,10 @@ final class SceneObjectCatalog
 	 *
 	 * @return array<int, array<string, mixed>>
 	 */
-	public static function all(): array
+	public static function all(?callable $imageUrlResolver = null): array
 	{
 		return array_map(
-			static fn (SceneObjectDefinition $definition): array => $definition->toArray(),
+			static fn (SceneObjectDefinition $definition): array => $definition->toArray($imageUrlResolver),
 			self::definitions(),
 		);
 	}

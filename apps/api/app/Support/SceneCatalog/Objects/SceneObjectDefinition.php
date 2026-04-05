@@ -9,15 +9,21 @@ namespace App\Support\SceneCatalog\Objects;
  */
 interface SceneObjectDefinition
 {
+
 	/**
 	 * Возвращает код authored-объекта.
 	 */
 	public function code(): string;
 
 	/**
+	 * Возвращает путь картинки.
+	 */
+	public function image(): string;
+
+	/**
 	 * Возвращает серверное представление authored-объекта.
 	 *
 	 * @return array<string, mixed>
 	 */
-	public function toArray(): array;
+	public function toArray(?callable $imageUrlResolver = null): array;
 }

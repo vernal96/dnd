@@ -3,6 +3,16 @@
 use Illuminate\Support\Str;
 use Pdo\Mysql;
 
+$argv = $_SERVER['argv'] ?? [];
+$isRunningTests = defined('PHPUNIT_COMPOSER_INSTALL')
+    || defined('__PHPUNIT_PHAR__')
+    || in_array('test', $argv, true)
+    || in_array('phpunit', $argv, true);
+$testingDatabase = env('DB_TEST_DATABASE', database_path('testing.sqlite'));
+$defaultConnection = $isRunningTests
+    ? env('DB_TEST_CONNECTION', 'sqlite')
+    : env('DB_CONNECTION', 'sqlite');
+
 return [
 
     /*
@@ -17,7 +27,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => $defaultConnection,
 
     /*
     |--------------------------------------------------------------------------
@@ -34,8 +44,8 @@ return [
 
         'sqlite' => [
             'driver' => 'sqlite',
-            'url' => env('DB_URL'),
-            'database' => env('DB_DATABASE', database_path('database.sqlite')),
+            'url' => $isRunningTests ? env('DB_TEST_URL') : env('DB_URL'),
+            'database' => $isRunningTests ? $testingDatabase : env('DB_DATABASE', database_path('database.sqlite')),
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
             'busy_timeout' => null,

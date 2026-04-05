@@ -2,6 +2,7 @@ import type {
   CreateGamePayload,
   GameDetail,
   GameInvitationSummary,
+  PlayerActiveGameSummary,
   GameStatus,
   GameStatusFilter,
   GameSummary,
@@ -9,6 +10,7 @@ import type {
   PaginatedGamesResponse,
 } from '@/types/game';
 import { fetchWithSession } from '@/services/httpApi';
+import type { PlayerCharacter } from '@/types/playerCharacter';
 
 /**
  * Возвращает список игр текущего мастера.
@@ -80,11 +82,21 @@ export function fetchPlayerInvitations(): Promise<GameInvitationSummary[]> {
 }
 
 /**
+ * Возвращает доступных персонажей для принятия приглашения.
+ */
+export function fetchInvitationAvailableCharacters(token: string): Promise<PlayerCharacter[]> {
+  return fetchWithSession<PlayerCharacter[]>(`/game-invitations/${token}/characters`);
+}
+
+/**
  * Принимает одно приглашение в игру.
  */
-export function acceptPlayerInvitation(token: string): Promise<GameInvitationSummary> {
+export function acceptPlayerInvitation(token: string, characterId: number): Promise<GameInvitationSummary> {
   return fetchWithSession<GameInvitationSummary>(`/game-invitations/${token}/accept`, {
     method: 'POST',
+    body: JSON.stringify({
+      character_id: characterId,
+    }),
   });
 }
 
@@ -95,4 +107,11 @@ export function declinePlayerInvitation(token: string): Promise<GameInvitationSu
   return fetchWithSession<GameInvitationSummary>(`/game-invitations/${token}/decline`, {
     method: 'POST',
   });
+}
+
+/**
+ * Возвращает активные игры текущего игрока, где уже запущена сцена.
+ */
+export function fetchPlayerActiveGames(): Promise<PlayerActiveGameSummary[]> {
+  return fetchWithSession<PlayerActiveGameSummary[]>('/player/games/active');
 }

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {ChevronLeft, Map, Pencil, Plus, ScrollText, Shield, Trash2, UserRound, Users} from 'lucide-vue-next';
+import {ChevronLeft, Map, Pencil, Play, Plus, ScrollText, Shield, Trash2, UserRound, Users} from 'lucide-vue-next';
 import {computed, onMounted, onUnmounted, ref} from 'vue';
 import {RouterLink, useRoute, useRouter} from 'vue-router';
 import CabinetShell from '@/components/cabinet/CabinetShell.vue';
@@ -10,6 +10,7 @@ import {usePlayerInvitations} from '@/composables/usePlayerInvitations';
 import {connectRealtime, subscribeRealtime} from '@/composables/useRealtimeSocket';
 import {useToastCenter} from '@/composables/useToastCenter';
 import {fetchGameActors} from '@/services/actorApi';
+import {activateRuntimeScene} from '@/services/runtimeSceneApi';
 import {createGameScene, deleteGameScene} from '@/services/sceneApi';
 import {fetchGame, inviteGameMember, removeGameMember, updateGameStatus} from '@/services/gameApi';
 import type {GameActor} from '@/types/actor';
@@ -197,6 +198,39 @@ async function handleDeleteScene(sceneId: number): Promise<void> {
   } finally {
     isSceneUpdating.value = false;
   }
+}
+
+/**
+ * Запускает выбранную authored-сцену как активную runtime-сцену и открывает режим игры.
+ */
+async function handleActivateScene(sceneId: number): Promise<void> {
+  if (game.value === null) {
+    return;
+  }
+
+  isSceneUpdating.value = true;
+  gameError.value = '';
+
+  try {
+    await activateRuntimeScene(game.value.id, sceneId);
+    await loadGame();
+    await router.push(`/cabinet/gm/games/${game.value.id}/runtime`);
+  } catch (error) {
+    gameError.value = (error as Error).message;
+  } finally {
+    isSceneUpdating.value = false;
+  }
+}
+
+/**
+ * Открывает уже запущенную runtime-сцену игры.
+ */
+async function handleOpenRuntime(): Promise<void> {
+  if (game.value === null || game.value.active_scene_state_id === null) {
+    return;
+  }
+
+  await router.push(`/cabinet/gm/games/${game.value.id}/runtime`);
 }
 
 /**
@@ -406,34 +440,113 @@ onUnmounted(() => {
             <div
                 v-for="member in game.members"
                 :key="member.id"
-                class="rounded-2xl border border-amber-200/10 bg-slate-950/30 px-4 py-4"
+                class="overflow-hidden rounded-[1.5rem] border border-amber-200/10 bg-slate-950/30"
             >
-              <div class="flex items-center justify-between gap-3">
-                <p class="font-medium text-amber-50">
-                  {{ member.user.name }}
-                </p>
-                <div class="flex items-center gap-2">
-                  <span
-                      class="rounded-full border border-amber-200/10 bg-white/5 px-3 py-1 text-xs uppercase text-amber-100/80">
-                    {{ formatMemberRole(member.role) }}
-                  </span>
-                  <button
-                      v-if="member.role !== 'gm'"
-                      :disabled="isMemberUpdating"
-                      class="rounded-full border border-rose-300/15 bg-rose-500/10 p-2 text-rose-200 transition hover:bg-rose-500/20"
-                      type="button"
-                      @click="handleRemoveMember(member.id)"
+              <div
+                  v-if="member.player_character"
+                  class="grid min-h-56 md:grid-cols-[10rem_minmax(0,1fr)]"
+              >
+                <div class="border-b border-amber-200/10 bg-slate-950/40 md:border-b-0 md:border-r">
+                  <img
+                      v-if="member.player_character.image_url"
+                      :alt="member.player_character.name"
+                      :src="member.player_character.image_url"
+                      class="h-full w-full object-cover object-top"
                   >
-                    <Trash2 class="h-4 w-4"/>
-                  </button>
+                  <div
+                      v-else
+                      class="flex h-full min-h-56 items-center justify-center text-3xl font-display text-amber-100/80"
+                  >
+                    {{ member.player_character.name.slice(0, 1) }}
+                  </div>
+                </div>
+
+                <div class="p-5">
+                  <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p class="text-xs uppercase text-amber-200/50">
+                        {{ formatMemberRole(member.role) }}
+                      </p>
+                      <h3 class="mt-2 font-display text-3xl text-amber-50">
+                        {{ member.player_character.name }}
+                      </h3>
+                      <p class="mt-2 text-sm text-slate-300">
+                        Игрок: {{ member.user.name }} · {{ member.user.email }}
+                      </p>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                      <span
+                          class="rounded-full border border-amber-200/10 bg-white/5 px-3 py-1 text-xs uppercase text-amber-100/80">
+                        {{ member.status === 'active' ? 'Активен' : member.status }}
+                      </span>
+                      <button
+                          v-if="member.role !== 'gm'"
+                          :disabled="isMemberUpdating"
+                          class="rounded-full border border-rose-300/15 bg-rose-500/10 p-2 text-rose-200 transition hover:bg-rose-500/20"
+                          type="button"
+                          @click="handleRemoveMember(member.id)"
+                      >
+                        <Trash2 class="h-4 w-4"/>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="mt-4 flex flex-wrap gap-2 text-xs uppercase text-slate-300">
+                    <span class="rounded-full border border-amber-200/10 bg-white/5 px-3 py-2">
+                      {{ member.player_character.race || 'Без расы' }}
+                      <template v-if="member.player_character.subrace">
+                        · {{ member.player_character.subrace }}
+                      </template>
+                    </span>
+                    <span class="rounded-full border border-amber-200/10 bg-white/5 px-3 py-2">
+                      {{ member.player_character.class || 'Без класса' }}
+                    </span>
+                    <span class="rounded-full border border-amber-200/10 bg-white/5 px-3 py-2">
+                      Ур. {{ member.player_character.level }}
+                    </span>
+                    <span class="rounded-full border border-amber-200/10 bg-white/5 px-3 py-2">
+                      XP {{ member.player_character.experience }}
+                    </span>
+                  </div>
+
+                  <p class="mt-4 text-sm leading-7 text-slate-300">
+                    {{ member.player_character.description || 'Описание героя пока не заполнено.' }}
+                  </p>
                 </div>
               </div>
-              <p class="mt-2 text-sm text-slate-300">
-                {{ member.user.email }}
-              </p>
-              <p class="mt-2 text-xs uppercase text-slate-400">
-                Статус: {{ member.status === 'active' ? 'Активен' : member.status }}
-              </p>
+
+              <div
+                  v-else
+                  class="px-4 py-4"
+              >
+                <div class="flex items-center justify-between gap-3">
+                  <p class="font-medium text-amber-50">
+                    {{ member.user.name }}
+                  </p>
+                  <div class="flex items-center gap-2">
+                    <span
+                        class="rounded-full border border-amber-200/10 bg-white/5 px-3 py-1 text-xs uppercase text-amber-100/80">
+                      {{ formatMemberRole(member.role) }}
+                    </span>
+                    <button
+                        v-if="member.role !== 'gm'"
+                        :disabled="isMemberUpdating"
+                        class="rounded-full border border-rose-300/15 bg-rose-500/10 p-2 text-rose-200 transition hover:bg-rose-500/20"
+                        type="button"
+                        @click="handleRemoveMember(member.id)"
+                    >
+                      <Trash2 class="h-4 w-4"/>
+                    </button>
+                  </div>
+                </div>
+                <p class="mt-2 text-sm text-slate-300">
+                  {{ member.user.email }}
+                </p>
+                <p class="mt-2 text-xs uppercase text-slate-400">
+                  {{ member.role === 'player' ? 'Герой пока не выбран' : 'Мастер стола' }}
+                </p>
+              </div>
             </div>
           </div>
         </section>
@@ -445,7 +558,7 @@ onUnmounted(() => {
                 Сцены
               </p>
               <p class="mt-2 text-sm text-slate-300">
-                Авторские сцены этой игры. Отсюда можно создать, удалить и открыть редактор.
+                Авторские сцены этой игры. Их можно редактировать, запускать и открывать в runtime-режиме.
               </p>
             </div>
 
@@ -505,6 +618,26 @@ onUnmounted(() => {
               </div>
 
               <div class="mt-4 flex flex-wrap gap-2">
+                <button
+                    :disabled="isSceneUpdating"
+                    class="inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-100 transition hover:bg-emerald-500/20"
+                    type="button"
+                    @click="handleActivateScene(scene.id)"
+                >
+                  <Play class="h-4 w-4"/>
+                  {{ game.active_scene_state_id === scene.id ? 'Перезапустить' : 'Запустить' }}
+                </button>
+
+                <button
+                    v-if="game.active_scene_state_id === scene.id"
+                    class="inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-300/10 px-4 py-2 text-sm text-amber-50 transition hover:bg-amber-300/15"
+                    type="button"
+                    @click="handleOpenRuntime"
+                >
+                  <Map class="h-4 w-4"/>
+                  Открыть сцену
+                </button>
+
                 <RouterLink
                     :to="`/cabinet/gm/games/${game.id}/scenes/${scene.id}`"
                     class="inline-flex items-center gap-2 rounded-full border border-sky-300/20 bg-sky-500/10 px-4 py-2 text-sm text-sky-100 transition hover:bg-sky-500/20"

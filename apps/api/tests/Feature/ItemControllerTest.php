@@ -75,6 +75,7 @@ final class ItemControllerTest extends TestCase
 			->assertJsonPath('10.type', 'ranged-weapon')
 			->assertJsonPath('10.code', 'light-crossbow')
 			->assertJsonPath('10.damageDice', '1d8')
+			->assertJsonPath('0.image_url', '/api/item-images/club.png')
 			->assertJsonPath('10.attackAbilities.0', 'dex')
 			->assertJsonPath('34.code', 'net')
 			->assertJsonPath('34.damageDice', null)
@@ -93,8 +94,8 @@ final class ItemControllerTest extends TestCase
 			->assertJsonPath('47.armorClassBonus', 2)
 			->assertJsonPath('35.category', 'light-armor')
 			->assertJsonPath('48.name', 'Рюкзак')
-			->assertJsonPath('81.code', 'healers-kit')
-			->assertJsonPath('92.code', 'map-or-scroll-case')
+			->assertJsonPath('80.code', 'healers-kit')
+			->assertJsonPath('91.code', 'map-or-scroll-case')
 			->assertJsonPath('103.code', 'priest-pack')
 			->assertJsonPath('108.code', 'cloak');
 	}
@@ -126,7 +127,8 @@ final class ItemControllerTest extends TestCase
 			->assertJsonPath('armorClassAbility', null)
 			->assertJsonPath('armorClassAbilityCap', null)
 			->assertJsonPath('armorClassBonus', null)
-			->assertJsonPath('description', null)
+			->assertJsonPath('description', 'Короткий клинок для ближнего боя и броска. Благодаря балансу подходит как для силы, так и для точных ловких ударов.')
+			->assertJsonPath('image_url', '/api/item-images/dagger.png')
 			->assertJsonPath('isActive', true);
 	}
 

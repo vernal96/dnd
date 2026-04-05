@@ -70,6 +70,29 @@ final class PlayerCharacterImageStorageService
 	}
 
 	/**
+	 * Возвращает файл изображения персонажа по имени без проверки владельца.
+	 */
+	public function findImageByFileName(string $fileName): ?GameImageFileData
+	{
+		$safeFileName = basename($fileName);
+		$disk = $this->getDisk();
+
+		foreach ($disk->allFiles('player-characters') as $path) {
+			if (basename($path) !== $safeFileName) {
+				continue;
+			}
+
+			return new GameImageFileData(
+				absolutePath: $disk->path($path),
+				fileName: $safeFileName,
+				mimeType: $this->resolveMimeType($disk, $path),
+			);
+		}
+
+		return null;
+	}
+
+	/**
 	 * Возвращает относительный путь изображения персонажа для сохранения в БД.
 	 */
 	public function buildImagePath(string $fileName, User $user): string

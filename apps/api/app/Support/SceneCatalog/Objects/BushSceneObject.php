@@ -9,6 +9,7 @@ namespace App\Support\SceneCatalog\Objects;
  */
 final class BushSceneObject implements SceneObjectDefinition
 {
+
 	/**
 	 * Возвращает код authored-объекта.
 	 */
@@ -17,15 +18,21 @@ final class BushSceneObject implements SceneObjectDefinition
 		return 'bush';
 	}
 
+	public function image(): string
+	{
+		return 'bush.png';
+	}
+
 	/**
 	 * Возвращает серверное представление authored-объекта.
 	 *
 	 * @return array<string, mixed>
 	 */
-	public function toArray(): array
+	public function toArray(?callable $imageUrlResolver = null): array
 	{
 		return [
 			'code' => $this->code(),
+			'image_url' => is_callable($imageUrlResolver) ? $imageUrlResolver($this->image()) : null,
 			'name' => 'Куст',
 			'width' => 1,
 			'height' => 1,

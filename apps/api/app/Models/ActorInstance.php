@@ -33,6 +33,8 @@ use Illuminate\Support\Carbon;
  * @property array<string, mixed>|null $resources
  * @property array<string, mixed>|null $temporary_effects
  * @property array<string, mixed>|null $runtime_state
+ * @property string|null $image_url
+ * @property int|null $movement_speed
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -69,6 +71,11 @@ class ActorInstance extends Model
 		'resources' => 'array',
 		'temporary_effects' => 'array',
 		'runtime_state' => 'array',
+	];
+
+	protected $appends = [
+		'image_url',
+		'movement_speed',
 	];
 
 	/**
@@ -109,5 +116,29 @@ class ActorInstance extends Model
 	public function encounterParticipants(): HasMany
 	{
 		return $this->hasMany(EncounterParticipant::class, 'actor_id', 'id');
+	}
+
+	/**
+	 * Возвращает публичный URL портрета runtime-актора, если он был перенесен из шаблона.
+	 */
+	public function getImageUrlAttribute(): ?string
+	{
+		$imageUrl = $this->runtime_state['image_url'] ?? null;
+
+		return is_string($imageUrl) && $imageUrl !== ''
+			? $imageUrl
+			: null;
+	}
+
+	/**
+	 * Возвращает скорость перемещения runtime-актора в клетках.
+	 */
+	public function getMovementSpeedAttribute(): ?int
+	{
+		$movementSpeed = $this->runtime_state['movement_speed'] ?? null;
+
+		return is_int($movementSpeed)
+			? $movementSpeed
+			: null;
 	}
 }
