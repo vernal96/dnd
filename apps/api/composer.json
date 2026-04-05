@@ -48,7 +48,7 @@
         ],
         "test": [
             "@php artisan config:clear --ansi",
-            "@php artisan test"
+            "@php artisan test --env=testing"
         ],
         "analyse": [
             "@php vendor/bin/phpstan analyse --memory-limit=1G"

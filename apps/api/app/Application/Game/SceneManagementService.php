@@ -6,6 +6,7 @@ namespace App\Application\Game;
 
 use App\Data\Game\CreateSceneData;
 use App\Data\Game\UpdateSceneData;
+use App\Models\Actor;
 use App\Models\Game;
 use App\Models\GameSceneState;
 use App\Models\SceneTemplate;
@@ -103,7 +104,7 @@ final class SceneManagementService
 			return null;
 		}
 
-		DB::transaction(function () use ($data, $sceneState): void {
+		DB::transaction(function () use ($data, $sceneState, $user): void {
 			$sceneTemplate = $sceneState->sceneTemplate()->firstOrFail();
 			$sceneTemplate->fill([
 				'name' => $data->name,
@@ -126,6 +127,13 @@ final class SceneManagementService
 			$sceneTemplate->objects()->createMany($this->buildObjectRows(
 				$sceneTemplate->id,
 				$data->objects,
+			));
+
+			$sceneTemplate->actorPlacements()->delete();
+			$sceneTemplate->actorPlacements()->createMany($this->buildActorPlacementRows(
+				$sceneTemplate->id,
+				$user->id,
+				$data->actors,
 			));
 
 			$sceneState->forceFill([
@@ -201,6 +209,8 @@ final class SceneManagementService
 			'sceneTemplate:id,created_by,name,description,width,height,status,metadata,created_at,updated_at',
 			'sceneTemplate.cells',
 			'sceneTemplate.objects',
+			'sceneTemplate.actorPlacements',
+			'sceneTemplate.actorPlacements.actor',
 		]);
 
 		return $sceneState;
@@ -270,6 +280,40 @@ final class SceneManagementService
 				'is_interactive' => $object['isInteractive'],
 				'state' => $object['state'],
 				'trigger_rules' => null,
+				'created_at' => $timestamp,
+				'updated_at' => $timestamp,
+			];
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * Формирует строки размещения актеров для authored-сцены.
+	 *
+	 * @param array<int, array{actorId:int,x:int,y:int}> $actors
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function buildActorPlacementRows(int $sceneTemplateId, int $gmUserId, array $actors): array
+	{
+		$rows = [];
+		$timestamp = now();
+		$allowedActorIds = Actor::query()
+			->where('gm_user_id', $gmUserId)
+			->pluck('id')
+			->all();
+		$allowedActorMap = array_fill_keys(array_map(static fn (mixed $id): int => (int) $id, $allowedActorIds), true);
+
+		foreach ($actors as $actor) {
+			if (!isset($allowedActorMap[$actor['actorId']])) {
+				continue;
+			}
+
+			$rows[] = [
+				'scene_template_id' => $sceneTemplateId,
+				'actor_id' => $actor['actorId'],
+				'x' => $actor['x'],
+				'y' => $actor['y'],
 				'created_at' => $timestamp,
 				'updated_at' => $timestamp,
 			];

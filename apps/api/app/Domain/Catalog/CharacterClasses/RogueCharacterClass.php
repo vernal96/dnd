@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\CharacterClasses;
 
+use App\Data\Catalog\AbilityBonusesData;
 use App\Data\Catalog\CharacterClassSkillProgressionData;
 use App\Data\Catalog\StartingEquipmentEntryData;
 use App\Domain\Catalog\AbstractCharacterClass;
 use App\Domain\Catalog\AbstractCharacterSubclass;
+use App\Domain\Catalog\Abilities\DexterityAbility;
 use App\Domain\Catalog\CharacterSubclasses\ArcaneTricksterCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\AssassinCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\SoulknifeCharacterSubclass;
@@ -67,6 +69,24 @@ final class RogueCharacterClass extends AbstractCharacterClass
 	public function getDescription(): string
 	{
 		return 'Хитрый специалист скрытности, ловкости и точечных ударов по уязвимым местам.';
+	}
+
+	/**
+	 * Возвращает бонусы характеристик плута.
+	 */
+	public function getAbilityBonuses(): AbilityBonusesData
+	{
+		return new AbilityBonusesData(dexterity: 2);
+	}
+
+	/**
+	 * Возвращает основные характеристики плута.
+	 *
+	 * @return list<\App\Domain\Catalog\Ability>
+	 */
+	public function getPrimaryAbilities(): array
+	{
+		return [new DexterityAbility];
 	}
 
 	/**

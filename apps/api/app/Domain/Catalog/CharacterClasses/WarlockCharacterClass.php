@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\CharacterClasses;
 
+use App\Data\Catalog\AbilityBonusesData;
 use App\Data\Catalog\CharacterClassSkillProgressionData;
 use App\Data\Catalog\StartingEquipmentEntryData;
 use App\Domain\Catalog\AbstractCharacterClass;
 use App\Domain\Catalog\AbstractCharacterSubclass;
+use App\Domain\Catalog\Abilities\CharismaAbility;
 use App\Domain\Catalog\CharacterSubclasses\ArchfeyPatronCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\CelestialPatronCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\FiendPatronCharacterSubclass;
@@ -58,6 +60,24 @@ final class WarlockCharacterClass extends AbstractCharacterClass
 	public function getDescription(): string
 	{
 		return 'Заклинатель, получивший силу через договор с могущественным потусторонним покровителем.';
+	}
+
+	/**
+	 * Возвращает бонусы характеристик колдуна.
+	 */
+	public function getAbilityBonuses(): AbilityBonusesData
+	{
+		return new AbilityBonusesData(charisma: 2);
+	}
+
+	/**
+	 * Возвращает основные характеристики колдуна.
+	 *
+	 * @return list<\App\Domain\Catalog\Ability>
+	 */
+	public function getPrimaryAbilities(): array
+	{
+		return [new CharismaAbility];
 	}
 
 	/**

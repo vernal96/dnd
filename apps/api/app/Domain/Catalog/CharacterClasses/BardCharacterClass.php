@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\CharacterClasses;
 
+use App\Data\Catalog\AbilityBonusesData;
 use App\Data\Catalog\CharacterClassSkillProgressionData;
 use App\Data\Catalog\StartingEquipmentEntryData;
 use App\Domain\Catalog\AbstractCharacterClass;
 use App\Domain\Catalog\AbstractCharacterSubclass;
+use App\Domain\Catalog\Abilities\CharismaAbility;
+use App\Domain\Catalog\Abilities\DexterityAbility;
 use App\Domain\Catalog\CharacterSubclasses\CollegeOfDanceCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\CollegeOfGlamourCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\CollegeOfLoreCharacterSubclass;
@@ -62,6 +65,24 @@ final class BardCharacterClass extends AbstractCharacterClass
 	public function getDescription(): string
 	{
 		return 'Мастер вдохновения, магии и искусства, меняющий ход событий словом и мелодией.';
+	}
+
+	/**
+	 * Возвращает бонусы характеристик барда.
+	 */
+	public function getAbilityBonuses(): AbilityBonusesData
+	{
+		return new AbilityBonusesData(charisma: 2);
+	}
+
+	/**
+	 * Возвращает основные характеристики барда.
+	 *
+	 * @return list<\App\Domain\Catalog\Ability>
+	 */
+	public function getPrimaryAbilities(): array
+	{
+		return [new CharismaAbility, new DexterityAbility];
 	}
 
 	/**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Game;
 
+use App\Models\Actor;
 use App\Support\SceneCatalog\SceneObjectCatalog;
 use App\Support\SceneCatalog\SceneSurfaceCatalog;
 use Illuminate\Foundation\Http\FormRequest;
@@ -52,6 +53,10 @@ final class UpdateSceneRequest extends FormRequest
 			'objects.*.is_hidden' => ['nullable', 'boolean'],
 			'objects.*.is_interactive' => ['nullable', 'boolean'],
 			'objects.*.state' => ['nullable', 'array'],
+			'actors' => ['nullable', 'array'],
+			'actors.*.actor_id' => ['required', 'integer', 'distinct', 'exists:actors,id'],
+			'actors.*.x' => ['required', 'integer', 'min:0'],
+			'actors.*.y' => ['required', 'integer', 'min:0'],
 		];
 	}
 }

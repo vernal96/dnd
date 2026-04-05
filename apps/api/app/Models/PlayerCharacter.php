@@ -16,15 +16,19 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $user_id
  * @property string $name
+ * @property string|null $description
  * @property string|null $race
+ * @property string|null $subrace
  * @property string|null $class
  * @property int $level
  * @property int $experience
  * @property string $status
  * @property array<string, mixed>|null $base_stats
  * @property array<string, mixed>|null $derived_stats
+ * @property string|null $image_path
  * @property array<string, mixed>|null $unlocked_skills
  * @property array<string, mixed>|null $meta
+ * @property string|null $image_url
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -37,13 +41,16 @@ class PlayerCharacter extends Model
 	protected $fillable = [
 		'user_id',
 		'name',
+		'description',
 		'race',
+		'subrace',
 		'class',
 		'level',
 		'experience',
 		'status',
 		'base_stats',
 		'derived_stats',
+		'image_path',
 		'unlocked_skills',
 		'meta',
 	];
@@ -53,6 +60,10 @@ class PlayerCharacter extends Model
 		'derived_stats' => 'array',
 		'unlocked_skills' => 'array',
 		'meta' => 'array',
+	];
+
+	protected $appends = [
+		'image_url',
 	];
 
 	/**
@@ -77,5 +88,17 @@ class PlayerCharacter extends Model
 	public function actorInstances(): HasMany
 	{
 		return $this->hasMany(ActorInstance::class, 'player_character_id', 'id');
+	}
+
+	/**
+	 * Возвращает публичный URL изображения персонажа игрока из storage.
+	 */
+	public function getImageUrlAttribute(): ?string
+	{
+		if (!is_string($this->image_path) || $this->image_path === '') {
+			return null;
+		}
+
+		return '/api/player/character-images/' . basename($this->image_path);
 	}
 }

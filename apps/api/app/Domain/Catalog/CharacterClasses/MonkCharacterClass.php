@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\CharacterClasses;
 
+use App\Data\Catalog\AbilityBonusesData;
 use App\Data\Catalog\CharacterClassSkillProgressionData;
 use App\Data\Catalog\StartingEquipmentEntryData;
 use App\Domain\Catalog\AbstractCharacterClass;
 use App\Domain\Catalog\AbstractCharacterSubclass;
+use App\Domain\Catalog\Abilities\DexterityAbility;
+use App\Domain\Catalog\Abilities\WisdomAbility;
 use App\Domain\Catalog\CharacterSubclasses\WarriorOfMercyCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\WarriorOfShadowCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\WarriorOfTheElementsCharacterSubclass;
@@ -70,6 +73,24 @@ final class MonkCharacterClass extends AbstractCharacterClass
 	public function getDescription(): string
 	{
 		return 'Воин внутренней дисциплины, направляющий энергию тела и духа в сверхчеловеческое мастерство.';
+	}
+
+	/**
+	 * Возвращает бонусы характеристик монаха.
+	 */
+	public function getAbilityBonuses(): AbilityBonusesData
+	{
+		return new AbilityBonusesData(dexterity: 1, wisdom: 1);
+	}
+
+	/**
+	 * Возвращает основные характеристики монаха.
+	 *
+	 * @return list<\App\Domain\Catalog\Ability>
+	 */
+	public function getPrimaryAbilities(): array
+	{
+		return [new DexterityAbility, new WisdomAbility];
 	}
 
 	/**

@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import { ChevronLeft, Map, Pencil, Plus, ScrollText, Shield, Trash2, Users } from 'lucide-vue-next';
+import { ChevronLeft, Map, Pencil, Plus, ScrollText, Shield, Trash2, UserRound, Users } from 'lucide-vue-next';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import CabinetShell from '@/components/cabinet/CabinetShell.vue';
 import GmAddMemberForm from '@/components/gm/GmAddMemberForm.vue';
+import GmNpcManagerModal from '@/components/gm/GmNpcManagerModal.vue';
 import { useAuthSession } from '@/composables/useAuthSession';
 import { usePlayerInvitations } from '@/composables/usePlayerInvitations';
 import { connectRealtime, subscribeRealtime } from '@/composables/useRealtimeSocket';
 import { useToastCenter } from '@/composables/useToastCenter';
+import { fetchGameActors } from '@/services/actorApi';
 import { createGameScene, deleteGameScene } from '@/services/sceneApi';
 import { fetchGame, inviteGameMember, removeGameMember, updateGameStatus } from '@/services/gameApi';
+import type { GameActor } from '@/types/actor';
 import type { GameDetail, GameStatus } from '@/types/game';
 import type { RealtimeEventMessage } from '@/types/realtime';
 import { formatGameStatus } from '@/utils/gameStatus';
@@ -26,6 +29,8 @@ const isGameLoading = ref(false);
 const isStatusUpdating = ref(false);
 const isMemberUpdating = ref(false);
 const isSceneUpdating = ref(false);
+const actors = ref<GameActor[]>([]);
+const isNpcManagerOpen = ref(false);
 
 const gameId = computed<number | null>(() => {
   const rawValue = route.params.id;
@@ -61,6 +66,23 @@ async function loadGame(): Promise<void> {
     gameError.value = (error as Error).message;
   } finally {
     isGameLoading.value = false;
+  }
+}
+
+/**
+ * Загружает NPC текущей игры.
+ */
+async function loadActors(): Promise<void> {
+  if (gameId.value === null) {
+    actors.value = [];
+
+    return;
+  }
+
+  try {
+    actors.value = await fetchGameActors();
+  } catch (error) {
+    gameError.value = (error as Error).message;
   }
 }
 
@@ -236,6 +258,7 @@ onMounted(async () => {
   }
 
   await loadGame();
+  await loadActors();
   await loadInvitations();
   connectRealtime();
 });
@@ -504,6 +527,28 @@ onUnmounted(() => {
         </section>
 
         <section class="rounded-[1.75rem] border border-amber-200/10 bg-white/5 p-5">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p class="text-xs uppercase text-amber-200/50">
+                NPC
+              </p>
+              <p class="mt-2 text-sm text-slate-300">
+                В игре создано {{ actors.filter((actor) => actor.kind === 'npc').length }} NPC. Управление персонажами и их инвентарем вынесено в отдельное окно.
+              </p>
+            </div>
+
+            <button
+              class="inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-300/10 px-4 py-2 text-sm text-amber-50 transition hover:border-amber-200/40 hover:bg-amber-300/15"
+              type="button"
+              @click="isNpcManagerOpen = true"
+            >
+              <UserRound class="h-4 w-4" />
+              Открыть NPC
+            </button>
+          </div>
+        </section>
+
+        <section class="rounded-[1.75rem] border border-amber-200/10 bg-white/5 p-5">
           <p class="text-xs uppercase text-amber-200/50">
             Ожидают ответа
           </p>
@@ -542,5 +587,10 @@ onUnmounted(() => {
         </section>
       </template>
     </div>
+
+    <GmNpcManagerModal
+      :open="isNpcManagerOpen"
+      @close="isNpcManagerOpen = false; void loadActors()"
+    />
   </CabinetShell>
 </template>

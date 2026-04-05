@@ -28,7 +28,7 @@ final class UploadGameImageRequest extends FormRequest
 	public function rules(): array
 	{
 		return [
-			'file' => ['required', 'file', 'mimetypes:image/jpeg,image/png,image/webp,image/gif', 'max:10240'],
+			'file' => ['required', 'file', 'image', 'max:16384'],
 		];
 	}
 

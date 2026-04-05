@@ -3,7 +3,10 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\ActorInstanceController;
+use App\Http\Controllers\Api\ActorController;
+use App\Http\Controllers\Api\ActorImageController;
 use App\Http\Controllers\Api\AuthSessionController;
+use App\Http\Controllers\Api\AbilityController;
 use App\Http\Controllers\Api\CharacterClassController;
 use App\Http\Controllers\Api\GameController;
 use App\Http\Controllers\Api\GameImageController;
@@ -11,6 +14,8 @@ use App\Http\Controllers\Api\GameInvitationController;
 use App\Http\Controllers\Api\GameSceneController;
 use App\Http\Controllers\Api\GameSceneStateController;
 use App\Http\Controllers\Api\ItemController;
+use App\Http\Controllers\Api\PlayerCharacterController;
+use App\Http\Controllers\Api\PlayerCharacterImageController;
 use App\Http\Controllers\Api\RaceController;
 use App\Http\Controllers\Api\SceneCatalogController;
 use App\Http\Controllers\Api\SceneTemplateController;
@@ -51,8 +56,22 @@ Route::middleware([
     Route::get('/races/{race}', [RaceController::class, 'show'])->where('race', '[a-z0-9-]+');
     Route::get('/character-classes', [CharacterClassController::class, 'index']);
     Route::get('/character-classes/{characterClass}', [CharacterClassController::class, 'show'])->where('characterClass', '[a-z0-9-]+');
+    Route::get('/character-abilities', [AbilityController::class, 'index']);
     Route::get('/items', [ItemController::class, 'index']);
     Route::get('/items/{item}', [ItemController::class, 'show'])->where('item', '[a-z0-9-]+');
+    Route::get('/player/characters', [PlayerCharacterController::class, 'index']);
+    Route::post('/player/characters', [PlayerCharacterController::class, 'store']);
+    Route::patch('/player/characters/{character}/image', [PlayerCharacterController::class, 'updateImage']);
+    Route::post('/player/character-images', [PlayerCharacterImageController::class, 'store']);
+    Route::get('/player/character-images/{image}', [PlayerCharacterImageController::class, 'show'])->where('image', '[A-Za-z0-9._-]+');
+    Route::get('/gm/actors', [ActorController::class, 'index']);
+    Route::post('/gm/actors', [ActorController::class, 'store']);
+    Route::get('/gm/actors/{actor}', [ActorController::class, 'show']);
+    Route::put('/gm/actors/{actor}', [ActorController::class, 'update']);
+    Route::delete('/gm/actors/{actor}', [ActorController::class, 'destroy']);
+    Route::get('/gm/actor-images', [ActorImageController::class, 'index']);
+    Route::post('/gm/actor-images', [ActorImageController::class, 'store']);
+    Route::get('/gm/actor-images/{image}', [ActorImageController::class, 'show'])->where('image', '[A-Za-z0-9._-]+');
 
     Route::get('/games', [GameController::class, 'index']);
     Route::post('/games', [GameController::class, 'store']);

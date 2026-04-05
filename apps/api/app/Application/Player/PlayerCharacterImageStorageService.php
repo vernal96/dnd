@@ -1,0 +1,127 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Application\Player;
+
+use App\Data\Game\GameImageFileData;
+use App\Data\Game\StoredGameImageData;
+use App\Data\Game\UploadGameImageData;
+use App\Models\User;
+use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use RuntimeException;
+
+/**
+ * Управляет хранением изображений персонажей игрока.
+ */
+final class PlayerCharacterImageStorageService
+{
+	private const string DISK_NAME = 'game_images';
+
+	/**
+	 * Сохраняет новое изображение персонажа игрока.
+	 *
+	 * @throws RuntimeException Если файл не удалось сохранить.
+	 */
+	public function storeImage(UploadGameImageData $data, User $user): StoredGameImageData
+	{
+		$disk = $this->getDisk();
+		$directory = $this->buildDirectory($user);
+		$extension = $data->file->guessExtension();
+
+		if ($extension === null || $extension === '') {
+			$extension = $data->file->getClientOriginalExtension();
+		}
+
+		if ($extension === '') {
+			$extension = 'bin';
+		}
+
+		$fileName = Str::lower((string) Str::uuid()) . '.' . Str::lower($extension);
+		$storedPath = $disk->putFileAs($directory, $data->file, $fileName);
+
+		if (!is_string($storedPath) || $storedPath === '') {
+			throw new RuntimeException('Не удалось сохранить изображение персонажа.');
+		}
+
+		return $this->buildStoredImageData($storedPath, $disk, $data->file->getClientOriginalName());
+	}
+
+	/**
+	 * Возвращает бинарный файл изображения персонажа игрока.
+	 */
+	public function findImage(string $fileName, User $user): ?GameImageFileData
+	{
+		$safeFileName = basename($fileName);
+		$path = $this->buildDirectory($user) . '/' . $safeFileName;
+		$disk = $this->getDisk();
+
+		if (!$disk->exists($path)) {
+			return null;
+		}
+
+		return new GameImageFileData(
+			absolutePath: $disk->path($path),
+			fileName: $safeFileName,
+			mimeType: $this->resolveMimeType($disk, $path),
+		);
+	}
+
+	/**
+	 * Возвращает относительный путь изображения персонажа для сохранения в БД.
+	 */
+	public function buildImagePath(string $fileName, User $user): string
+	{
+		return $this->buildDirectory($user) . '/' . basename($fileName);
+	}
+
+	/**
+	 * Возвращает файловый диск для хранения изображений персонажей.
+	 */
+	private function getDisk(): Filesystem
+	{
+		return Storage::disk(self::DISK_NAME);
+	}
+
+	/**
+	 * Возвращает каталог хранения изображений персонажей пользователя.
+	 */
+	private function buildDirectory(User $user): string
+	{
+		return 'player-characters/' . $user->id;
+	}
+
+	/**
+	 * Собирает DTO сохраненного изображения.
+	 */
+	private function buildStoredImageData(
+		string $path,
+		Filesystem $disk,
+		?string $originalName = null,
+	): StoredGameImageData
+	{
+		$fileName = basename($path);
+
+		return new StoredGameImageData(
+			fileName: $fileName,
+			originalName: $originalName ?? $fileName,
+			mimeType: $this->resolveMimeType($disk, $path),
+			fileSize: $disk->size($path),
+			downloadUrl: '/api/player/character-images/' . $fileName,
+		);
+	}
+
+	/**
+	 * Возвращает MIME-тип файла или безопасное значение по умолчанию.
+	 */
+	private function resolveMimeType(Filesystem $disk, string $path): string
+	{
+		$mimeType = $disk->mimeType($path);
+
+		return is_string($mimeType) && $mimeType !== ''
+			? $mimeType
+			: 'application/octet-stream';
+	}
+}

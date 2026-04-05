@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\CharacterClasses;
 
+use App\Data\Catalog\AbilityBonusesData;
 use App\Data\Catalog\CharacterClassSkillProgressionData;
 use App\Data\Catalog\StartingEquipmentEntryData;
 use App\Domain\Catalog\AbstractCharacterClass;
 use App\Domain\Catalog\AbstractCharacterSubclass;
+use App\Domain\Catalog\Abilities\CharismaAbility;
+use App\Domain\Catalog\Abilities\StrengthAbility;
 use App\Domain\Catalog\CharacterSubclasses\OathOfDevotionCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\OathOfGloryCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\OathOfTheAncientsCharacterSubclass;
@@ -67,6 +70,24 @@ final class PaladinCharacterClass extends AbstractCharacterClass
 	public function getDescription(): string
 	{
 		return 'Священный воитель, следующий клятве и соединяющий веру, сталь и исцеляющий свет.';
+	}
+
+	/**
+	 * Возвращает бонусы характеристик паладина.
+	 */
+	public function getAbilityBonuses(): AbilityBonusesData
+	{
+		return new AbilityBonusesData(strength: 1, charisma: 1);
+	}
+
+	/**
+	 * Возвращает основные характеристики паладина.
+	 *
+	 * @return list<\App\Domain\Catalog\Ability>
+	 */
+	public function getPrimaryAbilities(): array
+	{
+		return [new StrengthAbility, new CharismaAbility];
 	}
 
 	/**

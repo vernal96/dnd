@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog;
 
+use App\Data\Catalog\AbilityBonusesData;
 use App\Data\Catalog\CharacterClassSkillProgressionData;
 use App\Data\Catalog\StartingEquipmentEntryData;
 
@@ -20,6 +21,8 @@ abstract class AbstractCharacterClass
 	 *     name: string,
 	 *     description: ?string,
 	 *     isActive: bool,
+	 *     abilityBonuses: array{str: int, dex: int, con: int, int: int, wis: int, cha: int},
+	 *     primaryAbilities: list<array{code: string, name: string, description: ?string}>,
 	 *     subclasses: list<array{code: string, name: string, description: ?string, isActive: bool}>,
 	 *     skillsByLevel: array{
 	 *         level1: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
@@ -70,6 +73,15 @@ abstract class AbstractCharacterClass
 			'name' => $this->getName(),
 			'description' => $this->getDescription(),
 			'isActive' => $this->isActive(),
+			'abilityBonuses' => $this->getAbilityBonuses()->toArray(),
+			'primaryAbilities' => array_map(
+				static fn(Ability $ability): array => [
+					'code' => $ability->getCode(),
+					'name' => $ability->getName(),
+					'description' => $ability->getDescription(),
+				],
+				$this->getPrimaryAbilities(),
+			),
 			'subclasses' => array_map(
 				static fn(AbstractCharacterSubclass $subclass): array => $subclass->toArray(),
 				$this->getActiveSubclasses(),
@@ -103,6 +115,24 @@ abstract class AbstractCharacterClass
 	public function isActive(): bool
 	{
 		return true;
+	}
+
+	/**
+	 * Возвращает бонусы характеристик, которые дает класс персонажа.
+	 */
+	public function getAbilityBonuses(): AbilityBonusesData
+	{
+		return new AbilityBonusesData;
+	}
+
+	/**
+	 * Возвращает основные характеристики класса персонажа.
+	 *
+	 * @return list<Ability>
+	 */
+	public function getPrimaryAbilities(): array
+	{
+		return [];
 	}
 
 	/**

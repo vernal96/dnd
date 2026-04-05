@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\CharacterClasses;
 
+use App\Data\Catalog\AbilityBonusesData;
 use App\Data\Catalog\CharacterClassSkillProgressionData;
 use App\Data\Catalog\StartingEquipmentEntryData;
 use App\Domain\Catalog\AbstractCharacterClass;
 use App\Domain\Catalog\AbstractCharacterSubclass;
+use App\Domain\Catalog\Abilities\IntelligenceAbility;
 use App\Domain\Catalog\CharacterSubclasses\AbjurerCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\DivinerCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\EvokerCharacterSubclass;
@@ -60,6 +62,24 @@ final class WizardCharacterClass extends AbstractCharacterClass
 	public function getDescription(): string
 	{
 		return 'Учёный магии, добивающийся могущества дисциплиной, исследованиями и точным знанием заклинаний.';
+	}
+
+	/**
+	 * Возвращает бонусы характеристик волшебника.
+	 */
+	public function getAbilityBonuses(): AbilityBonusesData
+	{
+		return new AbilityBonusesData(intelligence: 2);
+	}
+
+	/**
+	 * Возвращает основные характеристики волшебника.
+	 *
+	 * @return list<\App\Domain\Catalog\Ability>
+	 */
+	public function getPrimaryAbilities(): array
+	{
+		return [new IntelligenceAbility];
 	}
 
 	/**

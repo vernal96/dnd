@@ -15,6 +15,7 @@ final readonly class UpdateSceneData
 	 * @param array<string, mixed>|null $metadata
 	 * @param array<int, array{x:int,y:int,terrainType:string,elevation:int,isPassable:bool,blocksVision:bool,props:?array}> $cells
 	 * @param array<int, array{kind:string,name:?string,x:int,y:int,width:int,height:int,isHidden:bool,isInteractive:bool,state:?array}> $objects
+	 * @param array<int, array{actorId:int,x:int,y:int}> $actors
 	 */
 	public function __construct(
 		public string $name,
@@ -24,6 +25,7 @@ final readonly class UpdateSceneData
 		public ?array $metadata,
 		public array $cells,
 		public array $objects,
+		public array $actors,
 	)
 	{
 	}
@@ -31,7 +33,7 @@ final readonly class UpdateSceneData
 	/**
 	 * Создает DTO из валидированного payload.
 	 *
-	 * @param array{name:string,description?:string|null,width:int,height:int,metadata?:array<string,mixed>|null,cells:array<int, array<string, mixed>>,objects?:array<int, array<string, mixed>>} $payload
+	 * @param array{name:string,description?:string|null,width:int,height:int,metadata?:array<string,mixed>|null,cells:array<int, array<string, mixed>>,objects?:array<int, array<string, mixed>>,actors?:array<int, array<string, mixed>>} $payload
 	 */
 	public static function fromArray(array $payload): self
 	{
@@ -48,6 +50,10 @@ final readonly class UpdateSceneData
 			objects: array_map(
 				static fn (array $object): array => SceneObjectData::fromArray($object)->toArray(),
 				$payload['objects'] ?? [],
+			),
+			actors: array_map(
+				static fn (array $actor): array => SceneActorPlacementData::fromArray($actor)->toArray(),
+				$payload['actors'] ?? [],
 			),
 		);
 	}

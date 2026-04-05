@@ -69,6 +69,14 @@ class SceneTemplate extends Model
 	}
 
 	/**
+	 * Возвращает размещения persistent-акторов на шаблоне.
+	 */
+	public function actorPlacements(): HasMany
+	{
+		return $this->hasMany(SceneActorPlacement::class, 'scene_template_id', 'id');
+	}
+
+	/**
 	 * Возвращает runtime-состояния сцен, созданные из шаблона.
 	 */
 	public function sceneStates(): HasMany

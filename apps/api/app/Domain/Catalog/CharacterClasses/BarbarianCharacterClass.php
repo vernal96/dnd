@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\CharacterClasses;
 
+use App\Data\Catalog\AbilityBonusesData;
 use App\Data\Catalog\CharacterClassSkillProgressionData;
 use App\Data\Catalog\StartingEquipmentEntryData;
 use App\Domain\Catalog\AbstractCharacterClass;
 use App\Domain\Catalog\AbstractCharacterSubclass;
+use App\Domain\Catalog\Abilities\ConstitutionAbility;
+use App\Domain\Catalog\Abilities\StrengthAbility;
 use App\Domain\Catalog\CharacterSubclasses\PathOfTheBerserkerCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\PathOfTheWildHeartCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\PathOfTheWorldTreeCharacterSubclass;
@@ -69,6 +72,24 @@ final class BarbarianCharacterClass extends AbstractCharacterClass
 	public function getDescription(): string
 	{
 		return 'Яростный воин, полагающийся на силу, стойкость и боевое неистовство.';
+	}
+
+	/**
+	 * Возвращает бонусы характеристик варвара.
+	 */
+	public function getAbilityBonuses(): AbilityBonusesData
+	{
+		return new AbilityBonusesData(strength: 1, constitution: 1);
+	}
+
+	/**
+	 * Возвращает основные характеристики варвара.
+	 *
+	 * @return list<\App\Domain\Catalog\Ability>
+	 */
+	public function getPrimaryAbilities(): array
+	{
+		return [new StrengthAbility, new ConstitutionAbility];
 	}
 
 	/**

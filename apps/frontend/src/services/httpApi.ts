@@ -45,7 +45,7 @@ export async function fetchWithSession<TResponse>(
   const headers = new Headers(init?.headers);
   headers.set('Accept', 'application/json');
 
-  if (init?.body !== undefined) {
+  if (init?.body !== undefined && !(init.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json');
   }
 
@@ -80,7 +80,16 @@ export async function fetchWithSession<TResponse>(
   const payload = (await response.json()) as Record<string, unknown>;
 
   if (!response.ok) {
-    const message = typeof payload.message === 'string' ? payload.message : 'Не удалось выполнить запрос.';
+    let message = typeof payload.message === 'string' ? payload.message : 'Не удалось выполнить запрос.';
+
+    if (message === 'Не удалось выполнить запрос.' && payload.errors && typeof payload.errors === 'object') {
+      const firstErrorGroup = Object.values(payload.errors as Record<string, unknown>).find((value) => Array.isArray(value) && value.length > 0);
+
+      if (Array.isArray(firstErrorGroup) && typeof firstErrorGroup[0] === 'string') {
+        message = firstErrorGroup[0];
+      }
+    }
+
     throw new Error(message);
   }
 

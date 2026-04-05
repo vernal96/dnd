@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\CharacterClasses;
 
+use App\Data\Catalog\AbilityBonusesData;
 use App\Data\Catalog\CharacterClassSkillProgressionData;
 use App\Data\Catalog\StartingEquipmentEntryData;
 use App\Domain\Catalog\AbstractCharacterClass;
 use App\Domain\Catalog\AbstractCharacterSubclass;
+use App\Domain\Catalog\Abilities\WisdomAbility;
 use App\Domain\Catalog\CharacterSubclasses\LifeDomainCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\LightDomainCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\TrickeryDomainCharacterSubclass;
@@ -61,6 +63,24 @@ final class ClericCharacterClass extends AbstractCharacterClass
 	public function getDescription(): string
 	{
 		return 'Проводник божественной силы, сочетающий молитвы, поддержку и священное возмездие.';
+	}
+
+	/**
+	 * Возвращает бонусы характеристик жреца.
+	 */
+	public function getAbilityBonuses(): AbilityBonusesData
+	{
+		return new AbilityBonusesData(wisdom: 2);
+	}
+
+	/**
+	 * Возвращает основные характеристики жреца.
+	 *
+	 * @return list<\App\Domain\Catalog\Ability>
+	 */
+	public function getPrimaryAbilities(): array
+	{
+		return [new WisdomAbility];
 	}
 
 	/**
