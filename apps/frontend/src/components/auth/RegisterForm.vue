@@ -1,8 +1,8 @@
-<script setup lang="ts">
-import { KeyRound, Mail, UserRound } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+<script lang="ts" setup>
+import {KeyRound, Mail, UserRound} from 'lucide-vue-next';
+import {computed, ref} from 'vue';
 import FormTextInput from '@/components/form/FormTextInput.vue';
-import type { RegisterPayload } from '@/types/auth';
+import type {RegisterPayload} from '@/types/auth';
 
 defineProps<{
   pending: boolean;
@@ -49,8 +49,8 @@ function submitForm(): void {
 
 <template>
   <form
-    class="space-y-3.5"
-    @submit.prevent="submitForm"
+      class="space-y-3.5"
+      @submit.prevent="submitForm"
   >
     <div class="space-y-1.5">
       <h2 class="font-display text-[1.34rem] text-amber-50">
@@ -62,45 +62,45 @@ function submitForm(): void {
     </div>
 
     <FormTextInput
-      v-model="login"
-      autocomplete="username"
-      label="Логин"
-      name="login"
-      placeholder="Например, alrik"
-      :icon="UserRound"
+        v-model="login"
+        :icon="UserRound"
+        autocomplete="username"
+        label="Логин"
+        name="login"
+        placeholder="Например, alrik"
     />
 
     <FormTextInput
-      v-model="email"
-      autocomplete="email"
-      label="Email"
-      name="email"
-      placeholder="login@table.quest"
-      :icon="Mail"
+        v-model="email"
+        :icon="Mail"
+        autocomplete="email"
+        label="Email"
+        name="email"
+        placeholder="login@table.quest"
     />
 
     <FormTextInput
-      v-model="password"
-      autocomplete="new-password"
-      label="Пароль"
-      name="password"
-      placeholder="Минимум 8 символов"
-      type="password"
-      :icon="KeyRound"
+        v-model="password"
+        :icon="KeyRound"
+        autocomplete="new-password"
+        label="Пароль"
+        name="password"
+        placeholder="Минимум 8 символов"
+        type="password"
     />
 
     <p
-      v-if="localError"
-      class="rounded-2xl border border-rose-300/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200"
+        v-if="localError"
+        class="rounded-2xl border border-rose-300/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200"
     >
       {{ localError }}
     </p>
 
     <div>
       <button
-        class="cta-primary w-full"
-        :disabled="pending || isDisabled"
-        type="submit"
+          :disabled="pending || isDisabled"
+          class="cta-primary w-full"
+          type="submit"
       >
         {{ pending ? 'Создаем аккаунт...' : 'Создать аккаунт' }}
       </button>

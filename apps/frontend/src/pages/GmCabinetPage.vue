@@ -1,21 +1,21 @@
-<script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
+<script lang="ts" setup>
+import {onMounted, onUnmounted} from 'vue';
+import {useRouter} from 'vue-router';
 import CabinetShell from '@/components/cabinet/CabinetShell.vue';
-import { useAuthSession } from '@/composables/useAuthSession';
-import { usePlayerInvitations } from '@/composables/usePlayerInvitations';
-import { connectRealtime, subscribeRealtime } from '@/composables/useRealtimeSocket';
-import { useToastCenter } from '@/composables/useToastCenter';
-import { useGameMasterGames } from '@/composables/useGameMasterGames';
+import {useAuthSession} from '@/composables/useAuthSession';
+import {usePlayerInvitations} from '@/composables/usePlayerInvitations';
+import {connectRealtime, subscribeRealtime} from '@/composables/useRealtimeSocket';
+import {useToastCenter} from '@/composables/useToastCenter';
+import {useGameMasterGames} from '@/composables/useGameMasterGames';
 import GmCreateGameForm from '@/components/gm/GmCreateGameForm.vue';
 import GmGamesList from '@/components/gm/GmGamesList.vue';
-import type { CreateGamePayload } from '@/types/game';
-import type { RealtimeEventMessage } from '@/types/realtime';
+import type {CreateGamePayload} from '@/types/game';
+import type {RealtimeEventMessage} from '@/types/realtime';
 
 const router = useRouter();
-const { currentUser, ensureSessionLoaded, isAuthenticated, isPending, logoutUser } = useAuthSession();
-const { loadInvitations, pendingInvitationsCount } = usePlayerInvitations();
-const { pushToast } = useToastCenter();
+const {currentUser, ensureSessionLoaded, isAuthenticated, isPending, logoutUser} = useAuthSession();
+const {loadInvitations, pendingInvitationsCount} = usePlayerInvitations();
+const {pushToast} = useToastCenter();
 const {
   activeStatusFilter,
   applyStatusFilter,
@@ -47,9 +47,9 @@ async function handleCreateGame(payload: CreateGamePayload): Promise<void> {
  */
 async function handleRealtimeEvent(message: RealtimeEventMessage): Promise<void> {
   if (
-    message.event !== 'game-invitation.created'
-    && message.event !== 'game-invitation.accepted'
-    && message.event !== 'game-invitation.declined'
+      message.event !== 'game-invitation.created'
+      && message.event !== 'game-invitation.accepted'
+      && message.event !== 'game-invitation.declined'
   ) {
     return;
   }
@@ -99,12 +99,12 @@ onUnmounted(() => {
 
 <template>
   <CabinetShell
-    v-if="currentUser"
-    current-section="gm"
-    :pending="isPending"
-    :player-invitation-badge="pendingInvitationsCount"
-    :user="currentUser"
-    @logout="handleLogout"
+      v-if="currentUser"
+      :pending="isPending"
+      :player-invitation-badge="pendingInvitationsCount"
+      :user="currentUser"
+      current-section="gm"
+      @logout="handleLogout"
   >
     <div class="space-y-6">
       <div class="space-y-3">
@@ -120,22 +120,22 @@ onUnmounted(() => {
       </div>
 
       <div
-        v-if="errorMessage"
-        class="rounded-[1.3rem] border border-rose-300/20 bg-rose-500/10 px-4 py-3 text-sm leading-6 text-rose-100"
+          v-if="errorMessage"
+          class="rounded-[1.3rem] border border-rose-300/20 bg-rose-500/10 px-4 py-3 text-sm leading-6 text-rose-100"
       >
         {{ errorMessage }}
       </div>
 
       <GmGamesList
-        :active-status-filter="activeStatusFilter"
-        :games="games"
-        :loading="gamesPending"
-        @update:status-filter="applyStatusFilter"
+          :active-status-filter="activeStatusFilter"
+          :games="games"
+          :loading="gamesPending"
+          @update:status-filter="applyStatusFilter"
       />
 
       <GmCreateGameForm
-        :pending="gamesPending"
-        @submit="handleCreateGame"
+          :pending="gamesPending"
+          @submit="handleCreateGame"
       />
     </div>
   </CabinetShell>

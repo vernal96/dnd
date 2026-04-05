@@ -1,6 +1,6 @@
-<script setup lang="ts">
-import { onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
+<script lang="ts" setup>
+import {onMounted, ref} from 'vue';
+import {useRouter} from 'vue-router';
 import AuthBrand from '@/components/auth/AuthBrand.vue';
 import AuthFrame from '@/components/auth/AuthFrame.vue';
 import AuthTabs from '@/components/auth/AuthTabs.vue';
@@ -8,8 +8,8 @@ import ForgotPasswordForm from '@/components/auth/ForgotPasswordForm.vue';
 import FantasyBackground from '@/components/auth/FantasyBackground.vue';
 import LoginForm from '@/components/auth/LoginForm.vue';
 import RegisterForm from '@/components/auth/RegisterForm.vue';
-import { useAuthSession } from '@/composables/useAuthSession';
-import type { AuthMode, AuthView, ForgotPasswordPayload, LoginPayload, RegisterPayload } from '@/types/auth';
+import {useAuthSession} from '@/composables/useAuthSession';
+import type {AuthMode, AuthView, ForgotPasswordPayload, LoginPayload, RegisterPayload} from '@/types/auth';
 
 const router = useRouter();
 const mode = ref<AuthMode>('login');
@@ -93,13 +93,13 @@ onMounted(async () => {
 
 <template>
   <main class="relative isolate min-h-screen overflow-hidden px-4 py-4 sm:px-6">
-    <FantasyBackground />
+    <FantasyBackground/>
 
     <div class="relative mx-auto flex min-h-[calc(100vh-2rem)] max-w-2xl items-center justify-center">
       <AuthFrame>
-        <AuthBrand />
+        <AuthBrand/>
 
-        <div class="arcane-divider" />
+        <div class="arcane-divider"/>
 
         <div class="space-y-2.5">
           <div class="space-y-1">
@@ -112,49 +112,49 @@ onMounted(async () => {
           </div>
 
           <AuthTabs
-            v-if="view !== 'forgot-password'"
-            :model-value="mode"
-            @update:model-value="switchMode"
+              v-if="view !== 'forgot-password'"
+              :model-value="mode"
+              @update:model-value="switchMode"
           />
         </div>
 
         <div
-          v-if="feedbackMessage"
-          :class="
+            v-if="feedbackMessage"
+            :class="
             feedbackTone === 'error'
               ? 'border-rose-300/20 bg-rose-500/10 text-rose-100'
               : 'border-emerald-300/20 bg-emerald-500/10 text-emerald-100'
           "
-          class="rounded-[1.2rem] border px-4 py-3 text-sm leading-5"
+            class="rounded-[1.2rem] border px-4 py-3 text-sm leading-5"
         >
           {{ feedbackMessage }}
         </div>
 
         <Transition
-          mode="out-in"
-          name="mode-fade"
+            mode="out-in"
+            name="mode-fade"
         >
           <LoginForm
-            v-if="view === 'login'"
-            key="login"
-            :pending="isPending"
-            @forgot-password="openForgotPassword"
-            @submit="handleLogin"
+              v-if="view === 'login'"
+              key="login"
+              :pending="isPending"
+              @submit="handleLogin"
+              @forgot-password="openForgotPassword"
           />
 
           <RegisterForm
-            v-else-if="view === 'register'"
-            key="register"
-            :pending="isPending"
-            @submit="handleRegister"
+              v-else-if="view === 'register'"
+              key="register"
+              :pending="isPending"
+              @submit="handleRegister"
           />
 
           <ForgotPasswordForm
-            v-else
-            key="forgot-password"
-            :pending="isPending"
-            @back="backToLogin"
-            @submit="handleForgotPassword"
+              v-else
+              key="forgot-password"
+              :pending="isPending"
+              @back="backToLogin"
+              @submit="handleForgotPassword"
           />
         </Transition>
       </AuthFrame>

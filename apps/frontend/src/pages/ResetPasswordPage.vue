@@ -1,12 +1,12 @@
-<script setup lang="ts">
-import { computed, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+<script lang="ts" setup>
+import {computed, onMounted} from 'vue';
+import {useRoute, useRouter} from 'vue-router';
 import AuthBrand from '@/components/auth/AuthBrand.vue';
 import AuthFrame from '@/components/auth/AuthFrame.vue';
 import FantasyBackground from '@/components/auth/FantasyBackground.vue';
 import ResetPasswordForm from '@/components/auth/ResetPasswordForm.vue';
-import { useAuthSession } from '@/composables/useAuthSession';
-import type { ResetPasswordPayload } from '@/types/auth';
+import {useAuthSession} from '@/composables/useAuthSession';
+import type {ResetPasswordPayload} from '@/types/auth';
 
 const route = useRoute();
 const router = useRouter();
@@ -66,13 +66,13 @@ onMounted(async () => {
 
 <template>
   <main class="relative isolate min-h-screen overflow-hidden px-4 py-4 sm:px-6">
-    <FantasyBackground />
+    <FantasyBackground/>
 
     <div class="relative mx-auto flex min-h-[calc(100vh-2rem)] max-w-2xl items-center justify-center">
       <AuthFrame>
-        <AuthBrand />
+        <AuthBrand/>
 
-        <div class="arcane-divider" />
+        <div class="arcane-divider"/>
 
         <div class="space-y-1">
           <p class="text-xs uppercase text-amber-200/55">
@@ -84,41 +84,42 @@ onMounted(async () => {
         </div>
 
         <div
-          v-if="feedbackMessage"
-          :class="
+            v-if="feedbackMessage"
+            :class="
             feedbackTone === 'error'
               ? 'border-rose-300/20 bg-rose-500/10 text-rose-100'
               : 'border-emerald-300/20 bg-emerald-500/10 text-emerald-100'
           "
-          class="rounded-[1.2rem] border px-4 py-3 text-sm leading-5"
+            class="rounded-[1.2rem] border px-4 py-3 text-sm leading-5"
         >
           {{ feedbackMessage }}
         </div>
 
         <div
-          v-if="!hasValidLink"
-          class="space-y-3"
+            v-if="!hasValidLink"
+            class="space-y-3"
         >
-          <div class="rounded-[1.2rem] border border-rose-300/20 bg-rose-500/10 px-4 py-3 text-sm leading-5 text-rose-100">
+          <div
+              class="rounded-[1.2rem] border border-rose-300/20 bg-rose-500/10 px-4 py-3 text-sm leading-5 text-rose-100">
             Ссылка для сброса пароля недействительна или неполная.
           </div>
 
           <button
-            class="cta-secondary w-full"
-            type="button"
-            @click="backToLogin"
+              class="cta-secondary w-full"
+              type="button"
+              @click="backToLogin"
           >
             Вернуться ко входу
           </button>
         </div>
 
         <ResetPasswordForm
-          v-else
-          :email="email"
-          :pending="isPending"
-          :token="token"
-          @back="backToLogin"
-          @submit="handleResetPassword"
+            v-else
+            :email="email"
+            :pending="isPending"
+            :token="token"
+            @back="backToLogin"
+            @submit="handleResetPassword"
         />
       </AuthFrame>
     </div>

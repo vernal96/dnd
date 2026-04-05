@@ -1,27 +1,27 @@
-<script setup lang="ts">
-import { ChevronLeft, Map, Pencil, Plus, ScrollText, Shield, Trash2, UserRound, Users } from 'lucide-vue-next';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
-import { RouterLink, useRoute, useRouter } from 'vue-router';
+<script lang="ts" setup>
+import {ChevronLeft, Map, Pencil, Plus, ScrollText, Shield, Trash2, UserRound, Users} from 'lucide-vue-next';
+import {computed, onMounted, onUnmounted, ref} from 'vue';
+import {RouterLink, useRoute, useRouter} from 'vue-router';
 import CabinetShell from '@/components/cabinet/CabinetShell.vue';
 import GmAddMemberForm from '@/components/gm/GmAddMemberForm.vue';
 import GmNpcManagerModal from '@/components/gm/GmNpcManagerModal.vue';
-import { useAuthSession } from '@/composables/useAuthSession';
-import { usePlayerInvitations } from '@/composables/usePlayerInvitations';
-import { connectRealtime, subscribeRealtime } from '@/composables/useRealtimeSocket';
-import { useToastCenter } from '@/composables/useToastCenter';
-import { fetchGameActors } from '@/services/actorApi';
-import { createGameScene, deleteGameScene } from '@/services/sceneApi';
-import { fetchGame, inviteGameMember, removeGameMember, updateGameStatus } from '@/services/gameApi';
-import type { GameActor } from '@/types/actor';
-import type { GameDetail, GameStatus } from '@/types/game';
-import type { RealtimeEventMessage } from '@/types/realtime';
-import { formatGameStatus } from '@/utils/gameStatus';
+import {useAuthSession} from '@/composables/useAuthSession';
+import {usePlayerInvitations} from '@/composables/usePlayerInvitations';
+import {connectRealtime, subscribeRealtime} from '@/composables/useRealtimeSocket';
+import {useToastCenter} from '@/composables/useToastCenter';
+import {fetchGameActors} from '@/services/actorApi';
+import {createGameScene, deleteGameScene} from '@/services/sceneApi';
+import {fetchGame, inviteGameMember, removeGameMember, updateGameStatus} from '@/services/gameApi';
+import type {GameActor} from '@/types/actor';
+import type {GameDetail, GameStatus} from '@/types/game';
+import type {RealtimeEventMessage} from '@/types/realtime';
+import {formatGameStatus} from '@/utils/gameStatus';
 
 const route = useRoute();
 const router = useRouter();
-const { currentUser, ensureSessionLoaded, isAuthenticated, isPending, logoutUser } = useAuthSession();
-const { loadInvitations, pendingInvitationsCount } = usePlayerInvitations();
-const { pushToast } = useToastCenter();
+const {currentUser, ensureSessionLoaded, isAuthenticated, isPending, logoutUser} = useAuthSession();
+const {loadInvitations, pendingInvitationsCount} = usePlayerInvitations();
+const {pushToast} = useToastCenter();
 
 const game = ref<GameDetail | null>(null);
 const gameError = ref('');
@@ -87,10 +87,10 @@ async function loadActors(): Promise<void> {
 }
 
 const statusOptions: Array<{ label: string; value: GameStatus }> = [
-  { label: 'Черновик', value: 'draft' },
-  { label: 'Активна', value: 'active' },
-  { label: 'Пауза', value: 'paused' },
-  { label: 'Завершена', value: 'completed' },
+  {label: 'Черновик', value: 'draft'},
+  {label: 'Активна', value: 'active'},
+  {label: 'Пауза', value: 'paused'},
+  {label: 'Завершена', value: 'completed'},
 ];
 
 /**
@@ -125,7 +125,7 @@ async function handleAddMember(login: string): Promise<void> {
   gameError.value = '';
 
   try {
-    game.value = await inviteGameMember(game.value.id, { login });
+    game.value = await inviteGameMember(game.value.id, {login});
   } catch (error) {
     gameError.value = (error as Error).message;
   } finally {
@@ -223,9 +223,9 @@ async function handleRealtimeEvent(message: RealtimeEventMessage): Promise<void>
   }
 
   if (
-    message.event === 'game-invitation.created'
-    || message.event === 'game-invitation.accepted'
-    || message.event === 'game-invitation.declined'
+      message.event === 'game-invitation.created'
+      || message.event === 'game-invitation.accepted'
+      || message.event === 'game-invitation.declined'
   ) {
     await loadGame();
     await loadInvitations(true);
@@ -274,21 +274,21 @@ onUnmounted(() => {
 
 <template>
   <CabinetShell
-    v-if="currentUser"
-    current-section="gm"
-    :pending="isPending"
-    :player-invitation-badge="pendingInvitationsCount"
-    :user="currentUser"
-    @logout="handleLogout"
+      v-if="currentUser"
+      :pending="isPending"
+      :player-invitation-badge="pendingInvitationsCount"
+      :user="currentUser"
+      current-section="gm"
+      @logout="handleLogout"
   >
     <div class="space-y-6">
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div class="space-y-2">
           <RouterLink
-            class="inline-flex items-center gap-2 text-sm text-amber-200/80 transition hover:text-amber-100"
-            to="/cabinet/gm"
+              class="inline-flex items-center gap-2 text-sm text-amber-200/80 transition hover:text-amber-100"
+              to="/cabinet/gm"
           >
-            <ChevronLeft class="h-4 w-4" />
+            <ChevronLeft class="h-4 w-4"/>
             Назад к списку игр
           </RouterLink>
 
@@ -298,23 +298,23 @@ onUnmounted(() => {
         </div>
 
         <span
-          v-if="game"
-          class="rounded-full border border-amber-300/20 bg-amber-300/10 px-4 py-2 text-xs uppercase text-amber-100"
+            v-if="game"
+            class="rounded-full border border-amber-300/20 bg-amber-300/10 px-4 py-2 text-xs uppercase text-amber-100"
         >
           {{ formatGameStatus(game.status) }}
         </span>
       </div>
 
       <div
-        v-if="gameError"
-        class="rounded-[1.3rem] border border-rose-300/20 bg-rose-500/10 px-4 py-3 text-sm leading-6 text-rose-100"
+          v-if="gameError"
+          class="rounded-[1.3rem] border border-rose-300/20 bg-rose-500/10 px-4 py-3 text-sm leading-6 text-rose-100"
       >
         {{ gameError }}
       </div>
 
       <div
-        v-else-if="isGameLoading"
-        class="rounded-[1.75rem] border border-amber-200/10 bg-white/5 px-5 py-8 text-sm text-slate-300"
+          v-else-if="isGameLoading"
+          class="rounded-[1.75rem] border border-amber-200/10 bg-white/5 px-5 py-8 text-sm text-slate-300"
       >
         Загружаем данные игры...
       </div>
@@ -333,17 +333,17 @@ onUnmounted(() => {
 
           <div class="mt-5 flex flex-wrap gap-2">
             <button
-              v-for="option in statusOptions"
-              :key="option.value"
-              :class="
+                v-for="option in statusOptions"
+                :key="option.value"
+                :class="
                 game.status === option.value
                   ? 'border-amber-300/25 bg-amber-300/10 text-amber-50'
                   : 'border-amber-100/10 bg-white/5 text-slate-300'
               "
-              class="rounded-full border px-4 py-2 text-sm transition hover:border-amber-200/20 hover:text-amber-50"
-              :disabled="isStatusUpdating"
-              type="button"
-              @click="handleStatusUpdate(option.value)"
+                :disabled="isStatusUpdating"
+                class="rounded-full border px-4 py-2 text-sm transition hover:border-amber-200/20 hover:text-amber-50"
+                type="button"
+                @click="handleStatusUpdate(option.value)"
             >
               {{ option.label }}
             </button>
@@ -352,7 +352,7 @@ onUnmounted(() => {
 
         <div class="grid gap-4 md:grid-cols-3">
           <div class="rounded-[1.5rem] border border-amber-200/10 bg-white/5 p-5">
-            <Shield class="h-5 w-5 text-amber-200" />
+            <Shield class="h-5 w-5 text-amber-200"/>
             <p class="mt-4 text-sm uppercase text-amber-200/50">
               Мастер
             </p>
@@ -365,7 +365,7 @@ onUnmounted(() => {
           </div>
 
           <div class="rounded-[1.5rem] border border-amber-200/10 bg-white/5 p-5">
-            <Users class="h-5 w-5 text-amber-200" />
+            <Users class="h-5 w-5 text-amber-200"/>
             <p class="mt-4 text-sm uppercase text-amber-200/50">
               Участники
             </p>
@@ -378,7 +378,7 @@ onUnmounted(() => {
           </div>
 
           <div class="rounded-[1.5rem] border border-amber-200/10 bg-white/5 p-5">
-            <ScrollText class="h-5 w-5 text-amber-200" />
+            <ScrollText class="h-5 w-5 text-amber-200"/>
             <p class="mt-4 text-sm uppercase text-amber-200/50">
               Состояние сцены
             </p>
@@ -397,33 +397,34 @@ onUnmounted(() => {
           </p>
 
           <GmAddMemberForm
-            class="mt-4"
-            :pending="isMemberUpdating"
-            @submit="handleAddMember"
+              :pending="isMemberUpdating"
+              class="mt-4"
+              @submit="handleAddMember"
           />
 
           <div class="mt-4 grid gap-3 lg:grid-cols-2">
             <div
-              v-for="member in game.members"
-              :key="member.id"
-              class="rounded-2xl border border-amber-200/10 bg-slate-950/30 px-4 py-4"
+                v-for="member in game.members"
+                :key="member.id"
+                class="rounded-2xl border border-amber-200/10 bg-slate-950/30 px-4 py-4"
             >
               <div class="flex items-center justify-between gap-3">
                 <p class="font-medium text-amber-50">
                   {{ member.user.name }}
                 </p>
                 <div class="flex items-center gap-2">
-                  <span class="rounded-full border border-amber-200/10 bg-white/5 px-3 py-1 text-xs uppercase text-amber-100/80">
+                  <span
+                      class="rounded-full border border-amber-200/10 bg-white/5 px-3 py-1 text-xs uppercase text-amber-100/80">
                     {{ formatMemberRole(member.role) }}
                   </span>
                   <button
-                    v-if="member.role !== 'gm'"
-                    class="rounded-full border border-rose-300/15 bg-rose-500/10 p-2 text-rose-200 transition hover:bg-rose-500/20"
-                    :disabled="isMemberUpdating"
-                    type="button"
-                    @click="handleRemoveMember(member.id)"
+                      v-if="member.role !== 'gm'"
+                      :disabled="isMemberUpdating"
+                      class="rounded-full border border-rose-300/15 bg-rose-500/10 p-2 text-rose-200 transition hover:bg-rose-500/20"
+                      type="button"
+                      @click="handleRemoveMember(member.id)"
                   >
-                    <Trash2 class="h-4 w-4" />
+                    <Trash2 class="h-4 w-4"/>
                   </button>
                 </div>
               </div>
@@ -449,31 +450,31 @@ onUnmounted(() => {
             </div>
 
             <button
-              class="inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-300/10 px-4 py-2 text-sm text-amber-50 transition hover:border-amber-200/40 hover:bg-amber-300/15"
-              :disabled="isSceneUpdating"
-              type="button"
-              @click="handleCreateScene"
+                :disabled="isSceneUpdating"
+                class="inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-300/10 px-4 py-2 text-sm text-amber-50 transition hover:border-amber-200/40 hover:bg-amber-300/15"
+                type="button"
+                @click="handleCreateScene"
             >
-              <Plus class="h-4 w-4" />
+              <Plus class="h-4 w-4"/>
               Создать сцену
             </button>
           </div>
 
           <div
-            v-if="game.scene_states.length === 0"
-            class="mt-4 rounded-2xl border border-amber-200/10 bg-slate-950/30 px-4 py-4 text-sm text-slate-300"
+              v-if="game.scene_states.length === 0"
+              class="mt-4 rounded-2xl border border-amber-200/10 bg-slate-950/30 px-4 py-4 text-sm text-slate-300"
           >
             У этой игры пока нет сцен.
           </div>
 
           <div
-            v-else
-            class="mt-4 grid gap-3 lg:grid-cols-2"
+              v-else
+              class="mt-4 grid gap-3 lg:grid-cols-2"
           >
             <div
-              v-for="scene in game.scene_states"
-              :key="scene.id"
-              class="rounded-2xl border border-amber-200/10 bg-slate-950/30 px-4 py-4"
+                v-for="scene in game.scene_states"
+                :key="scene.id"
+                class="rounded-2xl border border-amber-200/10 bg-slate-950/30 px-4 py-4"
             >
               <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
@@ -486,8 +487,8 @@ onUnmounted(() => {
                 </div>
 
                 <span
-                  v-if="game.active_scene_state_id === scene.id"
-                  class="shrink-0 rounded-full border border-emerald-300/20 bg-emerald-500/10 px-3 py-1 text-xs uppercase text-emerald-100"
+                    v-if="game.active_scene_state_id === scene.id"
+                    class="shrink-0 rounded-full border border-emerald-300/20 bg-emerald-500/10 px-3 py-1 text-xs uppercase text-emerald-100"
                 >
                   Активна
                 </span>
@@ -495,7 +496,7 @@ onUnmounted(() => {
 
               <div class="mt-3 flex flex-wrap items-center gap-2 text-xs uppercase text-slate-400">
                 <span class="rounded-full border border-amber-200/10 bg-white/5 px-3 py-1">
-                  <Map class="mr-1 inline h-3.5 w-3.5" />
+                  <Map class="mr-1 inline h-3.5 w-3.5"/>
                   {{ scene.scene_template.width }}x{{ scene.scene_template.height }}
                 </span>
                 <span class="rounded-full border border-amber-200/10 bg-white/5 px-3 py-1">
@@ -505,20 +506,20 @@ onUnmounted(() => {
 
               <div class="mt-4 flex flex-wrap gap-2">
                 <RouterLink
-                  class="inline-flex items-center gap-2 rounded-full border border-sky-300/20 bg-sky-500/10 px-4 py-2 text-sm text-sky-100 transition hover:bg-sky-500/20"
-                  :to="`/cabinet/gm/games/${game.id}/scenes/${scene.id}`"
+                    :to="`/cabinet/gm/games/${game.id}/scenes/${scene.id}`"
+                    class="inline-flex items-center gap-2 rounded-full border border-sky-300/20 bg-sky-500/10 px-4 py-2 text-sm text-sky-100 transition hover:bg-sky-500/20"
                 >
-                  <Pencil class="h-4 w-4" />
+                  <Pencil class="h-4 w-4"/>
                   Редактировать
                 </RouterLink>
 
                 <button
-                  class="inline-flex items-center gap-2 rounded-full border border-rose-300/15 bg-rose-500/10 px-4 py-2 text-sm text-rose-200 transition hover:bg-rose-500/20"
-                  :disabled="isSceneUpdating"
-                  type="button"
-                  @click="handleDeleteScene(scene.id)"
+                    :disabled="isSceneUpdating"
+                    class="inline-flex items-center gap-2 rounded-full border border-rose-300/15 bg-rose-500/10 px-4 py-2 text-sm text-rose-200 transition hover:bg-rose-500/20"
+                    type="button"
+                    @click="handleDeleteScene(scene.id)"
                 >
-                  <Trash2 class="h-4 w-4" />
+                  <Trash2 class="h-4 w-4"/>
                   Удалить
                 </button>
               </div>
@@ -533,16 +534,17 @@ onUnmounted(() => {
                 NPC
               </p>
               <p class="mt-2 text-sm text-slate-300">
-                В игре создано {{ actors.filter((actor) => actor.kind === 'npc').length }} NPC. Управление персонажами и их инвентарем вынесено в отдельное окно.
+                В игре создано {{ actors.filter((actor) => actor.kind === 'npc').length }} NPC. Управление персонажами и
+                их инвентарем вынесено в отдельное окно.
               </p>
             </div>
 
             <button
-              class="inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-300/10 px-4 py-2 text-sm text-amber-50 transition hover:border-amber-200/40 hover:bg-amber-300/15"
-              type="button"
-              @click="isNpcManagerOpen = true"
+                class="inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-300/10 px-4 py-2 text-sm text-amber-50 transition hover:border-amber-200/40 hover:bg-amber-300/15"
+                type="button"
+                @click="isNpcManagerOpen = true"
             >
-              <UserRound class="h-4 w-4" />
+              <UserRound class="h-4 w-4"/>
               Открыть NPC
             </button>
           </div>
@@ -553,26 +555,27 @@ onUnmounted(() => {
             Ожидают ответа
           </p>
           <div
-            v-if="game.invitations.length === 0"
-            class="mt-4 rounded-2xl border border-amber-200/10 bg-slate-950/30 px-4 py-4 text-sm text-slate-300"
+              v-if="game.invitations.length === 0"
+              class="mt-4 rounded-2xl border border-amber-200/10 bg-slate-950/30 px-4 py-4 text-sm text-slate-300"
           >
             Пока нет активных приглашений.
           </div>
 
           <div
-            v-else
-            class="mt-4 grid gap-3 lg:grid-cols-2"
+              v-else
+              class="mt-4 grid gap-3 lg:grid-cols-2"
           >
             <div
-              v-for="invitation in game.invitations"
-              :key="invitation.id"
-              class="rounded-2xl border border-amber-200/10 bg-slate-950/30 px-4 py-4"
+                v-for="invitation in game.invitations"
+                :key="invitation.id"
+                class="rounded-2xl border border-amber-200/10 bg-slate-950/30 px-4 py-4"
             >
               <div class="flex items-center justify-between gap-3">
                 <p class="font-medium text-amber-50">
                   {{ invitation.invited_user.name }}
                 </p>
-                <span class="rounded-full border border-amber-200/10 bg-white/5 px-3 py-1 text-xs uppercase text-amber-100/80">
+                <span
+                    class="rounded-full border border-amber-200/10 bg-white/5 px-3 py-1 text-xs uppercase text-amber-100/80">
                   Ожидает
                 </span>
               </div>
@@ -589,8 +592,8 @@ onUnmounted(() => {
     </div>
 
     <GmNpcManagerModal
-      :open="isNpcManagerOpen"
-      @close="isNpcManagerOpen = false; void loadActors()"
+        :open="isNpcManagerOpen"
+        @close="isNpcManagerOpen = false; void loadActors()"
     />
   </CabinetShell>
 </template>

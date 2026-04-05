@@ -1,8 +1,8 @@
 <template>
-  <RouterView />
-  <AppToastStack />
+  <RouterView/>
+  <AppToastStack/>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import AppToastStack from '@/components/common/AppToastStack.vue';
 </script>

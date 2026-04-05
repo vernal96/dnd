@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 defineProps<{
   error?: string;
   label: string;
@@ -19,18 +19,18 @@ const emit = defineEmits<{
 
     <div class="form-control-shell items-start">
       <textarea
-        :name="name"
-        :placeholder="placeholder"
-        :rows="rows ?? 4"
-        :value="modelValue"
-        class="form-control form-textarea"
-        @input="emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
+          :name="name"
+          :placeholder="placeholder"
+          :rows="rows ?? 4"
+          :value="modelValue"
+          class="form-control form-textarea"
+          @input="emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
       />
     </div>
 
     <p
-      v-if="error"
-      class="text-xs text-rose-300"
+        v-if="error"
+        class="text-xs text-rose-300"
     >
       {{ error }}
     </p>

@@ -1,8 +1,8 @@
-<script setup lang="ts">
-import { Mail, ScrollText } from 'lucide-vue-next';
-import { ref } from 'vue';
+<script lang="ts" setup>
+import {Mail, ScrollText} from 'lucide-vue-next';
+import {ref} from 'vue';
 import FormTextInput from '@/components/form/FormTextInput.vue';
-import type { ForgotPasswordPayload } from '@/types/auth';
+import type {ForgotPasswordPayload} from '@/types/auth';
 
 defineProps<{
   pending: boolean;
@@ -36,8 +36,8 @@ function submitForm(): void {
 
 <template>
   <form
-    class="space-y-3.5"
-    @submit.prevent="submitForm"
+      class="space-y-3.5"
+      @submit.prevent="submitForm"
   >
     <div class="space-y-1.5">
       <h2 class="font-display text-[1.34rem] text-amber-50">
@@ -49,35 +49,35 @@ function submitForm(): void {
     </div>
 
     <FormTextInput
-      v-model="email"
-      autocomplete="email"
-      label="Email"
-      name="email"
-      placeholder="login@table.quest"
-      :icon="Mail"
+        v-model="email"
+        :icon="Mail"
+        autocomplete="email"
+        label="Email"
+        name="email"
+        placeholder="login@table.quest"
     />
 
     <p
-      v-if="localError"
-      class="rounded-2xl border border-rose-300/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200"
+        v-if="localError"
+        class="rounded-2xl border border-rose-300/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200"
     >
       {{ localError }}
     </p>
 
     <div class="space-y-2.5">
       <button
-        class="cta-primary w-full"
-        :disabled="pending"
-        type="submit"
+          :disabled="pending"
+          class="cta-primary w-full"
+          type="submit"
       >
-        <ScrollText class="h-4 w-4" />
+        <ScrollText class="h-4 w-4"/>
         {{ pending ? 'Отправляем письмо...' : 'Отправить инструкции' }}
       </button>
 
       <button
-        class="cta-secondary w-full"
-        type="button"
-        @click="emit('back')"
+          class="cta-secondary w-full"
+          type="button"
+          @click="emit('back')"
       >
         Вернуться ко входу
       </button>

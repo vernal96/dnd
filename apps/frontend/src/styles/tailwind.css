@@ -3,230 +3,231 @@
 @tailwind utilities;
 
 @font-face {
-  font-family: 'Vollkorn';
-  src: url('@/fonts/Vollkorn-Regular_0.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'Vollkorn';
+    src: url('@/fonts/Vollkorn-Regular_0.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: 'Vollkorn';
-  src: url('@/fonts/Vollkorn-Italic_0.ttf') format('truetype');
-  font-weight: 400;
-  font-style: italic;
-  font-display: swap;
+    font-family: 'Vollkorn';
+    src: url('@/fonts/Vollkorn-Italic_0.ttf') format('truetype');
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: 'Vollkorn';
-  src: url('@/fonts/Vollkorn-Medium_0.ttf') format('truetype');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'Vollkorn';
+    src: url('@/fonts/Vollkorn-Medium_0.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: 'Vollkorn';
-  src: url('@/fonts/Vollkorn-MediumItalic_0.ttf') format('truetype');
-  font-weight: 500;
-  font-style: italic;
-  font-display: swap;
+    font-family: 'Vollkorn';
+    src: url('@/fonts/Vollkorn-MediumItalic_0.ttf') format('truetype');
+    font-weight: 500;
+    font-style: italic;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: 'Vollkorn';
-  src: url('@/fonts/Vollkorn-SemiBold.ttf') format('truetype');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'Vollkorn';
+    src: url('@/fonts/Vollkorn-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: 'Vollkorn';
-  src: url('@/fonts/Vollkorn-SemiBoldItalic.ttf') format('truetype');
-  font-weight: 600;
-  font-style: italic;
-  font-display: swap;
+    font-family: 'Vollkorn';
+    src: url('@/fonts/Vollkorn-SemiBoldItalic.ttf') format('truetype');
+    font-weight: 600;
+    font-style: italic;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: 'Vollkorn';
-  src: url('@/fonts/Vollkorn-Bold_0.ttf') format('truetype');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'Vollkorn';
+    src: url('@/fonts/Vollkorn-Bold_0.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: 'Vollkorn';
-  src: url('@/fonts/Vollkorn-BoldItalic_0.ttf') format('truetype');
-  font-weight: 700;
-  font-style: italic;
-  font-display: swap;
+    font-family: 'Vollkorn';
+    src: url('@/fonts/Vollkorn-BoldItalic_0.ttf') format('truetype');
+    font-weight: 700;
+    font-style: italic;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: 'Vollkorn';
-  src: url('@/fonts/Vollkorn-ExtraBold.ttf') format('truetype');
-  font-weight: 800;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'Vollkorn';
+    src: url('@/fonts/Vollkorn-ExtraBold.ttf') format('truetype');
+    font-weight: 800;
+    font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: 'Vollkorn';
-  src: url('@/fonts/Vollkorn-ExtraBoldItalic.ttf') format('truetype');
-  font-weight: 800;
-  font-style: italic;
-  font-display: swap;
+    font-family: 'Vollkorn';
+    src: url('@/fonts/Vollkorn-ExtraBoldItalic.ttf') format('truetype');
+    font-weight: 800;
+    font-style: italic;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: 'Vollkorn Display';
-  src: url('@/fonts/Vollkorn-Regular_0.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'Vollkorn Display';
+    src: url('@/fonts/Vollkorn-Regular_0.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: 'Vollkorn Display';
-  src: url('@/fonts/Vollkorn-Medium_0.ttf') format('truetype');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'Vollkorn Display';
+    src: url('@/fonts/Vollkorn-Medium_0.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: 'Vollkorn Display';
-  src: url('@/fonts/Vollkorn-SemiBold.ttf') format('truetype');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'Vollkorn Display';
+    src: url('@/fonts/Vollkorn-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: 'Vollkorn Display';
-  src: url('@/fonts/Vollkorn-Bold_0.ttf') format('truetype');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'Vollkorn Display';
+    src: url('@/fonts/Vollkorn-Bold_0.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
 }
 
 @layer base {
-  :root {
-    color: #f8ecd5;
-    background:
-      radial-gradient(circle at top, rgba(255, 221, 168, 0.7), transparent 42%),
-      linear-gradient(180deg, #f8efdd 0%, #ebd8bb 48%, #dcc49b 100%);
-    font-family: 'Vollkorn', 'Segoe UI', Tahoma, serif;
-  }
+    :root {
+        color: #f8ecd5;
+        background: radial-gradient(circle at top, rgba(255, 221, 168, 0.7), transparent 42%),
+        linear-gradient(180deg, #f8efdd 0%, #ebd8bb 48%, #dcc49b 100%);
+        font-family: 'Vollkorn', 'Segoe UI', Tahoma, serif;
+    }
 
-  * {
-    @apply border-slate-200/10;
-  }
+    * {
+        @apply border-slate-200/10;
+    }
 
-  html,
-  body,
-  #app {
-    min-height: 100%;
-  }
+    html,
+    body,
+    #app {
+        min-height: 100%;
+    }
 
-  body {
-    @apply m-0 min-h-screen overflow-x-hidden font-body text-slate-100 antialiased;
-    background-attachment: fixed;
-  }
+    body {
+        @apply m-0 min-h-screen overflow-x-hidden font-body text-slate-100 antialiased;
+        background-attachment: fixed;
+    }
 
-  button,
-  input,
-  select,
-  textarea {
-    font: inherit;
-  }
+    button,
+    input,
+    select,
+    textarea {
+        font: inherit;
+    }
 }
 
 @layer components {
-  .fantasy-panel {
-    @apply relative overflow-hidden rounded-[2rem] border border-amber-200/15 bg-[linear-gradient(160deg,rgba(15,9,18,0.98),rgba(32,18,43,0.95)_55%,rgba(17,11,22,0.98))] shadow-panel;
-  }
+    .fantasy-panel {
+        @apply relative overflow-hidden rounded-[2rem] border border-amber-200/15 shadow-panel;
+        background: linear-gradient(160deg, rgba(15, 9, 18, 0.98), rgba(32, 18, 43, 0.95) 55%, rgba(17, 11, 22, 0.98));
+    }
 
-  .fantasy-panel::before {
-    content: '';
-    position: absolute;
-    inset: 1px;
-    pointer-events: none;
-    border: 1px solid rgba(254, 243, 199, 0.1);
-    border-radius: calc(2rem - 1px);
-  }
+    .fantasy-panel::before {
+        content: '';
+        position: absolute;
+        inset: 1px;
+        pointer-events: none;
+        border: 1px solid rgba(254, 243, 199, 0.1);
+        border-radius: calc(2rem - 1px);
+    }
 
-  .fantasy-panel::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background-image:
-      linear-gradient(rgba(248, 216, 155, 0.06) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(248, 216, 155, 0.06) 1px, transparent 1px);
-    background-size: 24px 24px;
-    opacity: 0.08;
-  }
+    .fantasy-panel::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-image: linear-gradient(rgba(248, 216, 155, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(248, 216, 155, 0.06) 1px, transparent 1px);
+        background-size: 24px 24px;
+        opacity: 0.08;
+    }
 
-  .ornament-corner {
-    @apply absolute h-12 w-12 rounded-full border border-amber-200/20 bg-[radial-gradient(circle,rgba(248,216,155,0.24),transparent_65%)];
-  }
+    .ornament-corner {
+        @apply absolute h-12 w-12 rounded-full border border-amber-200/20;
+        background: radial-gradient(circle, rgba(248, 216, 155, 0.24), transparent 65%);
+    }
 
-  .auth-shell {
-    @apply relative rounded-[1.35rem] border border-amber-100/10 bg-white/5 backdrop-blur-sm;
-  }
+    .auth-shell {
+        @apply relative rounded-[1.35rem] border border-amber-100/10 bg-white/5 backdrop-blur-sm;
+    }
 
-  .form-control-shell {
-    @apply flex items-center gap-3 rounded-2xl border border-amber-100/10 bg-slate-950/45 px-4 py-3 text-sm text-slate-100 transition duration-200;
-  }
+    .form-control-shell {
+        @apply flex items-center gap-3 rounded-2xl border border-amber-100/10 bg-slate-950/45 px-4 py-3 text-sm text-slate-100 transition duration-200;
+    }
 
-  .form-control-shell:focus-within {
-    @apply border-amber-300/40 shadow-glow;
-  }
+    .form-control-shell:focus-within {
+        @apply border-amber-300/40 shadow-glow;
+    }
 
-  .form-control {
-    @apply w-full border-0 bg-transparent p-0 text-[0.96rem] text-slate-50 placeholder:text-slate-400 focus:outline-none focus:ring-0;
-  }
+    .form-control {
+        @apply w-full border-0 bg-transparent p-0 text-[0.96rem] text-slate-50 placeholder:text-slate-400 focus:outline-none focus:ring-0;
+    }
 
-  .form-textarea {
-    @apply min-h-[112px] resize-y;
-  }
+    .form-textarea {
+        @apply min-h-[112px] resize-y;
+    }
 
-  .cta-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-300/30 bg-[linear-gradient(180deg,rgba(255,199,115,0.95),rgba(194,118,35,0.95))] px-5 py-3 text-sm font-semibold text-slate-950 shadow-[0_10px_35px_rgba(222,150,50,0.34)] transition duration-200 hover:scale-[1.01] hover:shadow-[0_16px_40px_rgba(222,150,50,0.42)] disabled:cursor-not-allowed disabled:opacity-60;
-  }
+    .cta-primary {
+        @apply inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-300/30 px-5 py-3 text-sm font-semibold text-slate-950 shadow-[0_10px_35px_rgba(222,150,50,0.34)] transition duration-200 hover:scale-[1.01] hover:shadow-[0_16px_40px_rgba(222,150,50,0.42)] disabled:cursor-not-allowed disabled:opacity-60;
+        background: linear-gradient(180deg, rgba(255, 199, 115, 0.95), rgba(194, 118, 35, 0.95));
+    }
 
-  .cta-secondary {
-    @apply inline-flex items-center justify-center rounded-2xl border border-amber-100/10 bg-white/5 px-4 py-3 text-sm font-medium text-amber-50/90 transition duration-200 hover:border-amber-200/20 hover:bg-white/10;
-  }
+    .cta-secondary {
+        @apply inline-flex items-center justify-center rounded-2xl border border-amber-100/10 bg-white/5 px-4 py-3 text-sm font-medium text-amber-50/90 transition duration-200 hover:border-amber-200/20 hover:bg-white/10;
+    }
 
-  .mode-fade-enter-active,
-  .mode-fade-leave-active {
-    @apply transition-all duration-300 ease-out;
-  }
+    .mode-fade-enter-active,
+    .mode-fade-leave-active {
+        @apply transition-all duration-300 ease-out;
+    }
 
-  .mode-fade-enter-from,
-  .mode-fade-leave-to {
-    @apply translate-y-2 opacity-0 blur-[2px];
-  }
+    .mode-fade-enter-from,
+    .mode-fade-leave-to {
+        @apply translate-y-2 opacity-0 blur-[2px];
+    }
 
-  .arcane-divider {
-    @apply relative h-px bg-gradient-to-r from-transparent via-amber-200/35 to-transparent;
-  }
+    .arcane-divider {
+        @apply relative h-px bg-gradient-to-r from-transparent via-amber-200/35 to-transparent;
+    }
 
-  .arcane-divider::after {
-    content: '';
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    height: 0.5rem;
-    width: 0.5rem;
-    transform: translate(-50%, -50%) rotate(45deg);
-    border: 1px solid rgba(253, 230, 138, 0.35);
-    background: rgb(2 6 23);
-  }
+    .arcane-divider::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        height: 0.5rem;
+        width: 0.5rem;
+        transform: translate(-50%, -50%) rotate(45deg);
+        border: 1px solid rgba(253, 230, 138, 0.35);
+        background: rgb(2 6 23);
+    }
 }

@@ -49,6 +49,7 @@ export type SceneViewportMetadata = {
   offsetY: number;
   rotateX: number;
   rotateZ: number;
+  zoom: number;
 };
 
 export type SceneActorPlacement = {

@@ -1,7 +1,7 @@
-import { createApplication } from '@/main';
+import {createApplication} from '@/main';
 
-const { app, router } = createApplication();
+const {app, router} = createApplication();
 
 void router.isReady().then(() => {
-  app.mount('#app');
+    app.mount('#app');
 });
