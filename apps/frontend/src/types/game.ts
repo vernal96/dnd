@@ -37,6 +37,26 @@ export type GameSummary = {
 
 export type GameStatus = 'active' | 'completed' | 'draft' | 'paused';
 
+export type GameSceneSummary = {
+  created_at: string;
+  game_id: number;
+  id: number;
+  scene_template: {
+    created_at: string;
+    description: string | null;
+    height: number;
+    id: number;
+    metadata: Record<string, unknown> | null;
+    name: string;
+    status: string;
+    updated_at: string;
+    width: number;
+  };
+  status: string;
+  updated_at: string;
+  version: number;
+};
+
 export type GameDetail = GameSummary & {
   active_scene_state_id: number | null;
   invitations: Array<{
@@ -48,6 +68,7 @@ export type GameDetail = GameSummary & {
     token: string;
   }>;
   members: GameMemberSummary[];
+  scene_states: GameSceneSummary[];
   settings: Record<string, unknown> | null;
 };
 

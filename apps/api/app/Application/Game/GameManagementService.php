@@ -29,7 +29,12 @@ final class GameManagementService
 	{
 		$query = Game::query()
 			->where('gm_user_id', $user->id)
-			->with(['gm:id,name,email', 'activeSceneState:id,game_id,scene_template_id,status,version'])
+			->with([
+				'gm:id,name,email',
+				'activeSceneState:id,game_id,scene_template_id,status,version',
+				'sceneStates:id,game_id,scene_template_id,status,version,created_at,updated_at',
+				'sceneStates.sceneTemplate:id,name,description,width,height,status,metadata,created_at,updated_at',
+			])
 			->withCount('members')
 			->latest('id');
 
@@ -68,7 +73,12 @@ final class GameManagementService
 			return $createdGame;
 		});
 
-		$game->load(['gm:id,name,email', 'activeSceneState:id,game_id,scene_template_id,status,version'])
+		$game->load([
+			'gm:id,name,email',
+			'activeSceneState:id,game_id,scene_template_id,status,version',
+			'sceneStates:id,game_id,scene_template_id,status,version,created_at,updated_at',
+			'sceneStates.sceneTemplate:id,name,description,width,height,status,metadata,created_at,updated_at',
+		])
 			->loadCount('members');
 
 		return $game;
@@ -108,7 +118,7 @@ final class GameManagementService
 
 		$game->save();
 
-		$game->load([
+			$game->load([
 			'gm:id,name,email',
 			'members.user:id,name,email',
 			'invitations' => static function ($query): void {
@@ -118,6 +128,8 @@ final class GameManagementService
 			},
 			'invitations.invitedUser:id,name,email',
 			'activeSceneState.sceneTemplate:id,name,width,height,status',
+			'sceneStates:id,game_id,scene_template_id,status,version,created_at,updated_at',
+			'sceneStates.sceneTemplate:id,name,description,width,height,status,metadata,created_at,updated_at',
 		])->loadCount('members');
 
 		return $game;
@@ -183,6 +195,8 @@ final class GameManagementService
 				},
 				'invitations.invitedUser:id,name,email',
 				'activeSceneState.sceneTemplate:id,name,width,height,status',
+				'sceneStates:id,game_id,scene_template_id,status,version,created_at,updated_at',
+				'sceneStates.sceneTemplate:id,name,description,width,height,status,metadata,created_at,updated_at',
 			])
 			->withCount('members')
 			->first();

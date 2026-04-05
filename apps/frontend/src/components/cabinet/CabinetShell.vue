@@ -5,6 +5,7 @@ import type { SessionUser } from '@/types/auth';
 
 defineProps<{
   currentSection: 'gm' | 'player';
+  immersive?: boolean;
   pending: boolean;
   playerInvitationBadge?: number;
   user: SessionUser;
@@ -20,7 +21,7 @@ const emit = defineEmits<{
     <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,229,184,0.65),transparent_30%),linear-gradient(180deg,#f7ecd9_0%,#ead6b3_45%,#dcc29b_100%)]" />
     <div class="pointer-events-none absolute inset-0 opacity-40 [background-image:radial-gradient(circle_at_1px_1px,rgba(120,75,19,0.18)_1px,transparent_0)] [background-size:26px_26px]" />
 
-    <div class="relative mx-auto max-w-6xl space-y-5">
+    <div :class="immersive ? 'relative w-full space-y-5' : 'relative mx-auto max-w-6xl space-y-5'">
       <header class="flex flex-col gap-4 rounded-[1.75rem] border border-amber-950/10 bg-white/40 px-5 py-4 shadow-[0_30px_70px_rgba(82,48,15,0.12)] backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-4">
           <div class="flex h-14 w-14 items-center justify-center rounded-[1.2rem] border border-amber-900/15 bg-[radial-gradient(circle_at_top,rgba(248,216,155,0.75),rgba(78,43,20,0.12)_70%)]">
@@ -78,7 +79,7 @@ const emit = defineEmits<{
         </div>
       </header>
 
-      <section class="rounded-[1.9rem] border border-amber-950/10 bg-[linear-gradient(180deg,rgba(20,12,25,0.95),rgba(37,22,50,0.92))] p-5 text-slate-100 shadow-[0_30px_80px_rgba(37,20,49,0.34)] sm:p-6">
+      <section :class="immersive ? 'rounded-[1.9rem] border border-amber-950/10 bg-[linear-gradient(180deg,rgba(20,12,25,0.95),rgba(37,22,50,0.92))] p-0 text-slate-100 shadow-[0_30px_80px_rgba(37,20,49,0.34)]' : 'rounded-[1.9rem] border border-amber-950/10 bg-[linear-gradient(180deg,rgba(20,12,25,0.95),rgba(37,22,50,0.92))] p-5 text-slate-100 shadow-[0_30px_80px_rgba(37,20,49,0.34)] sm:p-6'">
         <slot />
       </section>
     </div>

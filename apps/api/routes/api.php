@@ -8,9 +8,11 @@ use App\Http\Controllers\Api\CharacterClassController;
 use App\Http\Controllers\Api\GameController;
 use App\Http\Controllers\Api\GameImageController;
 use App\Http\Controllers\Api\GameInvitationController;
+use App\Http\Controllers\Api\GameSceneController;
 use App\Http\Controllers\Api\GameSceneStateController;
 use App\Http\Controllers\Api\ItemController;
 use App\Http\Controllers\Api\RaceController;
+use App\Http\Controllers\Api\SceneCatalogController;
 use App\Http\Controllers\Api\SceneTemplateController;
 use App\Http\Middleware\EnsureFrontendOrigin;
 use Illuminate\Auth\Middleware\Authenticate;
@@ -61,12 +63,18 @@ Route::middleware([
     Route::get('/games/{game}/images/{image}', [GameImageController::class, 'show'])->where('image', '[A-Za-z0-9._-]+');
     Route::post('/games/{game}/invitations', [GameController::class, 'inviteMember']);
     Route::delete('/games/{game}/members/{member}', [GameController::class, 'removeMember']);
+    Route::post('/games/{game}/scenes', [GameSceneController::class, 'store']);
+    Route::get('/games/{game}/scenes/{scene}', [GameSceneController::class, 'show']);
+    Route::put('/games/{game}/scenes/{scene}', [GameSceneController::class, 'update']);
+    Route::delete('/games/{game}/scenes/{scene}', [GameSceneController::class, 'destroy']);
     Route::get('/game-invitations', [GameInvitationController::class, 'index']);
     Route::post('/game-invitations/{token}/accept', [GameInvitationController::class, 'accept']);
     Route::post('/game-invitations/{token}/decline', [GameInvitationController::class, 'decline']);
 
     Route::get('/scene-templates', [SceneTemplateController::class, 'index']);
     Route::get('/scene-templates/{sceneTemplate}', [SceneTemplateController::class, 'show']);
+    Route::get('/scene-catalog/surfaces', [SceneCatalogController::class, 'surfaces']);
+    Route::get('/scene-catalog/objects', [SceneCatalogController::class, 'objects']);
 
     Route::get('/scene-states', [GameSceneStateController::class, 'index']);
     Route::get('/scene-states/{gameSceneState}', [GameSceneStateController::class, 'show']);

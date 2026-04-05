@@ -4,6 +4,7 @@ import App from '@/App.vue';
 import AuthPage from '@/pages/AuthPage.vue';
 import GmGamePage from '@/pages/GmGamePage.vue';
 import GmCabinetPage from '@/pages/GmCabinetPage.vue';
+import GmSceneEditorPage from '@/pages/GmSceneEditorPage.vue';
 import PlayerCabinetPage from '@/pages/PlayerCabinetPage.vue';
 import ResetPasswordPage from '@/pages/ResetPasswordPage.vue';
 import '@/styles/tailwind.css';
@@ -40,6 +41,11 @@ export function createApplication() {
         path: '/cabinet/gm/games/:id',
         name: 'gm-game',
         component: GmGamePage,
+      },
+      {
+        path: '/cabinet/gm/games/:id/scenes/:sceneId',
+        name: 'gm-scene-editor',
+        component: GmSceneEditorPage,
       },
     ],
   });
