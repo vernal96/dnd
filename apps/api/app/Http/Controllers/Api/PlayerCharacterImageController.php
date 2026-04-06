@@ -9,6 +9,7 @@ use App\Data\Game\UploadGameImageData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Game\UploadGameImageRequest;
 use App\Http\Resources\ApiPayloadResource;
+use App\Http\Resources\Game\PlayerCharacterStoredImageResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -53,10 +54,10 @@ final class PlayerCharacterImageController extends Controller
 			], ResponseAlias::HTTP_INTERNAL_SERVER_ERROR);
 		}
 
-		return ApiPayloadResource::json([
-			...$image->toArray(),
-			'storagePath' => $this->playerCharacterImageStorageService->buildImagePath($image->fileName, $user),
-		], ResponseAlias::HTTP_CREATED);
+		return (new PlayerCharacterStoredImageResource(
+			$image,
+			$this->playerCharacterImageStorageService->buildImagePath($image->fileName, $user),
+		))->response()->setStatusCode(ResponseAlias::HTTP_CREATED);
 	}
 
 	/**

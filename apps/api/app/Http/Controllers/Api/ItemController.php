@@ -6,8 +6,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Application\Catalog\ItemCatalog;
 use App\Application\Catalog\ItemCatalogImageStorageService;
+use App\Domain\Catalog\Item;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApiPayloadResource;
+use App\Http\Resources\Catalog\CatalogItemResource;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
@@ -31,12 +33,18 @@ final class ItemController extends Controller
 	 */
 	public function index(): JsonResponse
 	{
-		return ApiPayloadResource::json(array_map(
-			fn (\App\Domain\Catalog\Item $item): array => $item->toArray(
+		$resources = array_map(
+			fn (Item $item): CatalogItemResource => new CatalogItemResource(
+				$item,
 				fn (string $fileName): string => $this->itemCatalogImageStorageService->buildImageUrl($fileName),
 			),
 			$this->itemCatalog->getActiveItems(),
-		));
+		);
+
+		return ApiPayloadResource::collectionJson(
+			array_map(static fn (CatalogItemResource $resource): array => $resource->resolve(), $resources),
+			ResponseAlias::HTTP_OK,
+		);
 	}
 
 	/**
@@ -52,8 +60,9 @@ final class ItemController extends Controller
 			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::json($itemDefinition->toArray(
+		return (new CatalogItemResource(
+			$itemDefinition,
 			fn (string $fileName): string => $this->itemCatalogImageStorageService->buildImageUrl($fileName),
-		));
+		))->response()->setStatusCode(ResponseAlias::HTTP_OK);
 	}
 }

@@ -31,33 +31,4 @@ final readonly class StartingEquipmentEntryData
 		return new $itemClass;
 	}
 
-	/**
-	 * Преобразует DTO в массив для API.
-	 *
-	 * @return array{
-	 *     quantity: int,
-	 *     item: array{
-	 *         code: string,
-	 *         name: string,
-	 *         type: string,
-	 *         category: string,
-	 *         damageDice: ?string,
-	 *         versatileDamageDice: ?string,
-	 *         attackAbilities: list<string>,
-	 *         armorClassBase: ?int,
-	 *         armorClassAbility: ?string,
-	 *         armorClassAbilityCap: ?int,
-	 *         armorClassBonus: ?int,
-	 *         description: ?string,
-	 *         isActive: bool
-	 *     }
-	 * }
-	 */
-	public function toArray(): array
-	{
-		return [
-			'quantity' => $this->quantity,
-			'item' => $this->getItem()->toArray(),
-		];
-	}
 }

@@ -8,8 +8,8 @@ use App\Application\SceneCatalog\SceneObjectImageStorageService;
 use App\Application\SceneCatalog\SceneSurfaceImageStorageService;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApiPayloadResource;
-use App\Support\SceneCatalog\SceneObjectCatalog;
-use App\Support\SceneCatalog\SceneSurfaceCatalog;
+use App\Catalog\Scene\SceneObjectCatalog;
+use App\Catalog\Scene\SceneSurfaceCatalog;
 use Illuminate\Http\JsonResponse;
 
 /**

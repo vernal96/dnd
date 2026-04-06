@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api;
 use App\Application\Catalog\CharacterClassCatalog;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApiPayloadResource;
+use App\Http\Resources\Catalog\ActorCharacterClassResource;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
@@ -29,7 +30,9 @@ final class CharacterClassController extends Controller
 	 */
 	public function index(): JsonResponse
 	{
-		return ApiPayloadResource::collectionJson($this->characterClassCatalog->getActiveClasses());
+		return ActorCharacterClassResource::collection($this->characterClassCatalog->getPlayerSelectableClasses())
+			->response()
+			->setStatusCode(ResponseAlias::HTTP_OK);
 	}
 
 	/**
@@ -37,7 +40,7 @@ final class CharacterClassController extends Controller
 	 */
 	public function show(string $characterClass): JsonResponse
 	{
-		$classDefinition = $this->characterClassCatalog->findActiveClassByCode($characterClass);
+		$classDefinition = $this->characterClassCatalog->findPlayerSelectableClassByCode($characterClass);
 
 		if ($classDefinition === null) {
 			return ApiPayloadResource::json([
@@ -45,6 +48,8 @@ final class CharacterClassController extends Controller
 			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::json($classDefinition);
+		return ActorCharacterClassResource::make($classDefinition)
+			->response()
+			->setStatusCode(ResponseAlias::HTTP_OK);
 	}
 }

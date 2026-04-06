@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api;
 use App\Application\Catalog\RaceCatalog;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApiPayloadResource;
+use App\Http\Resources\Catalog\ActorRaceResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 
@@ -29,7 +30,9 @@ final class RaceController extends Controller
 	 */
 	public function index(): JsonResponse
 	{
-		return ApiPayloadResource::collectionJson($this->raceCatalog->getActiveRaces());
+		return ActorRaceResource::collection($this->raceCatalog->getPlayerSelectableRaces())
+			->response()
+			->setStatusCode(Response::HTTP_OK);
 	}
 
 	/**
@@ -37,7 +40,7 @@ final class RaceController extends Controller
 	 */
 	public function show(string $race): JsonResponse
 	{
-		$raceDefinition = $this->raceCatalog->findActiveRaceByCode($race);
+		$raceDefinition = $this->raceCatalog->findPlayerSelectableRaceByCode($race);
 
 		if ($raceDefinition === null) {
 			return ApiPayloadResource::json([
@@ -45,6 +48,8 @@ final class RaceController extends Controller
 			], Response::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::json($raceDefinition);
+		return ActorRaceResource::make($raceDefinition)
+			->response()
+			->setStatusCode(Response::HTTP_OK);
 	}
 }

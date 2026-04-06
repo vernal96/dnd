@@ -40,19 +40,4 @@ final readonly class ActorInventoryItemData
 		);
 	}
 
-	/**
-	 * Возвращает сериализуемое представление записи инвентаря.
-	 *
-	 * @return array{itemCode:string,quantity:int,slot:?string,isEquipped:bool,state:?array}
-	 */
-	public function toArray(): array
-	{
-		return [
-			'itemCode' => $this->itemCode,
-			'quantity' => $this->quantity,
-			'slot' => $this->slot,
-			'isEquipped' => $this->isEquipped,
-			'state' => $this->state,
-		];
-	}
 }

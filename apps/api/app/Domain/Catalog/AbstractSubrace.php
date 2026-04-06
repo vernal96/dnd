@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog;
 
-use App\Data\Catalog\AbilityBonusChoiceData;
 use App\Data\Catalog\AbilityBonusesData;
 
 /**
@@ -12,33 +11,6 @@ use App\Data\Catalog\AbilityBonusesData;
  */
 abstract class AbstractSubrace
 {
-	/**
-	 * Преобразует подрасу в ответ API.
-	 *
-	 * @return array{
-	 *     code: string,
-	 *     name: string,
-	 *     description: ?string,
-	 *     isActive: bool,
-	 *     abilityBonuses: array{str: int, dex: int, con: int, int: int, wis: int, cha: int},
-	 *     abilityBonusChoices: list<array{count: int, value: int, abilities: list<string>}>
-	 * }
-	 */
-	public function toArray(): array
-	{
-		return [
-			'code' => $this->getCode(),
-			'name' => $this->getName(),
-			'description' => $this->getDescription(),
-			'isActive' => $this->isActive(),
-			'abilityBonuses' => $this->getAbilityBonuses()->toArray(),
-			'abilityBonusChoices' => array_map(
-				static fn(AbilityBonusChoiceData $choice): array => $choice->toArray(),
-				$this->getAbilityBonusChoices(),
-			),
-		];
-	}
-
 	/**
 	 * Возвращает код подрасы.
 	 */

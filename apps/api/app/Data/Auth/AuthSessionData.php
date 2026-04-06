@@ -41,18 +41,4 @@ final readonly class AuthSessionData
 			csrfToken: $csrfToken,
 		);
 	}
-
-	/**
-	 * Преобразует DTO в массив для JSON-ответа.
-	 *
-	 * @return array{authenticated:bool,user:array{id:int,name:string,email:string,canAccessGm:bool}|null,csrfToken:string}
-	 */
-	public function toArray(): array
-	{
-		return [
-			'authenticated' => $this->authenticated,
-			'user' => $this->user?->toArray(),
-			'csrfToken' => $this->csrfToken,
-		];
-	}
 }

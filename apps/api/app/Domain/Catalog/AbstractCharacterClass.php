@@ -7,93 +7,18 @@ namespace App\Domain\Catalog;
 use App\Data\Catalog\AbilityBonusesData;
 use App\Data\Catalog\CharacterClassSkillProgressionData;
 use App\Data\Catalog\StartingEquipmentEntryData;
+use App\Domain\Catalog\Abilities\CharismaAbility;
+use App\Domain\Catalog\Abilities\ConstitutionAbility;
+use App\Domain\Catalog\Abilities\DexterityAbility;
+use App\Domain\Catalog\Abilities\IntelligenceAbility;
+use App\Domain\Catalog\Abilities\StrengthAbility;
+use App\Domain\Catalog\Abilities\WisdomAbility;
 
 /**
  * Базовая сущность класса персонажа, реализуемая конкретными классами.
  */
 abstract class AbstractCharacterClass
 {
-	/**
-	 * Преобразует класс персонажа в ответ API.
-	 *
-	 * @return array{
-	 *     code: string,
-	 *     name: string,
-	 *     description: ?string,
-	 *     isActive: bool,
-	 *     abilityBonuses: array{str: int, dex: int, con: int, int: int, wis: int, cha: int},
-	 *     primaryAbilities: list<array{code: string, name: string, description: ?string}>,
-	 *     subclasses: list<array{code: string, name: string, description: ?string, isActive: bool}>,
-	 *     skillsByLevel: array{
-	 *         level1: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
-	 *         level2: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
-	 *         level3: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
-	 *         level4: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
-	 *         level5: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
-	 *         level6: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
-	 *         level7: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
-	 *         level8: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
-	 *         level9: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
-	 *         level10: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
-	 *         level11: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
-	 *         level12: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
-	 *         level13: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
-	 *         level14: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
-	 *         level15: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
-	 *         level16: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
-	 *         level17: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
-	 *         level18: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
-	 *         level19: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>,
-	 *         level20: list<array{code: string, name: string, description: string, rollDice: ?string, targetType: ?string, radiusCells: ?int}>
-	 *     },
-	 *     startingEquipment: list<array{
-	 *         quantity: int,
-	 *         item: array{
-	 *             code: string,
-	 *             name: string,
-	 *             type: string,
-	 *             category: string,
-	 *             damageDice: ?string,
-	 *             versatileDamageDice: ?string,
-	 *             attackAbilities: list<string>,
-	 *             armorClassBase: ?int,
-	 *             armorClassAbility: ?string,
-	 *             armorClassAbilityCap: ?int,
-	 *             armorClassBonus: ?int,
-	 *             description: ?string,
-	 *             isActive: bool
-	 *         }
-	 *     }>
-	 * }
-	 */
-	public function toArray(): array
-	{
-		return [
-			'code' => $this->getCode(),
-			'name' => $this->getName(),
-			'description' => $this->getDescription(),
-			'isActive' => $this->isActive(),
-			'abilityBonuses' => $this->getAbilityBonuses()->toArray(),
-			'primaryAbilities' => array_map(
-				static fn(Ability $ability): array => [
-					'code' => $ability->getCode(),
-					'name' => $ability->getName(),
-					'description' => $ability->getDescription(),
-				],
-				$this->getPrimaryAbilities(),
-			),
-			'subclasses' => array_map(
-				static fn(AbstractCharacterSubclass $subclass): array => $subclass->toArray(),
-				$this->getActiveSubclasses(),
-			),
-			'skillsByLevel' => $this->getSkillsByLevel()->toArray(),
-			'startingEquipment' => array_map(
-				static fn(StartingEquipmentEntryData $entry): array => $entry->toArray(),
-				$this->getStartingEquipment(),
-			),
-		];
-	}
-
 	/**
 	 * Возвращает код класса персонажа.
 	 */
@@ -118,6 +43,14 @@ abstract class AbstractCharacterClass
 	}
 
 	/**
+	 * Возвращает признак доступности класса для выбора игроком.
+	 */
+	public function canBeSelectedByPlayer(): bool
+	{
+		return false;
+	}
+
+	/**
 	 * Возвращает бонусы характеристик, которые дает класс персонажа.
 	 */
 	public function getAbilityBonuses(): AbilityBonusesData
@@ -133,6 +66,59 @@ abstract class AbstractCharacterClass
 	public function getPrimaryAbilities(): array
 	{
 		return [];
+	}
+
+	/**
+	 * Возвращает бонус класса персонажа к скорости.
+	 */
+	public function getSpeedBonus(): int
+	{
+		return 0;
+	}
+
+	/**
+	 * Возвращает бонус класса персонажа к здоровью.
+	 */
+	public function getHealthBonus(): int
+	{
+		return 0;
+	}
+
+	/**
+	 * Возвращает рекомендуемое автоматическое распределение 27 очков.
+	 */
+	public function getDefaultPointBuyAllocation(): AbilityBonusesData
+	{
+		$orderedClasses = array_values(array_unique([
+			...array_map(
+				static fn (Ability $ability): string => $ability::class,
+				$this->getPrimaryAbilities(),
+			),
+			DexterityAbility::class,
+			ConstitutionAbility::class,
+			WisdomAbility::class,
+			IntelligenceAbility::class,
+			CharismaAbility::class,
+			StrengthAbility::class,
+		]));
+
+		$valuesByClass = [
+			$orderedClasses[0] ?? StrengthAbility::class => 8,
+			$orderedClasses[1] ?? DexterityAbility::class => 8,
+			$orderedClasses[2] ?? ConstitutionAbility::class => 4,
+			$orderedClasses[3] ?? WisdomAbility::class => 3,
+			$orderedClasses[4] ?? IntelligenceAbility::class => 2,
+			$orderedClasses[5] ?? CharismaAbility::class => 2,
+		];
+
+		return new AbilityBonusesData(
+			strength: $valuesByClass[StrengthAbility::class] ?? 0,
+			dexterity: $valuesByClass[DexterityAbility::class] ?? 0,
+			constitution: $valuesByClass[ConstitutionAbility::class] ?? 0,
+			intelligence: $valuesByClass[IntelligenceAbility::class] ?? 0,
+			wisdom: $valuesByClass[WisdomAbility::class] ?? 0,
+			charisma: $valuesByClass[CharismaAbility::class] ?? 0,
+		);
 	}
 
 	/**

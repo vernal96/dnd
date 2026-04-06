@@ -11,6 +11,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Game\CreateSceneRequest;
 use App\Http\Requests\Game\UpdateSceneRequest;
 use App\Http\Resources\ApiPayloadResource;
+use App\Http\Resources\Game\GameSceneStateResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
@@ -58,7 +59,9 @@ final class GameSceneController extends Controller
 			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::json($scene, ResponseAlias::HTTP_CREATED);
+		return GameSceneStateResource::make($scene)
+			->response()
+			->setStatusCode(ResponseAlias::HTTP_CREATED);
 	}
 
 	/**
@@ -76,7 +79,7 @@ final class GameSceneController extends Controller
 			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::json($sceneModel);
+		return GameSceneStateResource::make($sceneModel)->response();
 	}
 
 	/**
@@ -108,7 +111,7 @@ final class GameSceneController extends Controller
 			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::json($sceneModel);
+		return GameSceneStateResource::make($sceneModel)->response();
 	}
 
 	/**

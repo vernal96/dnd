@@ -35,6 +35,20 @@ final class RaceCatalog
 	}
 
 	/**
+	 * Возвращает одну доступную игроку активную расу по коду.
+	 */
+	public function findPlayerSelectableRaceByCode(string $code): ?AbstractRace
+	{
+		foreach ($this->getPlayerSelectableRaces() as $race) {
+			if ($race->getCode() === $code) {
+				return $race;
+			}
+		}
+
+		return null;
+	}
+
+	/**
 	 * Возвращает все активные расы справочника.
 	 *
 	 * @return list<AbstractRace>
@@ -45,6 +59,16 @@ final class RaceCatalog
 			$this->getAllRaces(),
 			static fn(AbstractRace $race): bool => $race->isActive(),
 		));
+	}
+
+	/**
+	 * Возвращает активные расы, доступные для выбора игроком.
+	 *
+	 * @return list<AbstractRace>
+	 */
+	public function getPlayerSelectableRaces(): array
+	{
+		return $this->getActiveRaces();
 	}
 
 	/**

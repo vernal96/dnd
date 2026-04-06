@@ -7,7 +7,12 @@ namespace App\Http\Requests\Player;
 use App\Application\Catalog\AbilityCatalog;
 use App\Application\Catalog\CharacterClassCatalog;
 use App\Application\Catalog\RaceCatalog;
-use App\Data\Catalog\AbilityBonusesData;
+use App\Domain\Catalog\Abilities\CharismaAbility;
+use App\Domain\Catalog\Abilities\ConstitutionAbility;
+use App\Domain\Catalog\Abilities\DexterityAbility;
+use App\Domain\Catalog\Abilities\IntelligenceAbility;
+use App\Domain\Catalog\Abilities\StrengthAbility;
+use App\Domain\Catalog\Abilities\WisdomAbility;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -31,6 +36,8 @@ final class CreatePlayerCharacterRequest extends FormRequest
 	 */
 	public function rules(): array
 	{
+		$abilityCatalog = app(AbilityCatalog::class);
+
 		return [
 			'name' => ['sometimes', 'required', 'string', 'min:2', 'max:120'],
 			'description' => ['nullable', 'string', 'max:1500'],
@@ -39,12 +46,12 @@ final class CreatePlayerCharacterRequest extends FormRequest
 			'character_class' => ['sometimes', 'required', 'string', 'max:64'],
 			'image_path' => ['nullable', 'string', 'max:255'],
 			'base_stats' => ['sometimes', 'required', 'array'],
-			'base_stats.str' => ['required_with:base_stats', 'integer', 'min:1', 'max:30'],
-			'base_stats.dex' => ['required_with:base_stats', 'integer', 'min:1', 'max:30'],
-			'base_stats.con' => ['required_with:base_stats', 'integer', 'min:1', 'max:30'],
-			'base_stats.int' => ['required_with:base_stats', 'integer', 'min:1', 'max:30'],
-			'base_stats.wis' => ['required_with:base_stats', 'integer', 'min:1', 'max:30'],
-			'base_stats.cha' => ['required_with:base_stats', 'integer', 'min:1', 'max:30'],
+			'base_stats.' . $abilityCatalog->getCodeByClass(StrengthAbility::class) => ['required_with:base_stats', 'integer', 'min:1', 'max:30'],
+			'base_stats.' . $abilityCatalog->getCodeByClass(DexterityAbility::class) => ['required_with:base_stats', 'integer', 'min:1', 'max:30'],
+			'base_stats.' . $abilityCatalog->getCodeByClass(ConstitutionAbility::class) => ['required_with:base_stats', 'integer', 'min:1', 'max:30'],
+			'base_stats.' . $abilityCatalog->getCodeByClass(IntelligenceAbility::class) => ['required_with:base_stats', 'integer', 'min:1', 'max:30'],
+			'base_stats.' . $abilityCatalog->getCodeByClass(WisdomAbility::class) => ['required_with:base_stats', 'integer', 'min:1', 'max:30'],
+			'base_stats.' . $abilityCatalog->getCodeByClass(CharismaAbility::class) => ['required_with:base_stats', 'integer', 'min:1', 'max:30'],
 		];
 	}
 
@@ -61,7 +68,7 @@ final class CreatePlayerCharacterRequest extends FormRequest
 			}
 
 			$raceCatalog = app(RaceCatalog::class);
-			$race = $raceCatalog->findActiveRaceByCode($payload['race']);
+			$race = $raceCatalog->findPlayerSelectableRaceByCode($payload['race']);
 
 			if ($race === null) {
 				$validator->errors()->add('race', 'Выбранная раса не существует.');
@@ -84,29 +91,29 @@ final class CreatePlayerCharacterRequest extends FormRequest
 				}
 			}
 
-			$classBonuses = (new AbilityBonusesData)->toArray();
+			$classBonuses = null;
 
 			if (isset($payload['character_class']) && is_string($payload['character_class'])) {
 				$classCatalog = app(CharacterClassCatalog::class);
-				$characterClass = $classCatalog->findActiveClassByCode($payload['character_class']);
+				$characterClass = $classCatalog->findPlayerSelectableClassByCode($payload['character_class']);
 
 				if ($characterClass === null) {
 					$validator->errors()->add('character_class', 'Выбранный класс не существует.');
 				} else {
-					$classBonuses = $characterClass->toArray()['abilityBonuses'];
+					$classBonuses = $characterClass->getAbilityBonuses();
 				}
 			}
 
 			if (isset($payload['base_stats']) && is_array($payload['base_stats'])) {
 				$abilityCatalog = app(AbilityCatalog::class);
 				$spentPoints = 0;
-				$raceBonuses = $race?->toArray()['abilityBonuses'] ?? (new AbilityBonusesData)->toArray();
-				$subraceBonuses = (new AbilityBonusesData)->toArray();
+				$raceBonuses = $race?->getAbilityBonuses();
+				$subraceBonuses = null;
 
 				if ($race !== null && isset($payload['subrace']) && is_string($payload['subrace']) && trim($payload['subrace']) !== '') {
 					foreach ($race->getActiveSubraces() as $subrace) {
 						if ($subrace->getCode() === $payload['subrace']) {
-							$subraceBonuses = $subrace->toArray()['abilityBonuses'];
+							$subraceBonuses = $subrace->getAbilityBonuses();
 							break;
 						}
 					}
@@ -115,12 +122,16 @@ final class CreatePlayerCharacterRequest extends FormRequest
 				foreach ($abilityCatalog->getAbilities() as $ability) {
 					$code = $ability->getCode();
 					$value = $payload['base_stats'][$code] ?? null;
-					$minimumValue = 1 + ($raceBonuses[$code] ?? 0) + ($subraceBonuses[$code] ?? 0) + ($classBonuses[$code] ?? 0);
 
 					if (!is_int($value)) {
 						$validator->errors()->add('base_stats.' . $code, 'Нужно указать значение характеристики.');
 						continue;
 					}
+
+					$minimumValue = 1
+						+ ($raceBonuses?->getByAbility($ability) ?? 0)
+						+ ($subraceBonuses?->getByAbility($ability) ?? 0)
+						+ ($classBonuses?->getByAbility($ability) ?? 0);
 
 					if ($value < $minimumValue) {
 						$validator->errors()->add('base_stats.' . $code, 'Значение характеристики ниже стартового минимума.');

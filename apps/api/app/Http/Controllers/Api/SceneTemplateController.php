@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\ApiPayloadResource;
+use App\Http\Resources\Game\SceneTemplateResource;
 use App\Models\SceneTemplate;
 use Illuminate\Http\JsonResponse;
 
@@ -24,7 +24,7 @@ final class SceneTemplateController extends Controller
 			->latest('id')
 			->paginate(20);
 
-		return ApiPayloadResource::collectionJson($templates);
+		return SceneTemplateResource::collection($templates)->response();
 	}
 
 	/**
@@ -38,6 +38,6 @@ final class SceneTemplateController extends Controller
 			'objects',
 		]);
 
-		return ApiPayloadResource::json($sceneTemplate);
+		return SceneTemplateResource::make($sceneTemplate)->response();
 	}
 }

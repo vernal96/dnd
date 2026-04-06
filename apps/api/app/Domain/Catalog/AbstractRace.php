@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog;
 
-use App\Data\Catalog\AbilityBonusChoiceData;
 use App\Data\Catalog\AbilityBonusesData;
 
 /**
@@ -12,45 +11,6 @@ use App\Data\Catalog\AbilityBonusesData;
  */
 abstract class AbstractRace
 {
-	/**
-	 * Преобразует расу в ответ API.
-	 *
-	 * @return array{
-	 *     code: string,
-	 *     name: string,
-	 *     description: ?string,
-	 *     isActive: bool,
-	 *     abilityBonuses: array{str: int, dex: int, con: int, int: int, wis: int, cha: int},
-	 *     abilityBonusChoices: list<array{count: int, value: int, abilities: list<string>}>,
-	 *     subraces: list<array{
-	 *         code: string,
-	 *         name: string,
-	 *         description: ?string,
-	 *         isActive: bool,
-	 *         abilityBonuses: array{str: int, dex: int, con: int, int: int, wis: int, cha: int},
-	 *         abilityBonusChoices: list<array{count: int, value: int, abilities: list<string>}>
-	 *     }>
-	 * }
-	 */
-	public function toArray(): array
-	{
-		return [
-			'code' => $this->getCode(),
-			'name' => $this->getName(),
-			'description' => $this->getDescription(),
-			'isActive' => $this->isActive(),
-			'abilityBonuses' => $this->getAbilityBonuses()->toArray(),
-			'abilityBonusChoices' => array_map(
-				static fn(AbilityBonusChoiceData $choice): array => $choice->toArray(),
-				$this->getAbilityBonusChoices(),
-			),
-			'subraces' => array_map(
-				static fn(AbstractSubrace $subrace): array => $subrace->toArray(),
-				$this->getActiveSubraces(),
-			),
-		];
-	}
-
 	/**
 	 * Возвращает код расы.
 	 */
@@ -75,6 +35,14 @@ abstract class AbstractRace
 	}
 
 	/**
+	 * Возвращает признак доступности расы для выбора игроком.
+	 */
+	public function canBeSelectedByPlayer(): bool
+	{
+		return false;
+	}
+
+	/**
 	 * Возвращает фиксированные бонусы характеристик расы.
 	 */
 	public function getAbilityBonuses(): AbilityBonusesData
@@ -90,6 +58,22 @@ abstract class AbstractRace
 	public function getAbilityBonusChoices(): array
 	{
 		return [];
+	}
+
+	/**
+	 * Возвращает бонус расы к скорости персонажа.
+	 */
+	public function getSpeedBonus(): int
+	{
+		return 0;
+	}
+
+	/**
+	 * Возвращает бонус расы к здоровью персонажа.
+	 */
+	public function getHealthBonus(): int
+	{
+		return 0;
 	}
 
 	/**

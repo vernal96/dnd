@@ -16,7 +16,7 @@ abstract class ConfiguredSkill extends AbstractSkill
 		private readonly string $code,
 		private readonly string $name,
 		private readonly string $description,
-		private readonly ?SkillRollDice $rollDice = null,
+		private readonly ?Dice $rollDice = null,
 		private readonly ?SkillTargetType $targetType = null,
 		private readonly ?int $radiusCells = null,
 	) {
@@ -49,7 +49,7 @@ abstract class ConfiguredSkill extends AbstractSkill
 	/**
 	 * Возвращает кубик скилла.
 	 */
-	final public function getRollDice(): ?SkillRollDice
+	final public function getRollDice(): ?Dice
 	{
 		return $this->rollDice;
 	}

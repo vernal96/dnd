@@ -9,6 +9,7 @@ use App\Data\Game\UploadGameImageData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Game\UploadGameImageRequest;
 use App\Http\Resources\ApiPayloadResource;
+use App\Http\Resources\Game\StoredGameImageResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -38,7 +39,9 @@ final class ActorImageController extends Controller
 		/** @var User $user */
 		$user = $request->user('web');
 
-		return ApiPayloadResource::collectionJson($this->actorImageStorageService->getImages($user));
+		return StoredGameImageResource::collection($this->actorImageStorageService->getImages($user))
+			->response()
+			->setStatusCode(ResponseAlias::HTTP_OK);
 	}
 
 	/**
@@ -64,7 +67,9 @@ final class ActorImageController extends Controller
 			], ResponseAlias::HTTP_INTERNAL_SERVER_ERROR);
 		}
 
-		return ApiPayloadResource::json($image, ResponseAlias::HTTP_CREATED);
+		return StoredGameImageResource::make($image)
+			->response()
+			->setStatusCode(ResponseAlias::HTTP_CREATED);
 	}
 
 	/**

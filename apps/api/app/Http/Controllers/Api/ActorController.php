@@ -12,6 +12,7 @@ use App\Http\Requests\Game\CreateActorRequest;
 use App\Http\Requests\Game\ManageActorRequest;
 use App\Http\Requests\Game\UpdateActorRequest;
 use App\Http\Resources\ApiPayloadResource;
+use App\Http\Resources\Game\ActorResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
@@ -40,7 +41,7 @@ final class ActorController extends Controller
 		$user = $request->user('web');
 		$actors = $this->actorManagementService->getActorsForGameMaster($user);
 
-		return ApiPayloadResource::json($actors);
+		return ActorResource::collection($actors)->response();
 	}
 
 	/**
@@ -64,7 +65,9 @@ final class ActorController extends Controller
 			], ResponseAlias::HTTP_INTERNAL_SERVER_ERROR);
 		}
 
-		return ApiPayloadResource::json($actor, ResponseAlias::HTTP_CREATED);
+		return ActorResource::make($actor)
+			->response()
+			->setStatusCode(ResponseAlias::HTTP_CREATED);
 	}
 
 	/**
@@ -82,7 +85,7 @@ final class ActorController extends Controller
 			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::json($actorModel);
+		return ActorResource::make($actorModel)->response();
 	}
 
 	/**
@@ -113,7 +116,7 @@ final class ActorController extends Controller
 			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::json($actorModel);
+		return ActorResource::make($actorModel)->response();
 	}
 
 	/**

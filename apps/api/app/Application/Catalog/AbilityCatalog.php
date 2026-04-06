@@ -18,6 +18,23 @@ use App\Domain\Catalog\Ability;
 final class AbilityCatalog
 {
 	/**
+	 * Возвращает все классы характеристик в фиксированном порядке.
+	 *
+	 * @return list<class-string<Ability>>
+	 */
+	public function getAbilityClasses(): array
+	{
+		return [
+			StrengthAbility::class,
+			DexterityAbility::class,
+			ConstitutionAbility::class,
+			IntelligenceAbility::class,
+			WisdomAbility::class,
+			CharismaAbility::class,
+		];
+	}
+
+	/**
 	 * Возвращает одну характеристику по коду.
 	 */
 	public function findAbilityByCode(string $code): ?Ability
@@ -32,19 +49,27 @@ final class AbilityCatalog
 	}
 
 	/**
+	 * Возвращает код характеристики по имени ее класса.
+	 *
+	 * @param class-string<Ability> $abilityClass
+	 */
+	public function getCodeByClass(string $abilityClass): string
+	{
+		$ability = new $abilityClass;
+
+		return $ability->getCode();
+	}
+
+	/**
 	 * Возвращает все характеристики в фиксированном порядке.
 	 *
 	 * @return list<Ability>
 	 */
 	public function getAbilities(): array
 	{
-		return [
-			new StrengthAbility,
-			new DexterityAbility,
-			new ConstitutionAbility,
-			new IntelligenceAbility,
-			new WisdomAbility,
-			new CharismaAbility,
-		];
+		return array_map(
+			static fn (string $abilityClass): Ability => new $abilityClass,
+			$this->getAbilityClasses(),
+		);
 	}
 }

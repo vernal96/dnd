@@ -48,23 +48,4 @@ final readonly class SceneObjectData
 		);
 	}
 
-	/**
-	 * Возвращает DTO в виде массива для сервисного слоя.
-	 *
-	 * @return array{kind:string,name:?string,x:int,y:int,width:int,height:int,isHidden:bool,isInteractive:bool,state:?array}
-	 */
-	public function toArray(): array
-	{
-		return [
-			'kind' => $this->kind,
-			'name' => $this->name,
-			'x' => $this->x,
-			'y' => $this->y,
-			'width' => $this->width,
-			'height' => $this->height,
-			'isHidden' => $this->isHidden,
-			'isInteractive' => $this->isInteractive,
-			'state' => $this->state,
-		];
-	}
 }

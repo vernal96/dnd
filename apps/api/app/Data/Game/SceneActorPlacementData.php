@@ -34,17 +34,4 @@ final readonly class SceneActorPlacementData
 		);
 	}
 
-	/**
-	 * Возвращает DTO в виде массива для сервисного слоя.
-	 *
-	 * @return array{actorId:int,x:int,y:int}
-	 */
-	public function toArray(): array
-	{
-		return [
-			'actorId' => $this->actorId,
-			'x' => $this->x,
-			'y' => $this->y,
-		];
-	}
 }

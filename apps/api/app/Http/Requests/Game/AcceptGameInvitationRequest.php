@@ -27,7 +27,7 @@ final class AcceptGameInvitationRequest extends FormRequest
 	public function rules(): array
 	{
 		return [
-			'character_id' => ['required', 'integer', 'min:1'],
+			'character_id' => ['nullable', 'integer', 'min:1'],
 		];
 	}
 }

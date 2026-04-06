@@ -84,6 +84,7 @@ const displayedAbilityValues = computed<Record<string, number>>(() =>
     ]),
   ) as Record<string, number>,
 );
+const canAutoAllocate = computed<boolean>(() => step.value === 3 && selectedClass.value !== null);
 
 /**
  * Форматирует бонусы характеристик для отображения под описанием.
@@ -228,6 +229,22 @@ function adjustAbility(code: string, delta: number): void {
     ...allocatedAbilityPoints.value,
     [code]: nextValue,
   };
+}
+
+/**
+ * Автоматически распределяет 27 очков по рекомендациям выбранного класса.
+ */
+function applyAutomaticAllocation(): void {
+  if (selectedClass.value === null) {
+    return;
+  }
+
+  allocatedAbilityPoints.value = Object.fromEntries(
+    abilities.value.map((ability) => [
+      ability.code,
+      selectedClass.value?.defaultPointBuyAllocation?.[ability.code] ?? 0,
+    ]),
+  ) as Record<string, number>;
 }
 
 /**
@@ -540,6 +557,17 @@ watch(
                 v-else-if="step === 3"
                 class="space-y-4"
               >
+                <div class="flex justify-end">
+                  <button
+                    class="rounded-full border border-sky-300/25 bg-sky-500/10 px-4 py-2 text-sm text-sky-100 transition hover:border-sky-200/40 hover:bg-sky-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+                    :disabled="!canAutoAllocate"
+                    type="button"
+                    @click="applyAutomaticAllocation"
+                  >
+                    Автоматическое распределение
+                  </button>
+                </div>
+
                 <div
                   v-for="ability in abilities"
                   :key="ability.code"

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Data\Catalog;
 
+use App\Domain\Catalog\Ability;
+
 /**
  * Хранит один вариант выбора бонусов характеристик.
  */
@@ -12,7 +14,7 @@ final readonly class AbilityBonusChoiceData
 	/**
 	 * Создает DTO варианта выбора бонусов характеристик.
 	 *
-	 * @param list<string> $abilities
+	 * @param list<class-string<Ability>> $abilities
 	 */
 	public function __construct(
 		public int   $count,
@@ -22,17 +24,4 @@ final readonly class AbilityBonusChoiceData
 	{
 	}
 
-	/**
-	 * Преобразует DTO в массив для API.
-	 *
-	 * @return array{count: int, value: int, abilities: list<string>}
-	 */
-	public function toArray(): array
-	{
-		return [
-			'count' => $this->count,
-			'value' => $this->value,
-			'abilities' => $this->abilities,
-		];
-	}
 }

@@ -4,6 +4,14 @@ declare(strict_types=1);
 
 namespace App\Data\Catalog;
 
+use App\Domain\Catalog\Ability;
+use App\Domain\Catalog\Abilities\CharismaAbility;
+use App\Domain\Catalog\Abilities\ConstitutionAbility;
+use App\Domain\Catalog\Abilities\DexterityAbility;
+use App\Domain\Catalog\Abilities\IntelligenceAbility;
+use App\Domain\Catalog\Abilities\StrengthAbility;
+use App\Domain\Catalog\Abilities\WisdomAbility;
+
 /**
  * Хранит полный набор бонусов характеристик с нулевыми значениями по умолчанию.
  */
@@ -24,19 +32,18 @@ final readonly class AbilityBonusesData
 	}
 
 	/**
-	 * Преобразует DTO в массив для API.
-	 *
-	 * @return array{str: int, dex: int, con: int, int: int, wis: int, cha: int}
+	 * Возвращает бонус по объекту характеристики.
 	 */
-	public function toArray(): array
+	public function getByAbility(Ability $ability): int
 	{
-		return [
-			'str' => $this->strength,
-			'dex' => $this->dexterity,
-			'con' => $this->constitution,
-			'int' => $this->intelligence,
-			'wis' => $this->wisdom,
-			'cha' => $this->charisma,
-		];
+		return match ($ability::class) {
+			StrengthAbility::class => $this->strength,
+			DexterityAbility::class => $this->dexterity,
+			ConstitutionAbility::class => $this->constitution,
+			IntelligenceAbility::class => $this->intelligence,
+			WisdomAbility::class => $this->wisdom,
+			CharismaAbility::class => $this->charisma,
+			default => 0,
+		};
 	}
 }

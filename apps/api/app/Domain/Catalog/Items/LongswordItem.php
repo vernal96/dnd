@@ -8,7 +8,7 @@ use App\Domain\Catalog\Abilities\StrengthAbility;
 use App\Domain\Catalog\Ability;
 use App\Domain\Catalog\Item;
 use App\Domain\Catalog\ItemType;
-use App\Domain\Catalog\WeaponDamageDice;
+use App\Domain\Catalog\Dice;
 
 /**
  * Сущность предмета "Длинный меч".
@@ -50,17 +50,17 @@ final class LongswordItem extends Item
 	/**
 	 * Возвращает основной кубик урона оружия.
 	 */
-	public function getDamageDice(): ?WeaponDamageDice
+	public function getDamageDice(): ?Dice
 	{
-		return WeaponDamageDice::D8;
+		return Dice::D8;
 	}
 
 	/**
 	 * Возвращает альтернативный кубик урона оружия.
 	 */
-	public function getVersatileDamageDice(): ?WeaponDamageDice
+	public function getVersatileDamageDice(): ?Dice
 	{
-		return WeaponDamageDice::D10;
+		return Dice::D10;
 	}
 
 	/**

@@ -11,7 +11,10 @@ use App\Http\Requests\Game\MoveRuntimeActorRequest;
 use App\Http\Requests\Game\RuntimeDropItemRequest;
 use App\Http\Requests\Game\RuntimePaintCellRequest;
 use App\Http\Requests\Game\RuntimeSpawnActorRequest;
+use App\Http\Requests\Game\StartEncounterRequest;
 use App\Http\Resources\ApiPayloadResource;
+use App\Http\Resources\Game\ActorInstanceResource;
+use App\Http\Resources\Game\RuntimeSceneViewResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use RuntimeException;
@@ -47,7 +50,8 @@ final class GmRuntimeSceneController extends Controller
 			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::json($this->runtimeSceneManagementService->toScenePayload($sceneState));
+		return RuntimeSceneViewResource::make($this->runtimeSceneManagementService->buildSceneView($sceneState))
+			->response();
 	}
 
 	/**
@@ -74,7 +78,8 @@ final class GmRuntimeSceneController extends Controller
 			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::json($this->runtimeSceneManagementService->toScenePayload($activeScene));
+		return RuntimeSceneViewResource::make($this->runtimeSceneManagementService->buildSceneView($activeScene))
+			->response();
 	}
 
 	/**
@@ -111,7 +116,7 @@ final class GmRuntimeSceneController extends Controller
 			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::json($actorInstance);
+		return ActorInstanceResource::make($actorInstance)->response();
 	}
 
 	/**
@@ -149,7 +154,8 @@ final class GmRuntimeSceneController extends Controller
 			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::json($this->runtimeSceneManagementService->toScenePayload($sceneState));
+		return RuntimeSceneViewResource::make($this->runtimeSceneManagementService->buildSceneView($sceneState))
+			->response();
 	}
 
 	/**
@@ -186,7 +192,8 @@ final class GmRuntimeSceneController extends Controller
 			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::json($this->runtimeSceneManagementService->toScenePayload($sceneState));
+		return RuntimeSceneViewResource::make($this->runtimeSceneManagementService->buildSceneView($sceneState))
+			->response();
 	}
 
 	/**
@@ -224,6 +231,123 @@ final class GmRuntimeSceneController extends Controller
 			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::json($this->runtimeSceneManagementService->toScenePayload($sceneState));
+		return RuntimeSceneViewResource::make($this->runtimeSceneManagementService->buildSceneView($sceneState))
+			->response();
+	}
+
+	/**
+	 * Запускает encounter на активной runtime-сцене.
+	 */
+	public function startEncounter(int $game, StartEncounterRequest $request): JsonResponse
+	{
+		/** @var User $user */
+		$user = $request->user('web');
+
+		try {
+			$sceneState = $this->runtimeSceneManagementService->startEncounter(
+				$game,
+				array_values(array_map('intval', $request->validated('actor_ids', []))),
+				$user,
+			);
+		} catch (RuntimeException $exception) {
+			return ApiPayloadResource::json([
+				'message' => $exception->getMessage(),
+			], ResponseAlias::HTTP_UNPROCESSABLE_ENTITY);
+		} catch (Throwable $throwable) {
+			report($throwable);
+
+			return ApiPayloadResource::json([
+				'message' => 'Не удалось запустить сражение.',
+			], ResponseAlias::HTTP_INTERNAL_SERVER_ERROR);
+		}
+
+		if ($sceneState === null) {
+			return ApiPayloadResource::json([
+				'message' => 'Активная сцена игры не найдена.',
+			], ResponseAlias::HTTP_NOT_FOUND);
+		}
+
+		return RuntimeSceneViewResource::make($this->runtimeSceneManagementService->buildSceneView($sceneState))
+			->response();
+	}
+
+	/**
+	 * Расходует основное действие текущего участника encounter.
+	 */
+	public function useAction(int $game, int $actor, ListGamesRequest $request): JsonResponse
+	{
+		return $this->useEncounterAction($game, $actor, 'action', $request);
+	}
+
+	/**
+	 * Расходует дополнительное действие текущего участника encounter.
+	 */
+	public function useBonusAction(int $game, int $actor, ListGamesRequest $request): JsonResponse
+	{
+		return $this->useEncounterAction($game, $actor, 'bonus-action', $request);
+	}
+
+	/**
+	 * Переводит encounter на следующий ход.
+	 */
+	public function nextTurn(int $game, ListGamesRequest $request): JsonResponse
+	{
+		/** @var User $user */
+		$user = $request->user('web');
+
+		try {
+			$sceneState = $this->runtimeSceneManagementService->advanceEncounterTurn($game, $user);
+		} catch (RuntimeException $exception) {
+			return ApiPayloadResource::json([
+				'message' => $exception->getMessage(),
+			], ResponseAlias::HTTP_UNPROCESSABLE_ENTITY);
+		} catch (Throwable $throwable) {
+			report($throwable);
+
+			return ApiPayloadResource::json([
+				'message' => 'Не удалось завершить текущий ход.',
+			], ResponseAlias::HTTP_INTERNAL_SERVER_ERROR);
+		}
+
+		if ($sceneState === null) {
+			return ApiPayloadResource::json([
+				'message' => 'Активная сцена игры не найдена.',
+			], ResponseAlias::HTTP_NOT_FOUND);
+		}
+
+		return RuntimeSceneViewResource::make($this->runtimeSceneManagementService->buildSceneView($sceneState))
+			->response();
+	}
+
+	/**
+	 * Выполняет расход указанного боевого ресурса текущего участника encounter.
+	 */
+	private function useEncounterAction(int $game, int $actor, string $actionType, ListGamesRequest $request): JsonResponse
+	{
+		/** @var User $user */
+		$user = $request->user('web');
+
+		try {
+			$sceneState = $this->runtimeSceneManagementService->useEncounterAction($game, $actor, $actionType, $user);
+		} catch (RuntimeException $exception) {
+			return ApiPayloadResource::json([
+				'message' => $exception->getMessage(),
+			], ResponseAlias::HTTP_UNPROCESSABLE_ENTITY);
+		} catch (Throwable $throwable) {
+			report($throwable);
+
+			return ApiPayloadResource::json([
+				'message' => 'Не удалось обновить состояние боевого хода.',
+			], ResponseAlias::HTTP_INTERNAL_SERVER_ERROR);
+		}
+
+		if ($sceneState === null) {
+			return ApiPayloadResource::json([
+				'message' => 'Активная сцена игры не найдена.',
+			], ResponseAlias::HTTP_NOT_FOUND);
+		}
+
+		return RuntimeSceneViewResource::make($this->runtimeSceneManagementService->buildSceneView($sceneState))
+			->response();
 	}
 }

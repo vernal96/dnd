@@ -13,9 +13,9 @@ final readonly class UpdateSceneData
 	 * Создает DTO сохранения authored-сцены.
 	 *
 	 * @param array<string, mixed>|null $metadata
-	 * @param array<int, array{x:int,y:int,terrainType:string,elevation:int,isPassable:bool,blocksVision:bool,props:?array}> $cells
-	 * @param array<int, array{kind:string,name:?string,x:int,y:int,width:int,height:int,isHidden:bool,isInteractive:bool,state:?array}> $objects
-	 * @param array<int, array{actorId:int,x:int,y:int}> $actors
+	 * @param list<SceneCellData> $cells
+	 * @param list<SceneObjectData> $objects
+	 * @param list<SceneActorPlacementData> $actors
 	 */
 	public function __construct(
 		public string $name,
@@ -44,15 +44,15 @@ final readonly class UpdateSceneData
 			height: $payload['height'],
 			metadata: $payload['metadata'] ?? null,
 			cells: array_map(
-				static fn (array $cell): array => SceneCellData::fromArray($cell)->toArray(),
+				static fn (array $cell): SceneCellData => SceneCellData::fromArray($cell),
 				$payload['cells'],
 			),
 			objects: array_map(
-				static fn (array $object): array => SceneObjectData::fromArray($object)->toArray(),
+				static fn (array $object): SceneObjectData => SceneObjectData::fromArray($object),
 				$payload['objects'] ?? [],
 			),
 			actors: array_map(
-				static fn (array $actor): array => SceneActorPlacementData::fromArray($actor)->toArray(),
+				static fn (array $actor): SceneActorPlacementData => SceneActorPlacementData::fromArray($actor),
 				$payload['actors'] ?? [],
 			),
 		);

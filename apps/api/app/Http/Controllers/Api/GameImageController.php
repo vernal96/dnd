@@ -9,6 +9,7 @@ use App\Data\Game\UploadGameImageData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Game\UploadGameImageRequest;
 use App\Http\Resources\ApiPayloadResource;
+use App\Http\Resources\Game\StoredGameImageResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -46,7 +47,9 @@ final class GameImageController extends Controller
 			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::collectionJson($images);
+		return StoredGameImageResource::collection($images)
+			->response()
+			->setStatusCode(ResponseAlias::HTTP_OK);
 	}
 
 	/**
@@ -71,7 +74,9 @@ final class GameImageController extends Controller
 			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::json($image, ResponseAlias::HTTP_CREATED);
+		return StoredGameImageResource::make($image)
+			->response()
+			->setStatusCode(ResponseAlias::HTTP_CREATED);
 	}
 
 	/**

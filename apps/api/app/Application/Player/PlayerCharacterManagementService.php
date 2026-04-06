@@ -9,6 +9,15 @@ use App\Application\Catalog\CharacterClassCatalog;
 use App\Application\Catalog\RaceCatalog;
 use App\Data\Catalog\AbilityBonusesData;
 use App\Data\Player\CreatePlayerCharacterData;
+use App\Data\Player\PlayerCharacterViewData;
+use App\Domain\Catalog\Abilities\CharismaAbility;
+use App\Domain\Catalog\Abilities\ConstitutionAbility;
+use App\Domain\Catalog\Abilities\DexterityAbility;
+use App\Domain\Catalog\Abilities\IntelligenceAbility;
+use App\Domain\Catalog\Abilities\StrengthAbility;
+use App\Domain\Catalog\Abilities\WisdomAbility;
+use App\Domain\Catalog\AbstractCharacterClass;
+use App\Domain\Catalog\AbstractRace;
 use App\Models\GameMember;
 use App\Models\PlayerCharacter;
 use App\Models\User;
@@ -37,7 +46,7 @@ final class PlayerCharacterManagementService
 	/**
 	 * Возвращает список персонажей текущего игрока.
 	 *
-	 * @return list<array<string, mixed>>
+	 * @return list<PlayerCharacterViewData>
 	 */
 	public function getCharactersForPlayer(User $user): array
 	{
@@ -46,14 +55,14 @@ final class PlayerCharacterManagementService
 			->orderByDesc('created_at')
 			->orderByDesc('id')
 			->get()
-			->map(fn (PlayerCharacter $character): array => $this->buildCharacterPayload($character))
+			->map(fn (PlayerCharacter $character): PlayerCharacterViewData => $this->buildCharacterView($character))
 			->all();
 	}
 
 	/**
 	 * Возвращает только тех персонажей игрока, которые можно использовать для входа в указанную игру.
 	 *
-	 * @return list<array<string, mixed>>
+	 * @return list<PlayerCharacterViewData>
 	 */
 	public function getAvailableCharactersForGame(User $user, int $gameId): array
 	{
@@ -63,7 +72,7 @@ final class PlayerCharacterManagementService
 			->orderByDesc('id')
 			->get()
 			->filter(fn (PlayerCharacter $character): bool => $this->findBlockingMembership($character, $gameId) === null)
-			->map(fn (PlayerCharacter $character): array => $this->buildCharacterPayload($character))
+			->map(fn (PlayerCharacter $character): PlayerCharacterViewData => $this->buildCharacterView($character))
 			->values()
 			->all();
 	}
@@ -95,13 +104,11 @@ final class PlayerCharacterManagementService
 	/**
 	 * Создает нового persistent-персонажа текущего игрока.
 	 *
-	 * @return array<string, mixed>
-	 *
 	 * @throws Throwable Если создание персонажа завершилось технической ошибкой.
 	 */
-	public function createCharacter(CreatePlayerCharacterData $data, User $user): array
+	public function createCharacter(CreatePlayerCharacterData $data, User $user): PlayerCharacterViewData
 	{
-		$race = $this->raceCatalog->findActiveRaceByCode($data->raceCode);
+		$race = $this->raceCatalog->findPlayerSelectableRaceByCode($data->raceCode);
 
 		if ($race === null) {
 			throw new RuntimeException('Раса персонажа не найдена.');
@@ -122,22 +129,24 @@ final class PlayerCharacterManagementService
 			}
 		}
 
-		$characterClass = $this->characterClassCatalog->findActiveClassByCode($data->classCode);
+		$characterClass = $this->characterClassCatalog->findPlayerSelectableClassByCode($data->classCode);
 
 		if ($characterClass === null) {
 			throw new RuntimeException('Класс персонажа не найден.');
 		}
 
 		$totalBonuses = $this->buildTotalBonuses(
-			$race->toArray()['abilityBonuses'],
-			$subrace?->toArray()['abilityBonuses'] ?? null,
-			$characterClass->toArray()['abilityBonuses'],
+			$race->getAbilityBonuses(),
+			$subrace?->getAbilityBonuses(),
+			$characterClass->getAbilityBonuses(),
 		);
 
 		$this->assertPointBuyBudget($data->baseStats, $totalBonuses);
 
+		$derivedStats = $this->buildDerivedStats($data->baseStats, $race, $characterClass);
+
 		/** @var PlayerCharacter $character */
-		$character = DB::transaction(function () use ($data, $user, $race, $subrace): PlayerCharacter {
+		$character = DB::transaction(function () use ($data, $user, $derivedStats): PlayerCharacter {
 			return PlayerCharacter::query()->create([
 				'user_id' => $user->id,
 				'name' => $data->name,
@@ -149,23 +158,21 @@ final class PlayerCharacterManagementService
 				'experience' => 0,
 				'status' => 'active',
 				'base_stats' => $data->baseStats,
-				'derived_stats' => $data->baseStats,
+				'derived_stats' => $derivedStats,
 				'image_path' => $data->imagePath,
 				'meta' => null,
 			]);
 		});
 
-		return $this->buildCharacterPayload($character);
+		return $this->buildCharacterView($character);
 	}
 
 	/**
 	 * Обновляет только фото существующего персонажа игрока.
 	 *
-	 * @return array<string, mixed>|null
-	 *
 	 * @throws Throwable Если обновление персонажа завершилось технической ошибкой.
 	 */
-	public function updateCharacterImage(int $characterId, string $imagePath, User $user): ?array
+	public function updateCharacterImage(int $characterId, string $imagePath, User $user): ?PlayerCharacterViewData
 	{
 		$character = PlayerCharacter::query()
 			->where('id', $characterId)
@@ -182,7 +189,7 @@ final class PlayerCharacterManagementService
 			])->save();
 		});
 
-		return $this->buildCharacterPayload($character->fresh() ?? $character);
+		return $this->buildCharacterView($character->fresh() ?? $character);
 	}
 
 	/**
@@ -215,31 +222,59 @@ final class PlayerCharacterManagementService
 	/**
 	 * Собирает суммарные бонусы расы, подрасы и класса.
 	 *
-	 * @param array{str:int,dex:int,con:int,int:int,wis:int,cha:int} $raceBonuses
-	 * @param array{str:int,dex:int,con:int,int:int,wis:int,cha:int}|null $subraceBonuses
-	 * @param array{str:int,dex:int,con:int,int:int,wis:int,cha:int} $classBonuses
+	 * @param AbilityBonusesData $raceBonuses
+	 * @param AbilityBonusesData|null $subraceBonuses
+	 * @param AbilityBonusesData $classBonuses
 	 * @return array{str:int,dex:int,con:int,int:int,wis:int,cha:int}
 	 */
-	private function buildTotalBonuses(array $raceBonuses, ?array $subraceBonuses, array $classBonuses): array
+	private function buildTotalBonuses(
+		AbilityBonusesData $raceBonuses,
+		?AbilityBonusesData $subraceBonuses,
+		AbilityBonusesData $classBonuses,
+	): array
 	{
-		$totalBonuses = (new AbilityBonusesData)->toArray();
+		$totalBonuses = [
+			$this->abilityCatalog->getCodeByClass(StrengthAbility::class) => 0,
+			$this->abilityCatalog->getCodeByClass(DexterityAbility::class) => 0,
+			$this->abilityCatalog->getCodeByClass(ConstitutionAbility::class) => 0,
+			$this->abilityCatalog->getCodeByClass(IntelligenceAbility::class) => 0,
+			$this->abilityCatalog->getCodeByClass(WisdomAbility::class) => 0,
+			$this->abilityCatalog->getCodeByClass(CharismaAbility::class) => 0,
+		];
 
 		foreach ($this->abilityCatalog->getAbilities() as $ability) {
 			$code = $ability->getCode();
-			$totalBonuses[$code] += $raceBonuses[$code] ?? 0;
-			$totalBonuses[$code] += $subraceBonuses[$code] ?? 0;
-			$totalBonuses[$code] += $classBonuses[$code] ?? 0;
+			$totalBonuses[$code] += $raceBonuses->getByAbility($ability);
+			$totalBonuses[$code] += $subraceBonuses?->getByAbility($ability) ?? 0;
+			$totalBonuses[$code] += $classBonuses->getByAbility($ability);
 		}
 
 		return $totalBonuses;
 	}
 
 	/**
-	 * Преобразует модель персонажа в payload ответа API.
+	 * Собирает производные характеристики персонажа на основе базы, расы и класса.
 	 *
-	 * @return array<string, mixed>
+	 * @param array{str:int,dex:int,con:int,int:int,wis:int,cha:int} $baseStats
+	 * @return array<string, int>
 	 */
-	private function buildCharacterPayload(PlayerCharacter $character): array
+	private function buildDerivedStats(
+		array $baseStats,
+		AbstractRace $race,
+		AbstractCharacterClass $characterClass,
+	): array
+	{
+		return [
+			...$baseStats,
+			'speed' => 6 + $race->getSpeedBonus() + $characterClass->getSpeedBonus(),
+			'health' => $race->getHealthBonus() + $characterClass->getHealthBonus(),
+		];
+	}
+
+	/**
+	 * Преобразует модель персонажа в типизированное представление ответа API.
+	 */
+	private function buildCharacterView(PlayerCharacter $character): PlayerCharacterViewData
 	{
 		$activeMembership = GameMember::query()
 			->where('player_character_id', $character->id)
@@ -266,30 +301,30 @@ final class PlayerCharacterManagementService
 			}
 		}
 
-		return [
-			'id' => $character->id,
-			'user_id' => $character->user_id,
-			'name' => $character->name,
-			'description' => $character->description,
-			'race' => $character->race,
-			'race_name' => $race?->getName(),
-			'subrace' => $character->subrace,
-			'subrace_name' => $subraceName,
-			'character_class' => $character->class,
-			'character_class_name' => $characterClass?->getName(),
-			'level' => $character->level,
-			'experience' => $character->experience,
-			'status' => $character->status,
-			'base_stats' => $character->base_stats,
-			'derived_stats' => $character->derived_stats,
-			'image_path' => $character->image_path,
-			'image_url' => $character->image_url,
-			'active_game_id' => $activeMembership?->game_id,
-			'active_game_title' => $activeMembership?->game?->title,
-			'is_available_for_join' => $activeMembership === null,
-			'created_at' => $character->created_at?->toJSON(),
-			'updated_at' => $character->updated_at?->toJSON(),
-		];
+		return new PlayerCharacterViewData(
+			id: $character->id,
+			userId: $character->user_id,
+			name: $character->name,
+			description: $character->description,
+			race: $character->race,
+			raceName: $race?->getName(),
+			subrace: $character->subrace,
+			subraceName: $subraceName,
+			characterClass: $character->class,
+			characterClassName: $characterClass?->getName(),
+			level: $character->level,
+			experience: $character->experience,
+			status: $character->status,
+			baseStats: $character->base_stats,
+			derivedStats: $character->derived_stats,
+			imagePath: $character->image_path,
+			imageUrl: $character->image_url,
+			activeGameId: $activeMembership?->game_id,
+			activeGameTitle: $activeMembership?->game?->title,
+			isAvailableForJoin: $activeMembership === null,
+			createdAt: $character->created_at?->toJSON(),
+			updatedAt: $character->updated_at?->toJSON(),
+		);
 	}
 
 	/**

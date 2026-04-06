@@ -38,6 +38,20 @@ final class CharacterClassCatalog
 	}
 
 	/**
+	 * Возвращает один доступный игроку активный класс персонажа по коду.
+	 */
+	public function findPlayerSelectableClassByCode(string $code): ?AbstractCharacterClass
+	{
+		foreach ($this->getPlayerSelectableClasses() as $characterClass) {
+			if ($characterClass->getCode() === $code) {
+				return $characterClass;
+			}
+		}
+
+		return null;
+	}
+
+	/**
 	 * Возвращает все активные классы персонажей справочника.
 	 *
 	 * @return list<AbstractCharacterClass>
@@ -48,6 +62,16 @@ final class CharacterClassCatalog
 			$this->getAllClasses(),
 			static fn(AbstractCharacterClass $characterClass): bool => $characterClass->isActive(),
 		));
+	}
+
+	/**
+	 * Возвращает активные классы, доступные для выбора игроком.
+	 *
+	 * @return list<AbstractCharacterClass>
+	 */
+	public function getPlayerSelectableClasses(): array
+	{
+		return $this->getActiveClasses();
 	}
 
 	/**

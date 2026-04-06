@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\ApiPayloadResource;
+use App\Http\Resources\Game\GameSceneStateResource;
 use App\Models\GameSceneState;
 use Illuminate\Http\JsonResponse;
 
@@ -24,7 +24,7 @@ final class GameSceneStateController extends Controller
 			->latest('id')
 			->paginate(20);
 
-		return ApiPayloadResource::collectionJson($states);
+		return GameSceneStateResource::collection($states)->response();
 	}
 
 	/**
@@ -37,8 +37,10 @@ final class GameSceneStateController extends Controller
 			'sceneTemplate:id,name,width,height,status',
 			'actorInstances',
 			'encounters',
+			'encounters.participants',
+			'encounters.participants.actor',
 		]);
 
-		return ApiPayloadResource::json($gameSceneState);
+		return GameSceneStateResource::make($gameSceneState)->response();
 	}
 }

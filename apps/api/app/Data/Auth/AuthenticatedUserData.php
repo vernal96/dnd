@@ -35,19 +35,4 @@ final readonly class AuthenticatedUserData
 			canAccessGm: (bool)$user->can_access_gm,
 		);
 	}
-
-	/**
-	 * Преобразует DTO в массив для JSON-ответа.
-	 *
-	 * @return array{id:int,name:string,email:string,canAccessGm:bool}
-	 */
-	public function toArray(): array
-	{
-		return [
-			'id' => $this->id,
-			'name' => $this->name,
-			'email' => $this->email,
-			'canAccessGm' => $this->canAccessGm,
-		];
-	}
 }

@@ -15,6 +15,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Http\Resources\ApiPayloadResource;
+use App\Http\Resources\Auth\AuthSessionResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -42,7 +43,7 @@ final class AuthSessionController extends Controller
 	{
 		$session = $this->authSessionService->getSessionState($request);
 
-		return ApiPayloadResource::json($session);
+		return AuthSessionResource::make($session)->response();
 	}
 
 	/**
@@ -63,7 +64,7 @@ final class AuthSessionController extends Controller
 			return $this->buildServiceFailureResponse($throwable);
 		}
 
-		return ApiPayloadResource::json($session);
+		return AuthSessionResource::make($session)->response();
 	}
 
 	/**
@@ -92,7 +93,9 @@ final class AuthSessionController extends Controller
 			return $this->buildServiceFailureResponse($throwable);
 		}
 
-		return ApiPayloadResource::json($session, 201);
+		return AuthSessionResource::make($session)
+			->response()
+			->setStatusCode(201);
 	}
 
 	/**

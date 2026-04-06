@@ -21,20 +21,4 @@ final readonly class StoredGameImageData
 	)
 	{
 	}
-
-	/**
-	 * Преобразует DTO в массив для JSON-ответа.
-	 *
-	 * @return array{fileName:string,originalName:string,mimeType:string,fileSize:int,downloadUrl:string}
-	 */
-	public function toArray(): array
-	{
-		return [
-			'fileName' => $this->fileName,
-			'originalName' => $this->originalName,
-			'mimeType' => $this->mimeType,
-			'fileSize' => $this->fileSize,
-			'downloadUrl' => $this->downloadUrl,
-		];
-	}
 }

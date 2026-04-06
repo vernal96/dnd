@@ -15,28 +15,6 @@ use App\Domain\Catalog\CharacterSubclasses\CollegeOfDanceCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\CollegeOfGlamourCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\CollegeOfLoreCharacterSubclass;
 use App\Domain\Catalog\CharacterSubclasses\CollegeOfValorCharacterSubclass;
-use App\Domain\Catalog\Items\BackpackItem;
-use App\Domain\Catalog\Items\DaggerItem;
-use App\Domain\Catalog\Items\LeatherArmorItem;
-use App\Domain\Catalog\Items\MusicalInstrumentItem;
-use App\Domain\Catalog\Items\PaperParchmentItem;
-use App\Domain\Catalog\Items\QuillItem;
-use App\Domain\Catalog\Items\RapierItem;
-use App\Domain\Catalog\Items\RationsItem;
-use App\Domain\Catalog\Items\WaterskinItem;
-use App\Domain\Catalog\Skills\AbilityScoreImprovementSkill;
-use App\Domain\Catalog\Skills\BardicInspirationSkill;
-use App\Domain\Catalog\Skills\BardSubclassFeatureSkill;
-use App\Domain\Catalog\Skills\BardSubclassSkill;
-use App\Domain\Catalog\Skills\CountercharmSkill;
-use App\Domain\Catalog\Skills\EpicBoonSkill;
-use App\Domain\Catalog\Skills\ExpertiseSkill;
-use App\Domain\Catalog\Skills\FontOfInspirationSkill;
-use App\Domain\Catalog\Skills\JackOfAllTradesSkill;
-use App\Domain\Catalog\Skills\MagicalSecretsSkill;
-use App\Domain\Catalog\Skills\SpellcastingSkill;
-use App\Domain\Catalog\Skills\SuperiorInspirationSkill;
-use App\Domain\Catalog\Skills\WordsOfCreationSkill;
 
 /**
  * Сущность класса барда.
@@ -106,26 +84,7 @@ final class BardCharacterClass extends AbstractCharacterClass
 	public function getSkillsByLevel(): CharacterClassSkillProgressionData
 	{
 		return new CharacterClassSkillProgressionData(
-			level1: [new BardicInspirationSkill, new SpellcastingSkill],
-			level2: [new ExpertiseSkill, new JackOfAllTradesSkill],
-			level3: [new BardSubclassSkill],
-			level4: [new AbilityScoreImprovementSkill],
-			level5: [new FontOfInspirationSkill],
-			level6: [new BardSubclassFeatureSkill],
-			level7: [new CountercharmSkill],
-			level8: [new AbilityScoreImprovementSkill],
-			level9: [new ExpertiseSkill],
-			level10: [new MagicalSecretsSkill],
-			level11: [],
-			level12: [new AbilityScoreImprovementSkill],
-			level13: [],
-			level14: [new BardSubclassFeatureSkill],
-			level15: [],
-			level16: [new AbilityScoreImprovementSkill],
-			level17: [],
-			level18: [new SuperiorInspirationSkill],
-			level19: [new EpicBoonSkill],
-			level20: [new WordsOfCreationSkill],
+			level1: [new \App\Domain\Catalog\Skills\WeaponMasterySkill],
 		);
 	}
 
@@ -137,15 +96,7 @@ final class BardCharacterClass extends AbstractCharacterClass
 	public function getStartingEquipment(): array
 	{
 		return [
-			$this->makeStartingEquipmentEntry(RapierItem::class),
-			$this->makeStartingEquipmentEntry(DaggerItem::class),
-			$this->makeStartingEquipmentEntry(LeatherArmorItem::class),
-			$this->makeStartingEquipmentEntry(MusicalInstrumentItem::class),
-			$this->makeStartingEquipmentEntry(BackpackItem::class),
-			$this->makeStartingEquipmentEntry(PaperParchmentItem::class),
-			$this->makeStartingEquipmentEntry(QuillItem::class),
-			$this->makeStartingEquipmentEntry(WaterskinItem::class),
-			$this->makeStartingEquipmentEntry(RationsItem::class),
+			$this->makeStartingEquipmentEntry(\App\Domain\Catalog\Items\BackpackItem::class),
 		];
 	}
 }

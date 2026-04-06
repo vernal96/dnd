@@ -7,6 +7,11 @@ namespace App\Domain\Catalog\Races;
 use App\Data\Catalog\AbilityBonusChoiceData;
 use App\Data\Catalog\AbilityBonusesData;
 use App\Domain\Catalog\AbstractRace;
+use App\Domain\Catalog\Abilities\ConstitutionAbility;
+use App\Domain\Catalog\Abilities\DexterityAbility;
+use App\Domain\Catalog\Abilities\IntelligenceAbility;
+use App\Domain\Catalog\Abilities\StrengthAbility;
+use App\Domain\Catalog\Abilities\WisdomAbility;
 
 /**
  * Сущность расы полуэльфа.
@@ -57,7 +62,13 @@ final class HalfElfRace extends AbstractRace
 			new AbilityBonusChoiceData(
 				count: 2,
 				value: 1,
-				abilities: ['str', 'dex', 'con', 'int', 'wis'],
+				abilities: [
+					StrengthAbility::class,
+					DexterityAbility::class,
+					ConstitutionAbility::class,
+					IntelligenceAbility::class,
+					WisdomAbility::class,
+				],
 			),
 		];
 	}

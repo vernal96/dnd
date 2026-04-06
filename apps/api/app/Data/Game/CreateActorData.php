@@ -13,7 +13,7 @@ final readonly class CreateActorData
 	 * Создает DTO нового актора.
 	 *
 	 * @param array<string, mixed>|null $stats
-	 * @param array<int, array{itemCode:string,quantity:int,slot:?string,isEquipped:bool,state:?array}> $inventory
+	 * @param list<ActorInventoryItemData> $inventory
 	 * @param array<string, mixed>|null $meta
 	 */
 	public function __construct(
@@ -55,7 +55,7 @@ final readonly class CreateActorData
 			healthMax: $payload['health_max'] ?? null,
 			stats: $payload['stats'] ?? null,
 			inventory: array_map(
-				static fn (array $item): array => ActorInventoryItemData::fromArray($item)->toArray(),
+				static fn (array $item): ActorInventoryItemData => ActorInventoryItemData::fromArray($item),
 				$payload['inventory'] ?? [],
 			),
 			imagePath: self::normalizeImagePath($payload['image_path'] ?? null),

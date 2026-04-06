@@ -12,6 +12,7 @@ export type RaceDefinition = {
     code: string;
     description: string | null;
     isActive: boolean;
+    isPlayerSelectable: boolean;
     name: string;
     subraces: SubraceDefinition[];
 };
@@ -19,8 +20,10 @@ export type RaceDefinition = {
 export type CharacterClassDefinition = {
     abilityBonuses: Record<string, number>;
     code: string;
+    defaultPointBuyAllocation: Record<string, number>;
     description: string | null;
     isActive: boolean;
+    isPlayerSelectable: boolean;
     name: string;
     primaryAbilities: CharacterAbilityDefinition[];
 };

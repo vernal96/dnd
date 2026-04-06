@@ -16,6 +16,7 @@ use App\Http\Requests\Game\InviteGameMemberRequest;
 use App\Http\Requests\Game\ListGamesRequest;
 use App\Http\Requests\Game\UpdateGameStatusRequest;
 use App\Http\Resources\ApiPayloadResource;
+use App\Http\Resources\Game\GameResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use RuntimeException;
@@ -49,7 +50,7 @@ final class GameController extends Controller
 			GameListFiltersData::fromArray($request->validated()),
 		);
 
-		return ApiPayloadResource::json($games);
+		return GameResource::collection($games)->response();
 	}
 
 	/**
@@ -73,7 +74,9 @@ final class GameController extends Controller
 			], 500);
 		}
 
-		return ApiPayloadResource::json($game, 201);
+		return GameResource::make($game)
+			->response()
+			->setStatusCode(ResponseAlias::HTTP_CREATED);
 	}
 
 	/**
@@ -91,7 +94,7 @@ final class GameController extends Controller
 			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::json($gameModel);
+		return GameResource::make($gameModel)->response();
 	}
 
 	/**
@@ -122,7 +125,7 @@ final class GameController extends Controller
 			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::json($gameModel);
+		return GameResource::make($gameModel)->response();
 	}
 
 	/**
@@ -157,7 +160,7 @@ final class GameController extends Controller
 			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::json($gameModel);
+		return GameResource::make($gameModel)->response();
 	}
 
 	/**
@@ -188,6 +191,6 @@ final class GameController extends Controller
 			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::json($gameModel);
+		return GameResource::make($gameModel)->response();
 	}
 }

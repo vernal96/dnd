@@ -5,16 +5,24 @@ declare(strict_types=1);
 namespace App\Application\Game;
 
 use App\Application\Catalog\ItemCatalog;
+use App\Data\Game\RuntimeEncounterData;
+use App\Data\Game\RuntimeEncounterParticipantData;
+use App\Data\Game\RuntimeItemDropData;
+use App\Data\Game\RuntimeSceneViewData;
+use App\Domain\Catalog\Abilities\ConstitutionAbility;
+use App\Domain\Catalog\Abilities\DexterityAbility;
 use App\Application\Catalog\ItemCatalogImageStorageService;
 use App\Application\Realtime\RealtimePublisher;
 use App\Models\Actor;
 use App\Models\ActorInstance;
+use App\Models\Encounter;
+use App\Models\EncounterParticipant;
 use App\Models\Game;
 use App\Models\GameMember;
 use App\Models\GameSceneState;
 use App\Models\PlayerCharacter;
 use App\Models\User;
-use App\Support\SceneCatalog\SceneSurfaceCatalog;
+use App\Catalog\Scene\SceneSurfaceCatalog;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -77,17 +85,155 @@ final class RuntimeSceneManagementService
 	}
 
 	/**
-	 * Преобразует runtime-сцену в payload ответа API.
-	 *
-	 * @return array<string, mixed>
+	 * Подготавливает runtime-сцену для HTTP-ответа.
 	 */
-	public function toScenePayload(GameSceneState $sceneState): array
+	public function buildSceneView(GameSceneState $sceneState): RuntimeSceneViewData
 	{
 		$sceneState = $this->loadRuntimeScene($sceneState);
-		$payload = $sceneState->toArray();
-		$payload['item_drops'] = $this->normalizeItemDrops($sceneState);
 
-		return $payload;
+		return new RuntimeSceneViewData(
+			sceneState: $sceneState,
+			itemDrops: $this->normalizeItemDrops($sceneState),
+			encounter: $this->buildActiveEncounterPayload($sceneState),
+		);
+	}
+
+	/**
+	 * Запускает боевой режим на активной runtime-сцене.
+	 *
+	 * @param list<int> $actorIds
+	 * @throws RuntimeException Если не удалось сформировать encounter.
+	 * @throws Throwable Если запуск encounter завершился технической ошибкой.
+	 */
+	public function startEncounter(int $gameId, array $actorIds, User $user): ?GameSceneState
+	{
+		[$game, $sceneState] = $this->resolveOwnedActiveScene($gameId, $user);
+
+		if ($game === null || $sceneState === null) {
+			return null;
+		}
+
+		$runtimeActors = ActorInstance::query()
+			->where('game_scene_state_id', $sceneState->id)
+			->whereNotNull('x')
+			->whereNotNull('y')
+			->get();
+
+		if ($runtimeActors->isEmpty()) {
+			throw new RuntimeException('На активной сцене нет актеров для запуска сражения.');
+		}
+
+		$selectedActors = $actorIds === []
+			? $runtimeActors->values()
+			: $runtimeActors
+				->whereIn('id', $actorIds)
+				->values();
+
+		if ($selectedActors->isEmpty()) {
+			throw new RuntimeException('Не выбраны участники сражения.');
+		}
+
+		$encounter = DB::transaction(function () use ($game, $sceneState, $selectedActors): Encounter {
+			Encounter::query()
+				->where('game_scene_state_id', $sceneState->id)
+				->where('status', 'active')
+				->update([
+					'status' => 'resolved',
+					'resolved_at' => now(),
+					'current_participant_id' => null,
+				]);
+
+			/** @var Encounter $encounter */
+			$encounter = Encounter::query()->create([
+				'game_id' => $game->id,
+				'game_scene_state_id' => $sceneState->id,
+				'status' => 'active',
+				'round' => 1,
+				'trigger_type' => 'manual',
+				'payload' => [
+					'selected_actor_ids' => $selectedActors->pluck('id')->values()->all(),
+				],
+				'started_at' => now(),
+			]);
+
+			$initiativeRows = $selectedActors
+				->map(function (ActorInstance $actor): array {
+					$dexterity = $actor->runtime_state['stats'][(new DexterityAbility)->getCode()] ?? null;
+					$dexterityValue = is_int($dexterity) ? $dexterity : 10;
+					$dexterityModifier = (int) floor(($dexterityValue - 10) / 2);
+
+					return [
+						'actor' => $actor,
+						'dexterity_modifier' => $dexterityModifier,
+						'initiative' => random_int(1, 20) + $dexterityModifier,
+					];
+				})
+				->sort(static function (array $left, array $right): int {
+					if ($left['initiative'] !== $right['initiative']) {
+						return $right['initiative'] <=> $left['initiative'];
+					}
+
+					if ($left['dexterity_modifier'] !== $right['dexterity_modifier']) {
+						return $right['dexterity_modifier'] <=> $left['dexterity_modifier'];
+					}
+
+					/** @var ActorInstance $leftActor */
+					$leftActor = $left['actor'];
+					/** @var ActorInstance $rightActor */
+					$rightActor = $right['actor'];
+
+					return $leftActor->id <=> $rightActor->id;
+				})
+				->values();
+
+			$currentParticipantId = null;
+
+			foreach ($initiativeRows as $index => $row) {
+				/** @var ActorInstance $actor */
+				$actor = $row['actor'];
+
+				/** @var EncounterParticipant $participant */
+				$participant = EncounterParticipant::query()->create([
+					'encounter_id' => $encounter->id,
+					'actor_id' => $actor->id,
+					'initiative' => $row['initiative'],
+					'turn_order' => $index + 1,
+					'joined_round' => 1,
+					'is_hidden' => false,
+					'is_surprised' => false,
+					'movement_left' => max(0, (int) ($actor->movement_speed ?? 0)),
+					'action_available' => true,
+					'bonus_action_available' => true,
+					'reaction_available' => true,
+					'combat_result_state' => 'active',
+				]);
+
+				if ($index === 0) {
+					$currentParticipantId = $participant->id;
+				}
+			}
+
+			$encounter->forceFill([
+				'current_participant_id' => $currentParticipantId,
+			])->save();
+
+			$sceneState->forceFill([
+				'version' => $sceneState->version + 1,
+			])->save();
+
+			return $encounter;
+		});
+
+		$sceneState->refresh();
+		$encounter->refresh();
+
+		try {
+			$this->realtimePublisher->publishGameSceneUpdated($game, $sceneState);
+		} catch (Throwable $throwable) {
+			report($throwable);
+		}
+
+		return $this->findActiveSceneForGameMaster($gameId, $user);
 	}
 
 	/**
@@ -272,11 +418,47 @@ final class RuntimeSceneManagementService
 			throw new RuntimeException('Целевая клетка уже занята другим персонажем.');
 		}
 
-		DB::transaction(function () use ($actorInstance, $sceneState, $x, $y): void {
+		$activeEncounter = $this->findActiveEncounter($sceneState);
+
+		if ($activeEncounter instanceof Encounter) {
+			$participant = $this->findEncounterParticipant($activeEncounter, $actorInstance->id);
+
+			if (!$participant instanceof EncounterParticipant || $activeEncounter->current_participant_id !== $participant->id) {
+				throw new RuntimeException('Сейчас не ход этого участника.');
+			}
+
+			if ($actorInstance->x === null || $actorInstance->y === null) {
+				throw new RuntimeException('Актор не размещен на активной сцене.');
+			}
+
+			$distance = abs($actorInstance->x - $x) + abs($actorInstance->y - $y);
+
+			if ($distance > (int) $participant->movement_left) {
+				throw new RuntimeException('Для такого перемещения не хватает оставшейся скорости.');
+			}
+		}
+
+		$previousX = $actorInstance->x;
+		$previousY = $actorInstance->y;
+		$movementDistance = $previousX !== null && $previousY !== null
+			? abs($previousX - $x) + abs($previousY - $y)
+			: 0;
+
+		DB::transaction(function () use ($actorInstance, $sceneState, $x, $y, $activeEncounter, $movementDistance): void {
 			$actorInstance->forceFill([
 				'x' => $x,
 				'y' => $y,
 			])->save();
+
+			if ($activeEncounter instanceof Encounter && $movementDistance > 0) {
+				$participant = $this->findEncounterParticipant($activeEncounter, $actorInstance->id);
+
+				if ($participant instanceof EncounterParticipant) {
+					$participant->forceFill([
+						'movement_left' => max(0, (int) $participant->movement_left - $movementDistance),
+					])->save();
+				}
+			}
 
 			$sceneState->forceFill([
 				'version' => $sceneState->version + 1,
@@ -287,7 +469,11 @@ final class RuntimeSceneManagementService
 		$sceneState->refresh();
 
 		try {
-			$this->realtimePublisher->publishRuntimeActorMoved($game, $sceneState, $actorInstance);
+			if ($activeEncounter instanceof Encounter) {
+				$this->realtimePublisher->publishGameSceneUpdated($game, $sceneState);
+			} else {
+				$this->realtimePublisher->publishRuntimeActorMoved($game, $sceneState, $actorInstance);
+			}
 		} catch (Throwable $throwable) {
 			report($throwable);
 		}
@@ -305,15 +491,11 @@ final class RuntimeSceneManagementService
 	{
 		$game = $this->findPlayableGame($gameId, $user);
 
-		if ($game === null || $game->active_scene_state_id === null) {
+		if ($game === null) {
 			return null;
 		}
 
-		/** @var GameSceneState|null $sceneState */
-		$sceneState = GameSceneState::query()
-			->where('id', $game->active_scene_state_id)
-			->where('game_id', $game->id)
-			->first();
+		$sceneState = $this->resolveActiveSceneState($game);
 
 		if ($sceneState === null) {
 			return null;
@@ -351,16 +533,39 @@ final class RuntimeSceneManagementService
 
 		$movementSpeed = (int) ($actorInstance->runtime_state['movement_speed'] ?? 0);
 		$distance = abs($actorInstance->x - $x) + abs($actorInstance->y - $y);
+		$activeEncounter = $this->findActiveEncounter($sceneState);
 
-		if ($movementSpeed > 0 && $distance > $movementSpeed) {
+		if ($activeEncounter instanceof Encounter) {
+			$participant = $this->findEncounterParticipant($activeEncounter, $actorInstance->id);
+
+			if (!$participant instanceof EncounterParticipant || $activeEncounter->current_participant_id !== $participant->id) {
+				throw new RuntimeException('Сейчас не твой ход.');
+			}
+
+			if ($distance > (int) $participant->movement_left) {
+				throw new RuntimeException('Для такого перемещения не хватает оставшейся скорости.');
+			}
+		}
+
+		if (!$activeEncounter instanceof Encounter && $movementSpeed > 0 && $distance > $movementSpeed) {
 			throw new RuntimeException('Целевая клетка находится слишком далеко для текущего перемещения.');
 		}
 
-		DB::transaction(function () use ($actorInstance, $sceneState, $x, $y): void {
+		DB::transaction(function () use ($actorInstance, $sceneState, $x, $y, $activeEncounter, $distance): void {
 			$actorInstance->forceFill([
 				'x' => $x,
 				'y' => $y,
 			])->save();
+
+			if ($activeEncounter instanceof Encounter && $distance > 0) {
+				$participant = $this->findEncounterParticipant($activeEncounter, $actorInstance->id);
+
+				if ($participant instanceof EncounterParticipant) {
+					$participant->forceFill([
+						'movement_left' => max(0, (int) $participant->movement_left - $distance),
+					])->save();
+				}
+			}
 
 			$sceneState->forceFill([
 				'version' => $sceneState->version + 1,
@@ -371,7 +576,11 @@ final class RuntimeSceneManagementService
 		$sceneState->refresh();
 
 		try {
-			$this->realtimePublisher->publishRuntimeActorMoved($game, $sceneState, $actorInstance);
+			if ($activeEncounter instanceof Encounter) {
+				$this->realtimePublisher->publishGameSceneUpdated($game, $sceneState);
+			} else {
+				$this->realtimePublisher->publishRuntimeActorMoved($game, $sceneState, $actorInstance);
+			}
 		} catch (Throwable $throwable) {
 			report($throwable);
 		}
@@ -654,6 +863,125 @@ final class RuntimeSceneManagementService
 	}
 
 	/**
+	 * Расходует основное или дополнительное действие текущего участника encounter от имени мастера.
+	 *
+	 * @throws RuntimeException
+	 * @throws Throwable
+	 */
+	public function useEncounterAction(int $gameId, int $actorInstanceId, string $actionType, User $user): ?GameSceneState
+	{
+		[$game, $sceneState] = $this->resolveOwnedActiveScene($gameId, $user);
+
+		if ($game === null || $sceneState === null) {
+			return null;
+		}
+
+		$this->consumeEncounterAction($sceneState, $actorInstanceId, $actionType, null);
+		$sceneState->refresh();
+
+		try {
+			$this->realtimePublisher->publishGameSceneUpdated($game, $sceneState);
+		} catch (Throwable $throwable) {
+			report($throwable);
+		}
+
+		return $this->findActiveSceneForGameMaster($gameId, $user);
+	}
+
+	/**
+	 * Расходует действие текущего участника encounter от имени игрока.
+	 *
+	 * @throws RuntimeException
+	 * @throws Throwable
+	 */
+	public function useEncounterActionForPlayer(int $gameId, int $actorInstanceId, string $actionType, User $user): ?GameSceneState
+	{
+		$game = $this->findPlayableGame($gameId, $user);
+
+		if ($game === null) {
+			return null;
+		}
+
+		$sceneState = $this->resolveActiveSceneState($game);
+
+		if ($sceneState === null) {
+			return null;
+		}
+
+		$this->consumeEncounterAction($sceneState, $actorInstanceId, $actionType, $user->id);
+		$sceneState->refresh();
+
+		try {
+			$this->realtimePublisher->publishGameSceneUpdated($game, $sceneState);
+		} catch (Throwable $throwable) {
+			report($throwable);
+		}
+
+		return $this->findActiveSceneForPlayer($gameId, $user);
+	}
+
+	/**
+	 * Завершает текущий ход encounter от имени мастера.
+	 *
+	 * @throws RuntimeException
+	 * @throws Throwable
+	 */
+	public function advanceEncounterTurn(int $gameId, User $user): ?GameSceneState
+	{
+		[$game, $sceneState] = $this->resolveOwnedActiveScene($gameId, $user);
+
+		if ($game === null || $sceneState === null) {
+			return null;
+		}
+
+		$this->advanceEncounter($sceneState, null);
+		$sceneState->refresh();
+
+		try {
+			$this->realtimePublisher->publishGameSceneUpdated($game, $sceneState);
+		} catch (Throwable $throwable) {
+			report($throwable);
+		}
+
+		return $this->findActiveSceneForGameMaster($gameId, $user);
+	}
+
+	/**
+	 * Завершает текущий ход encounter от имени игрока.
+	 *
+	 * @throws RuntimeException
+	 * @throws Throwable
+	 */
+	public function advanceEncounterTurnForPlayer(int $gameId, int $actorInstanceId, User $user): ?GameSceneState
+	{
+		$game = $this->findPlayableGame($gameId, $user);
+
+		if ($game === null) {
+			return null;
+		}
+
+		$sceneState = $this->resolveActiveSceneState($game);
+
+		if ($sceneState === null) {
+			return null;
+		}
+
+		$this->advanceEncounter($sceneState, [
+			'actor_id' => $actorInstanceId,
+			'user_id' => $user->id,
+		]);
+		$sceneState->refresh();
+
+		try {
+			$this->realtimePublisher->publishGameSceneUpdated($game, $sceneState);
+		} catch (Throwable $throwable) {
+			report($throwable);
+		}
+
+		return $this->findActiveSceneForPlayer($gameId, $user);
+	}
+
+	/**
 	 * Возвращает игру, принадлежащую текущему мастеру.
 	 */
 	private function findOwnedGame(int $gameId, User $user): ?Game
@@ -742,12 +1070,12 @@ final class RuntimeSceneManagementService
 	/**
 	 * Нормализует runtime-дропы предметов для API.
 	 *
-	 * @return array<int, array<string, mixed>>
+	 * @return list<RuntimeItemDropData>
 	 */
 	private function normalizeItemDrops(GameSceneState $sceneState): array
 	{
 		return array_values(array_map(
-			fn (array $itemDrop): array => $this->normalizeItemDrop($sceneState, $itemDrop),
+			fn (array $itemDrop): RuntimeItemDropData => $this->normalizeItemDrop($sceneState, $itemDrop),
 			$sceneState->item_drops,
 		));
 	}
@@ -756,24 +1084,28 @@ final class RuntimeSceneManagementService
 	 * Дополняет runtime-дроп предмета ссылкой на изображение.
 	 *
 	 * @param array<string, mixed> $itemDrop
-	 * @return array<string, mixed>
 	 */
-	private function normalizeItemDrop(GameSceneState $sceneState, array $itemDrop): array
+	private function normalizeItemDrop(GameSceneState $sceneState, array $itemDrop): RuntimeItemDropData
 	{
 		$itemCode = is_string($itemDrop['item_code'] ?? null) ? $itemDrop['item_code'] : null;
+		$imageUrl = null;
 
-		if ($itemCode === null) {
-			return $itemDrop;
+		if ($itemCode !== null) {
+			$item = $this->itemCatalog->findActiveItemByCode($itemCode);
+			$imageUrl = $item?->image() !== null
+				? $this->itemCatalogImageStorageService->buildImageUrl($item->image())
+				: null;
 		}
 
-		$item = $this->itemCatalog->findActiveItemByCode($itemCode);
-
-		return [
-			...$itemDrop,
-			'image_url' => $item?->image() !== null
-				? $this->itemCatalogImageStorageService->buildImageUrl($item->image())
-				: null,
-		];
+		return new RuntimeItemDropData(
+			id: (string) ($itemDrop['id'] ?? ''),
+			itemCode: $itemCode ?? '',
+			name: is_string($itemDrop['name'] ?? null) ? $itemDrop['name'] : null,
+			quantity: max(1, (int) ($itemDrop['quantity'] ?? 1)),
+			x: (int) ($itemDrop['x'] ?? 0),
+			y: (int) ($itemDrop['y'] ?? 0),
+			imageUrl: $imageUrl,
+		);
 	}
 
 	/**
@@ -790,6 +1122,192 @@ final class RuntimeSceneManagementService
 		}
 
 		return [$game, $this->resolveActiveSceneState($game)];
+	}
+
+	/**
+	 * Возвращает активный encounter для runtime-сцены.
+	 */
+	private function findActiveEncounter(GameSceneState $sceneState): ?Encounter
+	{
+		return Encounter::query()
+			->where('game_scene_state_id', $sceneState->id)
+			->where('status', 'active')
+			->with(['participants.actor', 'currentParticipant'])
+			->orderByDesc('id')
+			->first();
+	}
+
+	/**
+	 * Возвращает encounter participant по actor id.
+	 */
+	private function findEncounterParticipant(Encounter $encounter, int $actorInstanceId): ?EncounterParticipant
+	{
+		return $encounter->participants
+			->first(static fn (EncounterParticipant $participant): bool => $participant->actor_id === $actorInstanceId);
+	}
+
+	/**
+	 * Преобразует активный encounter в payload frontend.
+	 */
+	private function buildActiveEncounterPayload(GameSceneState $sceneState): ?RuntimeEncounterData
+	{
+		$encounter = $this->findActiveEncounter($sceneState);
+
+		if (!$encounter instanceof Encounter) {
+			return null;
+		}
+
+		return new RuntimeEncounterData(
+			id: $encounter->id,
+			status: $encounter->status,
+			round: $encounter->round,
+			currentParticipantId: $encounter->current_participant_id,
+			startedAt: $encounter->started_at?->toAtomString(),
+			participants: $encounter->participants
+				->sortBy('turn_order')
+				->values()
+				->map(static fn (EncounterParticipant $participant): RuntimeEncounterParticipantData => new RuntimeEncounterParticipantData(
+					id: $participant->id,
+					actorId: $participant->actor_id,
+					initiative: $participant->initiative,
+					turnOrder: $participant->turn_order,
+					joinedRound: $participant->joined_round,
+					movementLeft: $participant->movement_left,
+					actionAvailable: (bool) $participant->action_available,
+					bonusActionAvailable: (bool) $participant->bonus_action_available,
+					reactionAvailable: (bool) $participant->reaction_available,
+					combatResultState: $participant->combat_result_state,
+					actor: $participant->actor,
+				))
+				->all(),
+		);
+	}
+
+	/**
+	 * Расходует действие участника encounter.
+	 *
+	 * @param int|null $requiredUserId
+	 * @throws RuntimeException
+	 * @throws Throwable
+	 */
+	private function consumeEncounterAction(GameSceneState $sceneState, int $actorInstanceId, string $actionType, ?int $requiredUserId): void
+	{
+		$encounter = $this->findActiveEncounter($sceneState);
+
+		if (!$encounter instanceof Encounter) {
+			throw new RuntimeException('Сражение на этой сцене не запущено.');
+		}
+
+		$participant = $this->findEncounterParticipant($encounter, $actorInstanceId);
+
+		if (!$participant instanceof EncounterParticipant || $encounter->current_participant_id !== $participant->id) {
+			throw new RuntimeException('Сейчас не ход этого участника.');
+		}
+
+		if ($requiredUserId !== null) {
+			$actor = $participant->actor;
+
+			if (!$actor instanceof ActorInstance || $actor->controlled_by_user_id !== $requiredUserId) {
+				throw new RuntimeException('Нельзя управлять действием чужого персонажа.');
+			}
+		}
+
+		$column = match ($actionType) {
+			'action' => 'action_available',
+			'bonus-action' => 'bonus_action_available',
+			default => throw new RuntimeException('Неизвестный тип боевого действия.'),
+		};
+
+		if (!$participant->{$column}) {
+			throw new RuntimeException($actionType === 'action'
+				? 'Основное действие уже израсходовано.'
+				: 'Дополнительное действие уже израсходовано.');
+		}
+
+		DB::transaction(function () use ($participant, $sceneState, $column): void {
+			$participant->forceFill([
+				$column => false,
+			])->save();
+
+			$sceneState->forceFill([
+				'version' => $sceneState->version + 1,
+			])->save();
+		});
+	}
+
+	/**
+	 * Переводит encounter на следующий ход.
+	 *
+	 * @param array{actor_id:int,user_id:int}|null $playerGuard
+	 * @throws RuntimeException
+	 * @throws Throwable
+	 */
+	private function advanceEncounter(GameSceneState $sceneState, ?array $playerGuard): void
+	{
+		$encounter = $this->findActiveEncounter($sceneState);
+
+		if (!$encounter instanceof Encounter) {
+			throw new RuntimeException('Сражение на этой сцене не запущено.');
+		}
+
+		$participants = $encounter->participants
+			->sortBy('turn_order')
+			->values();
+
+		$currentIndex = $participants->search(
+			static fn (EncounterParticipant $participant): bool => $participant->id === $encounter->current_participant_id,
+		);
+
+		if (!is_int($currentIndex) || !isset($participants[$currentIndex])) {
+			throw new RuntimeException('Не удалось определить текущего участника сражения.');
+		}
+
+		$currentParticipant = $participants[$currentIndex];
+
+		if ($playerGuard !== null) {
+			$currentActor = $currentParticipant->actor;
+
+			if (
+				!$currentActor instanceof ActorInstance
+				|| $currentActor->id !== $playerGuard['actor_id']
+				|| $currentActor->controlled_by_user_id !== $playerGuard['user_id']
+			) {
+				throw new RuntimeException('Нельзя завершить чужой ход.');
+			}
+		}
+
+		$nextIndex = $currentIndex + 1;
+		$nextRound = $encounter->round;
+
+		if (!isset($participants[$nextIndex])) {
+			$nextIndex = 0;
+			$nextRound += 1;
+		}
+
+		/** @var EncounterParticipant $nextParticipant */
+		$nextParticipant = $participants[$nextIndex];
+		$nextActor = $nextParticipant->actor;
+		$nextMovementSpeed = $nextActor instanceof ActorInstance
+			? max(0, (int) ($nextActor->movement_speed ?? 0))
+			: 0;
+
+		DB::transaction(function () use ($encounter, $nextParticipant, $nextMovementSpeed, $nextRound, $sceneState): void {
+			$nextParticipant->forceFill([
+				'movement_left' => $nextMovementSpeed,
+				'action_available' => true,
+				'bonus_action_available' => true,
+				'reaction_available' => true,
+			])->save();
+
+			$encounter->forceFill([
+				'current_participant_id' => $nextParticipant->id,
+				'round' => $nextRound,
+			])->save();
+
+			$sceneState->forceFill([
+				'version' => $sceneState->version + 1,
+			])->save();
+		});
 	}
 
 	/**
@@ -915,9 +1433,10 @@ final class RuntimeSceneManagementService
 	 */
 	private function resolvePlayerCharacterHitPoints(PlayerCharacter $character): int
 	{
-		$constitution = (int) ($character->base_stats['con'] ?? 10);
+		$constitution = (int) ($character->base_stats[(new ConstitutionAbility)->getCode()] ?? 10);
 		$constitutionModifier = (int) floor(($constitution - 10) / 2);
+		$healthBonus = (int) ($character->derived_stats['health'] ?? 0);
 
-		return max(1, 10 + $constitutionModifier + $character->level);
+		return max(1, 10 + $constitutionModifier + $character->level + $healthBonus);
 	}
 }

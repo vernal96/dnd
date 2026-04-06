@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Player\CreatePlayerCharacterRequest;
 use App\Http\Requests\Player\UpdatePlayerCharacterImageRequest;
 use App\Http\Resources\ApiPayloadResource;
+use App\Http\Resources\Player\PlayerCharacterPayloadResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -38,9 +39,9 @@ final class PlayerCharacterController extends Controller
 		/** @var User $user */
 		$user = $request->user('web');
 
-		return ApiPayloadResource::collectionJson(
+		return PlayerCharacterPayloadResource::collection(
 			$this->playerCharacterManagementService->getCharactersForPlayer($user),
-		);
+		)->response();
 	}
 
 	/**
@@ -64,7 +65,9 @@ final class PlayerCharacterController extends Controller
 			], ResponseAlias::HTTP_INTERNAL_SERVER_ERROR);
 		}
 
-		return ApiPayloadResource::json($character, ResponseAlias::HTTP_CREATED);
+		return PlayerCharacterPayloadResource::make($character)
+			->response()
+			->setStatusCode(ResponseAlias::HTTP_CREATED);
 	}
 
 	/**
@@ -95,6 +98,6 @@ final class PlayerCharacterController extends Controller
 			], ResponseAlias::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::json($updatedCharacter);
+		return PlayerCharacterPayloadResource::make($updatedCharacter)->response();
 	}
 }

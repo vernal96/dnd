@@ -14,21 +14,6 @@ abstract class AbstractCharacterSubclass
 	protected const ?string DESCRIPTION = null;
 
 	/**
-	 * Преобразует подкласс персонажа в ответ API.
-	 *
-	 * @return array{code: string, name: string, description: ?string, isActive: bool}
-	 */
-	public function toArray(): array
-	{
-		return [
-			'code' => $this->getCode(),
-			'name' => $this->getName(),
-			'description' => $this->getDescription(),
-			'isActive' => $this->isActive(),
-		];
-	}
-
-	/**
 	 * Возвращает код подкласса персонажа.
 	 */
 	final public function getCode(): string

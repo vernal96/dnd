@@ -44,21 +44,4 @@ final readonly class SceneCellData
 		);
 	}
 
-	/**
-	 * Возвращает DTO в виде массива для сервисного слоя.
-	 *
-	 * @return array{x:int,y:int,terrainType:string,elevation:int,isPassable:bool,blocksVision:bool,props:?array}
-	 */
-	public function toArray(): array
-	{
-		return [
-			'x' => $this->x,
-			'y' => $this->y,
-			'terrainType' => $this->terrainType,
-			'elevation' => $this->elevation,
-			'isPassable' => $this->isPassable,
-			'blocksVision' => $this->blocksVision,
-			'props' => $this->props,
-		];
-	}
 }

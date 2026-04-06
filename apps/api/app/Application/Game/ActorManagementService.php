@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Game;
 
+use App\Data\Game\ActorInventoryItemData;
 use App\Data\Game\CreateActorData;
 use App\Data\Game\UpdateActorData;
 use App\Models\Actor;
@@ -52,7 +53,7 @@ final class ActorManagementService
 				'health_current' => $data->healthCurrent,
 				'health_max' => $data->healthMax,
 				'stats' => $data->stats,
-				'inventory' => $data->inventory,
+				'inventory' => $this->buildInventoryPayload($data->inventory),
 				'image_path' => $data->imagePath,
 				'meta' => $data->meta,
 			]);
@@ -101,7 +102,7 @@ final class ActorManagementService
 				'health_current' => $data->healthCurrent,
 				'health_max' => $data->healthMax,
 				'stats' => $data->stats,
-				'inventory' => $data->inventory,
+				'inventory' => $this->buildInventoryPayload($data->inventory),
 				'image_path' => $data->imagePath,
 				'meta' => $data->meta,
 			]);
@@ -150,5 +151,25 @@ final class ActorManagementService
 		$actor->load('gameMaster:id,name,email');
 
 		return $actor;
+	}
+
+	/**
+	 * Преобразует типизированный инвентарь в payload хранения модели.
+	 *
+	 * @param list<ActorInventoryItemData> $inventory
+	 * @return list<array{itemCode: string, quantity: int, slot: ?string, isEquipped: bool, state: ?array}>
+	 */
+	private function buildInventoryPayload(array $inventory): array
+	{
+		return array_map(
+			static fn (ActorInventoryItemData $item): array => [
+				'itemCode' => $item->itemCode,
+				'quantity' => $item->quantity,
+				'slot' => $item->slot,
+				'isEquipped' => $item->isEquipped,
+				'state' => $item->state,
+			],
+			$inventory,
+		);
 	}
 }

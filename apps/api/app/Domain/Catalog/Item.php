@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog;
 
-use JsonSerializable;
-
 /**
  * Базовая сущность предмета кодового каталога.
  */
-abstract class Item implements JsonSerializable
+abstract class Item
 {
 	/**
 	 * Возвращает код предмета.
@@ -34,7 +32,7 @@ abstract class Item implements JsonSerializable
 	/**
 	 * Возвращает основной кубик урона оружия.
 	 */
-	public function getDamageDice(): ?WeaponDamageDice
+	public function getDamageDice(): ?Dice
 	{
 		return null;
 	}
@@ -42,7 +40,7 @@ abstract class Item implements JsonSerializable
 	/**
 	 * Возвращает альтернативный кубик урона, например при использовании двумя руками.
 	 */
-	public function getVersatileDamageDice(): ?WeaponDamageDice
+	public function getVersatileDamageDice(): ?Dice
 	{
 		return null;
 	}
@@ -111,75 +109,5 @@ abstract class Item implements JsonSerializable
 	public function isActive(): bool
 	{
 		return true;
-	}
-
-	/**
-	 * Преобразует предмет в ответ API.
-	 *
-	 * @return array{
-	 *     code: string,
-	 *     name: string,
-	 *     type: string,
-	 *     category: string,
-	 *     damageDice: ?string,
-	 *     versatileDamageDice: ?string,
-	 *     attackAbilities: list<string>,
-	 *     armorClassBase: ?int,
-	 *     armorClassAbility: ?string,
-	 *     armorClassAbilityCap: ?int,
-	 *     armorClassBonus: ?int,
-	 *     description: ?string,
-	 *     image_url: ?string,
-	 *     isActive: bool
-	 * }
-	 */
-	public function toArray(?callable $imageUrlResolver = null): array
-	{
-		return [
-			'code' => $this->getCode(),
-			'name' => $this->getName(),
-			'type' => $this->getType()->value,
-			'category' => $this->getCategory(),
-			'damageDice' => $this->getDamageDice()?->value,
-			'versatileDamageDice' => $this->getVersatileDamageDice()?->value,
-			'attackAbilities' => array_map(
-				static fn(Ability $ability): string => $ability->getCode(),
-				$this->getAttackAbilities(),
-			),
-			'armorClassBase' => $this->getArmorClassBase(),
-			'armorClassAbility' => $this->getArmorClassAbility()?->getCode(),
-			'armorClassAbilityCap' => $this->getArmorClassAbilityCap(),
-			'armorClassBonus' => $this->getArmorClassBonus(),
-			'description' => $this->getDescription(),
-			'image_url' => is_callable($imageUrlResolver) && is_string($this->image())
-				? $imageUrlResolver($this->image())
-				: null,
-			'isActive' => $this->isActive(),
-		];
-	}
-
-	/**
-	 * Возвращает сериализуемое представление предмета.
-	 *
-	 * @return array{
-	 *     code: string,
-	 *     name: string,
-	 *     type: string,
-	 *     category: string,
-	 *     damageDice: ?string,
-	 *     versatileDamageDice: ?string,
-	 *     attackAbilities: list<string>,
-	 *     armorClassBase: ?int,
-	 *     armorClassAbility: ?string,
-	 *     armorClassAbilityCap: ?int,
-	 *     armorClassBonus: ?int,
-	 *     description: ?string,
-	 *     image_url: ?string,
-	 *     isActive: bool
-	 * }
-	 */
-	public function jsonSerialize(): array
-	{
-		return $this->toArray();
 	}
 }

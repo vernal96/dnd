@@ -8,6 +8,8 @@ use App\Application\Game\GameInvitationService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Game\AcceptGameInvitationRequest;
 use App\Http\Resources\ApiPayloadResource;
+use App\Http\Resources\Game\GameInvitationResource;
+use App\Http\Resources\Player\PlayerCharacterPayloadResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -37,7 +39,9 @@ final class GameInvitationController extends Controller
 		/** @var User $user */
 		$user = $request->user('web');
 
-		return ApiPayloadResource::json($this->gameInvitationService->getInvitationsForPlayer($user));
+		return GameInvitationResource::collection(
+			$this->gameInvitationService->getInvitationsForPlayer($user),
+		)->response();
 	}
 
 	/**
@@ -68,7 +72,7 @@ final class GameInvitationController extends Controller
 			], Response::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::collectionJson($characters);
+		return PlayerCharacterPayloadResource::collection($characters)->response();
 	}
 
 	/**
@@ -82,7 +86,9 @@ final class GameInvitationController extends Controller
 		try {
 			$invitation = $this->gameInvitationService->acceptInvitation(
 				$token,
-				(int) $request->validated('character_id'),
+				$request->validated('character_id') !== null
+					? (int) $request->validated('character_id')
+					: null,
 				$user,
 			);
 		} catch (RuntimeException $exception) {
@@ -103,7 +109,7 @@ final class GameInvitationController extends Controller
 			], Response::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::json($invitation);
+		return GameInvitationResource::make($invitation)->response();
 	}
 
 	/**
@@ -134,6 +140,6 @@ final class GameInvitationController extends Controller
 			], Response::HTTP_NOT_FOUND);
 		}
 
-		return ApiPayloadResource::json($invitation);
+		return GameInvitationResource::make($invitation)->response();
 	}
 }

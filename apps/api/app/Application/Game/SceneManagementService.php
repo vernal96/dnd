@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Application\Game;
 
 use App\Data\Game\CreateSceneData;
+use App\Data\Game\SceneActorPlacementData;
+use App\Data\Game\SceneCellData;
+use App\Data\Game\SceneObjectData;
 use App\Data\Game\UpdateSceneData;
 use App\Models\Actor;
 use App\Models\Game;
@@ -219,7 +222,7 @@ final class SceneManagementService
 	/**
 	 * Формирует полную прямоугольную сетку клеток для authored-сцены.
 	 *
-	 * @param array<int, array{x:int,y:int,terrainType:string,elevation:int,isPassable:bool,blocksVision:bool,props:?array}> $cells
+	 * @param list<SceneCellData> $cells
 	 * @return array<int, array<string, mixed>>
 	 */
 	private function buildCellRows(int $sceneTemplateId, int $width, int $height, array $cells): array
@@ -227,7 +230,7 @@ final class SceneManagementService
 		$cellMap = [];
 
 		foreach ($cells as $cell) {
-			$cellMap[$cell['x'].':'.$cell['y']] = $cell;
+			$cellMap[$cell->x.':'.$cell->y] = $cell;
 		}
 
 		$rows = [];
@@ -242,11 +245,11 @@ final class SceneManagementService
 					'scene_template_id' => $sceneTemplateId,
 					'x' => $x,
 					'y' => $y,
-					'terrain_type' => is_array($cell) ? $cell['terrainType'] : 'grass',
-					'elevation' => is_array($cell) ? $cell['elevation'] : 0,
-					'is_passable' => is_array($cell) ? $cell['isPassable'] : true,
-					'blocks_vision' => is_array($cell) ? $cell['blocksVision'] : false,
-					'props' => is_array($cell) ? $cell['props'] : null,
+					'terrain_type' => $cell instanceof SceneCellData ? $cell->terrainType : 'grass',
+					'elevation' => $cell instanceof SceneCellData ? $cell->elevation : 0,
+					'is_passable' => $cell instanceof SceneCellData ? $cell->isPassable : true,
+					'blocks_vision' => $cell instanceof SceneCellData ? $cell->blocksVision : false,
+					'props' => $cell instanceof SceneCellData ? $cell->props : null,
 					'created_at' => $timestamp,
 					'updated_at' => $timestamp,
 				];
@@ -259,7 +262,7 @@ final class SceneManagementService
 	/**
 	 * Формирует строки объектов для authored-сцены.
 	 *
-	 * @param array<int, array{kind:string,name:?string,x:int,y:int,width:int,height:int,isHidden:bool,isInteractive:bool,state:?array}> $objects
+	 * @param list<SceneObjectData> $objects
 	 * @return array<int, array<string, mixed>>
 	 */
 	private function buildObjectRows(int $sceneTemplateId, array $objects): array
@@ -270,15 +273,15 @@ final class SceneManagementService
 		foreach ($objects as $object) {
 			$rows[] = [
 				'scene_template_id' => $sceneTemplateId,
-				'kind' => $object['kind'],
-				'name' => $object['name'],
-				'x' => $object['x'],
-				'y' => $object['y'],
-				'width' => $object['width'],
-				'height' => $object['height'],
-				'is_hidden' => $object['isHidden'],
-				'is_interactive' => $object['isInteractive'],
-				'state' => $object['state'],
+				'kind' => $object->kind,
+				'name' => $object->name,
+				'x' => $object->x,
+				'y' => $object->y,
+				'width' => $object->width,
+				'height' => $object->height,
+				'is_hidden' => $object->isHidden,
+				'is_interactive' => $object->isInteractive,
+				'state' => $object->state,
 				'trigger_rules' => null,
 				'created_at' => $timestamp,
 				'updated_at' => $timestamp,
@@ -291,7 +294,7 @@ final class SceneManagementService
 	/**
 	 * Формирует строки размещения актеров для authored-сцены.
 	 *
-	 * @param array<int, array{actorId:int,x:int,y:int}> $actors
+	 * @param list<SceneActorPlacementData> $actors
 	 * @return array<int, array<string, mixed>>
 	 */
 	private function buildActorPlacementRows(int $sceneTemplateId, int $gmUserId, array $actors): array
@@ -305,15 +308,15 @@ final class SceneManagementService
 		$allowedActorMap = array_fill_keys(array_map(static fn (mixed $id): int => (int) $id, $allowedActorIds), true);
 
 		foreach ($actors as $actor) {
-			if (!isset($allowedActorMap[$actor['actorId']])) {
+			if (!isset($allowedActorMap[$actor->actorId])) {
 				continue;
 			}
 
 			$rows[] = [
 				'scene_template_id' => $sceneTemplateId,
-				'actor_id' => $actor['actorId'],
-				'x' => $actor['x'],
-				'y' => $actor['y'],
+				'actor_id' => $actor->actorId,
+				'x' => $actor->x,
+				'y' => $actor->y,
 				'created_at' => $timestamp,
 				'updated_at' => $timestamp,
 			];

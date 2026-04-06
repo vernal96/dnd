@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\ApiPayloadResource;
+use App\Http\Resources\Game\ActorInstanceResource;
 use App\Models\ActorInstance;
 use Illuminate\Http\JsonResponse;
 
@@ -28,7 +28,7 @@ final class ActorInstanceController extends Controller
 			->latest('id')
 			->paginate(20);
 
-		return ApiPayloadResource::collectionJson($actors);
+		return ActorInstanceResource::collection($actors)->response();
 	}
 
 	/**
@@ -44,6 +44,6 @@ final class ActorInstanceController extends Controller
 			'encounterParticipants.encounter:id,game_id,game_scene_state_id,status,round',
 		]);
 
-		return ApiPayloadResource::json($actorInstance);
+		return ActorInstanceResource::make($actorInstance)->response();
 	}
 }

@@ -7,7 +7,7 @@ namespace App\Http\Controllers\Api;
 use App\Application\Player\PlayerGameParticipationService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Game\ListGamesRequest;
-use App\Http\Resources\ApiPayloadResource;
+use App\Http\Resources\Game\GameResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 
@@ -33,8 +33,8 @@ final class PlayerGameController extends Controller
 		/** @var User $user */
 		$user = $request->user('web');
 
-		return ApiPayloadResource::json(
+		return GameResource::collection(
 			$this->playerGameParticipationService->getActiveGamesForPlayer($user),
-		);
+		)->response();
 	}
 }
