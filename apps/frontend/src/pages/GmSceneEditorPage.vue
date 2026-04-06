@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, Minus, Move3D, Plus, Save } from 'lucide-vue-next';
+import { ArrowLeft, Minus, Plus, Save, X } from 'lucide-vue-next';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { useAuthSession } from '@/composables/useAuthSession';
@@ -10,7 +10,8 @@ import { fetchGameScene, updateGameScene } from '@/services/sceneApi';
 import type { GameActor } from '@/types/actor';
 import type { SceneActorPlacement, SceneCell, SceneObject, SceneObjectDefinition, ScenePlayerSpawnPoint, SceneSurfaceDefinition, SceneViewportMetadata } from '@/types/scene';
 
-type ToolSection = 'actors' | 'base' | 'help' | 'materials' | 'objects' | 'spawn';
+type GridResizeEdge = 'bottom' | 'left' | 'right' | 'top';
+type GridResizeMode = 'expand' | 'shrink';
 type PointerMode = 'pan' | 'rotate' | null;
 type CanvasPoint = {
   x: number;
@@ -57,12 +58,12 @@ const surfaceCatalog = ref<SceneSurfaceDefinition[]>([]);
 const objectCatalog = ref<SceneObjectDefinition[]>([]);
 const gameActors = ref<GameActor[]>([]);
 const activeTerrain = ref<SceneSurfaceDefinition['code']>('grass');
-const activeObjectKind = ref<SceneObjectDefinition['code'] | null>(null);
-const activeActorId = ref<number | null>(null);
 const activeEraseMode = ref(false);
-const activePlayerSpawnMode = ref(false);
-const openToolSections = ref<ToolSection[]>([]);
 const playerSpawnPoint = ref<ScenePlayerSpawnPoint | null>(null);
+const editorContextMenu = ref<{ cellX: number; cellY: number; x: number; y: number } | null>(null);
+const surfacePickerCell = ref<{ x: number; y: number } | null>(null);
+const objectPickerCell = ref<{ x: number; y: number } | null>(null);
+const actorPickerCell = ref<{ x: number; y: number } | null>(null);
 const viewport = ref<SceneViewportMetadata>({
   offsetX: 0,
   offsetY: 0,
@@ -213,21 +214,16 @@ function eraseCellContent(x: number, y: number): void {
 /**
  * Переключает authored-объект на клетке.
  */
-function toggleObjectAtCell(x: number, y: number): void {
-  if (activeObjectKind.value === null) {
-    return;
-  }
-
+function toggleObjectAtCell(x: number, y: number, objectKind: SceneObjectDefinition['code']): void {
   const existingObject = getObjectAtCell(x, y);
 
-  if (existingObject && existingObject.kind === activeObjectKind.value) {
+  if (existingObject && existingObject.kind === objectKind) {
     sceneObjects.value = sceneObjects.value.filter((object) => !(object.x === x && object.y === y));
-    activeObjectKind.value = null;
 
     return;
   }
 
-  const objectDefinition = objectCatalog.value.find((item) => item.code === activeObjectKind.value);
+  const objectDefinition = objectCatalog.value.find((item) => item.code === objectKind);
 
   if (!objectDefinition) {
     return;
@@ -247,28 +243,21 @@ function toggleObjectAtCell(x: number, y: number): void {
       state: null,
     },
   ];
-
-  activeObjectKind.value = null;
 }
 
 /**
  * Переключает authored-размещение актора на клетке.
  */
-function toggleActorAtCell(x: number, y: number): void {
-  if (activeActorId.value === null) {
-    return;
-  }
-
+function toggleActorAtCell(x: number, y: number, actorId: number): void {
   const existingPlacement = getActorPlacementAtCell(x, y);
 
-  if (existingPlacement && existingPlacement.actor_id === activeActorId.value) {
+  if (existingPlacement && existingPlacement.actor_id === actorId) {
     sceneActorPlacements.value = sceneActorPlacements.value.filter((placement) => !(placement.x === x && placement.y === y));
-    activeActorId.value = null;
 
     return;
   }
 
-  const actor = gameActors.value.find((item) => item.id === activeActorId.value);
+  const actor = gameActors.value.find((item) => item.id === actorId);
 
   if (!actor) {
     return;
@@ -283,8 +272,15 @@ function toggleActorAtCell(x: number, y: number): void {
       y,
     },
   ];
+}
 
-  activeActorId.value = null;
+/**
+ * Переносит authored-точку спауна игроков на выбранную клетку.
+ */
+function setPlayerSpawnAtCell(x: number, y: number): void {
+  playerSpawnPoint.value = playerSpawnPoint.value?.x === x && playerSpawnPoint.value?.y === y
+    ? null
+    : { x, y };
 }
 
 /**
@@ -469,30 +465,198 @@ async function handleSaveScene(): Promise<void> {
 }
 
 /**
- * Увеличивает authored-сетку на одну колонку или строку.
+ * Применяет смещение координаты по выбранной стороне изменения сетки.
  */
-function resizeGrid(direction: 'height' | 'width', delta: number): void {
-  const nextWidth = direction === 'width' ? Math.max(6, gridWidth.value + delta) : gridWidth.value;
-  const nextHeight = direction === 'height' ? Math.max(6, gridHeight.value + delta) : gridHeight.value;
+function transformGridCoordinate(value: number, edge: GridResizeEdge, mode: GridResizeMode): number {
+  if (mode === 'expand' && (edge === 'left' || edge === 'top')) {
+    return value + 1;
+  }
 
-  gridWidth.value = nextWidth;
-  gridHeight.value = nextHeight;
-  sceneCells.value = buildGridCells(nextWidth, nextHeight, sceneCells.value);
-  sceneObjects.value = sceneObjects.value.filter((object) => object.x !== null && object.y !== null && object.x < nextWidth && object.y < nextHeight);
-  sceneActorPlacements.value = sceneActorPlacements.value.filter((placement) => placement.x < nextWidth && placement.y < nextHeight);
+  if (mode === 'shrink' && (edge === 'left' || edge === 'top')) {
+    return value - 1;
+  }
+
+  return value;
 }
 
 /**
- * Переключает состояние спойлера панели инструментов.
+ * Возвращает true, если координата остается внутри новых границ authored-сетки.
  */
-function toggleToolSection(section: ToolSection): void {
-  if (openToolSections.value.includes(section)) {
-    openToolSections.value = openToolSections.value.filter((value) => value !== section);
+function isInsideGridBounds(x: number, y: number, width: number, height: number): boolean {
+  return x >= 0 && y >= 0 && x < width && y < height;
+}
 
+/**
+ * Обновляет ключ выбранной клетки после изменения размеров authored-сетки.
+ */
+function updateSelectedCellAfterGridResize(edge: GridResizeEdge, mode: GridResizeMode, nextWidth: number, nextHeight: number): void {
+  if (selectedCellKey.value === null) {
     return;
   }
 
-  openToolSections.value = [...openToolSections.value, section];
+  const [xRaw, yRaw] = selectedCellKey.value.split('-');
+  const currentX = Number.parseInt(xRaw ?? '', 10);
+  const currentY = Number.parseInt(yRaw ?? '', 10);
+
+  if (Number.isNaN(currentX) || Number.isNaN(currentY)) {
+    selectedCellKey.value = null;
+    return;
+  }
+
+  const nextX = transformGridCoordinate(currentX, edge, mode);
+  const nextY = transformGridCoordinate(currentY, edge, mode);
+
+  selectedCellKey.value = isInsideGridBounds(nextX, nextY, nextWidth, nextHeight)
+    ? resolveCellKey(nextX, nextY)
+    : null;
+}
+
+/**
+ * Изменяет размеры authored-сетки со стороны, выбранной пользователем.
+ */
+function resizeGridFromEdge(edge: GridResizeEdge, mode: GridResizeMode): void {
+  const nextWidth = edge === 'left' || edge === 'right'
+    ? gridWidth.value + (mode === 'expand' ? 1 : -1)
+    : gridWidth.value;
+  const nextHeight = edge === 'top' || edge === 'bottom'
+    ? gridHeight.value + (mode === 'expand' ? 1 : -1)
+    : gridHeight.value;
+
+  if (nextWidth < 6 || nextHeight < 6) {
+    return;
+  }
+
+  const transformedCells = sceneCells.value
+    .map((cell) => ({
+      ...cell,
+      x: transformGridCoordinate(cell.x, edge, mode),
+      y: transformGridCoordinate(cell.y, edge, mode),
+    }))
+    .filter((cell) => isInsideGridBounds(cell.x, cell.y, nextWidth, nextHeight));
+
+  sceneCells.value = buildGridCells(nextWidth, nextHeight, transformedCells);
+  sceneObjects.value = sceneObjects.value
+    .filter((object): object is SceneObject & { x: number; y: number } => object.x !== null && object.y !== null)
+    .map((object) => ({
+      ...object,
+      x: transformGridCoordinate(object.x, edge, mode),
+      y: transformGridCoordinate(object.y, edge, mode),
+    }))
+    .filter((object) => isInsideGridBounds(object.x, object.y, nextWidth, nextHeight));
+  sceneActorPlacements.value = sceneActorPlacements.value
+    .map((placement) => ({
+      ...placement,
+      x: transformGridCoordinate(placement.x, edge, mode),
+      y: transformGridCoordinate(placement.y, edge, mode),
+    }))
+    .filter((placement) => isInsideGridBounds(placement.x, placement.y, nextWidth, nextHeight));
+
+  if (playerSpawnPoint.value !== null) {
+    const nextSpawnX = transformGridCoordinate(playerSpawnPoint.value.x, edge, mode);
+    const nextSpawnY = transformGridCoordinate(playerSpawnPoint.value.y, edge, mode);
+    playerSpawnPoint.value = isInsideGridBounds(nextSpawnX, nextSpawnY, nextWidth, nextHeight)
+      ? { x: nextSpawnX, y: nextSpawnY }
+      : null;
+  }
+
+  gridWidth.value = nextWidth;
+  gridHeight.value = nextHeight;
+  updateSelectedCellAfterGridResize(edge, mode, nextWidth, nextHeight);
+}
+
+/**
+ * Закрывает контекстное меню редактора.
+ */
+function closeEditorContextMenu(): void {
+  editorContextMenu.value = null;
+}
+
+/**
+ * Открывает выбор поверхности для клетки из контекстного меню.
+ */
+function openSurfacePickerForCell(x: number, y: number): void {
+  surfacePickerCell.value = { x, y };
+  closeEditorContextMenu();
+}
+
+/**
+ * Открывает выбор authored-объекта для клетки из контекстного меню.
+ */
+function openObjectPickerForCell(x: number, y: number): void {
+  objectPickerCell.value = { x, y };
+  closeEditorContextMenu();
+}
+
+/**
+ * Открывает выбор NPC для клетки из контекстного меню.
+ */
+function openActorPickerForCell(x: number, y: number): void {
+  actorPickerCell.value = { x, y };
+  closeEditorContextMenu();
+}
+
+/**
+ * Применяет выбранную поверхность к клетке из модалки выбора.
+ */
+function applySurfaceSelection(surfaceCode: SceneSurfaceDefinition['code']): void {
+  if (surfacePickerCell.value === null) {
+    return;
+  }
+
+  activeTerrain.value = surfaceCode;
+  paintCell(surfacePickerCell.value.x, surfacePickerCell.value.y);
+  selectedCellKey.value = resolveCellKey(surfacePickerCell.value.x, surfacePickerCell.value.y);
+  surfacePickerCell.value = null;
+}
+
+/**
+ * Применяет выбранный authored-объект к клетке из модалки выбора.
+ */
+function applyObjectSelection(objectKind: SceneObjectDefinition['code']): void {
+  if (objectPickerCell.value === null) {
+    return;
+  }
+
+  toggleObjectAtCell(objectPickerCell.value.x, objectPickerCell.value.y, objectKind);
+  selectedCellKey.value = resolveCellKey(objectPickerCell.value.x, objectPickerCell.value.y);
+  objectPickerCell.value = null;
+}
+
+/**
+ * Применяет выбранный NPC к клетке из модалки выбора.
+ */
+function applyActorSelection(actorId: number): void {
+  if (actorPickerCell.value === null) {
+    return;
+  }
+
+  toggleActorAtCell(actorPickerCell.value.x, actorPickerCell.value.y, actorId);
+  selectedCellKey.value = resolveCellKey(actorPickerCell.value.x, actorPickerCell.value.y);
+  actorPickerCell.value = null;
+}
+
+/**
+ * Возвращает краткое состояние authored-клетки для меню и popup-окон.
+ */
+function describeCellState(x: number, y: number): string {
+  const cell = getCell(x, y);
+  const object = getObjectAtCell(x, y);
+  const actorPlacement = getActorPlacementAtCell(x, y);
+  const fragments = [
+    cell?.terrain_type ?? 'unknown',
+    object?.name ?? object?.kind ?? null,
+    actorPlacement?.actor.name ?? null,
+    playerSpawnPoint.value?.x === x && playerSpawnPoint.value?.y === y ? 'spawn' : null,
+  ].filter((fragment): fragment is string => fragment !== null);
+
+  return fragments.join(' · ');
+}
+
+/**
+ * Закрывает меню редактора по внешнему клику.
+ */
+function handleGlobalPointerDown(): void {
+  closeEditorContextMenu();
 }
 
 /**
@@ -666,24 +830,8 @@ function handleCellAction(x: number, y: number): void {
   const hasObject = getObjectAtCell(x, y) !== undefined;
   const hasActor = getActorPlacementAtCell(x, y) !== undefined;
 
-  if (activePlayerSpawnMode.value) {
-    playerSpawnPoint.value = playerSpawnPoint.value?.x === x && playerSpawnPoint.value?.y === y ? null : {x, y};
-    activePlayerSpawnMode.value = false;
-    return;
-  }
-
   if (activeEraseMode.value) {
     eraseCellContent(x, y);
-    return;
-  }
-
-  if (activeObjectKind.value !== null) {
-    toggleObjectAtCell(x, y);
-    return;
-  }
-
-  if (activeActorId.value !== null) {
-    toggleActorAtCell(x, y);
     return;
   }
 
@@ -699,6 +847,10 @@ function handleCellAction(x: number, y: number): void {
  */
 function handleCanvasMouseDown(event: MouseEvent): void {
   if (canvasRef.value === null) {
+    return;
+  }
+
+  if (event.button === 2) {
     return;
   }
 
@@ -720,14 +872,7 @@ function handleCanvasMouseDown(event: MouseEvent): void {
         || getActorPlacementAtCell(targetCell.cell.x, targetCell.cell.y) !== undefined
       );
 
-    if (
-      targetCell !== null
-      && activeObjectKind.value === null
-      && activeActorId.value === null
-      && !activeEraseMode.value
-      && !activePlayerSpawnMode.value
-      && !hasEntity
-    ) {
+    if (targetCell !== null && (activeEraseMode.value || !hasEntity)) {
       isPaintDragging.value = true;
       handleCellAction(targetCell.cell.x, targetCell.cell.y);
       scheduleCanvasRender();
@@ -744,6 +889,29 @@ function handleCanvasMouseDown(event: MouseEvent): void {
     pointerMode.value = 'rotate';
     event.preventDefault();
   }
+}
+
+/**
+ * Открывает контекстное меню редактора по правому клику на клетке.
+ */
+function handleCanvasContextMenu(event: MouseEvent): void {
+  const point = resolveCanvasPoint(event);
+  const targetCell = point ? findCellAtCanvasPoint(point) : null;
+
+  if (targetCell === null) {
+    closeEditorContextMenu();
+    return;
+  }
+
+  selectedCellKey.value = resolveCellKey(targetCell.cell.x, targetCell.cell.y);
+  hoveredActorTooltip.value = null;
+  editorContextMenu.value = {
+    cellX: targetCell.cell.x,
+    cellY: targetCell.cell.y,
+    x: event.clientX,
+    y: event.clientY,
+  };
+  scheduleCanvasRender();
 }
 
 /**
@@ -845,6 +1013,10 @@ function handleGlobalMouseUp(event: MouseEvent): void {
   const mode = pointerMode.value;
   pointerMode.value = null;
 
+  if (event.button === 2) {
+    return;
+  }
+
   if (mode === 'pan' && !hasMoved.value) {
     const point = resolveCanvasPoint(event);
     const targetCell = point ? findCellAtCanvasPoint(point) : null;
@@ -860,31 +1032,6 @@ function handleGlobalMouseUp(event: MouseEvent): void {
 
 /**
  * Запрещает browser autoscroll на среднем клике.
- */
-function handleCanvasAuxClick(event: MouseEvent): void {
-  event.preventDefault();
-
-  const point = resolveCanvasPoint(event);
-  const targetCell = point ? findCellAtCanvasPoint(point) : null;
-
-  if (targetCell === null) {
-    return;
-  }
-
-  const hasObject = getObjectAtCell(targetCell.cell.x, targetCell.cell.y) !== undefined;
-  const hasActor = getActorPlacementAtCell(targetCell.cell.x, targetCell.cell.y) !== undefined;
-
-  if (!hasObject && !hasActor) {
-    return;
-  }
-
-  selectedCellKey.value = resolveCellKey(targetCell.cell.x, targetCell.cell.y);
-  eraseCellContent(targetCell.cell.x, targetCell.cell.y);
-  scheduleCanvasRender();
-}
-
-/**
- * Сбрасывает hover, когда указатель уходит из viewport.
  */
 function handleCanvasMouseLeave(): void {
   if (pointerMode.value !== null) {
@@ -1455,51 +1602,6 @@ function drawActor(context: CanvasRenderingContext2D, projectedCell: ProjectedCe
 /**
  * Отрисовывает ghost-preview инструмента на наведенной клетке.
  */
-function drawGhostPreview(context: CanvasRenderingContext2D, projectedCell: ProjectedCell): void {
-  context.save();
-  context.globalAlpha = 0.55;
-
-  if (activeEraseMode.value) {
-    const centerX = projectedCell.center.x;
-    const centerY = projectedCell.center.y - 18;
-    const size = Math.max(18, (projectedCell.bounds.maxX - projectedCell.bounds.minX) * 0.18);
-    context.strokeStyle = '#fb7185';
-    context.lineWidth = 4;
-    context.beginPath();
-    context.moveTo(centerX - size, centerY - size);
-    context.lineTo(centerX + size, centerY + size);
-    context.moveTo(centerX + size, centerY - size);
-    context.lineTo(centerX - size, centerY + size);
-    context.stroke();
-    context.restore();
-
-    return;
-  }
-
-  if (activeObjectKind.value === 'bush' && getObjectAtCell(projectedCell.cell.x, projectedCell.cell.y) === undefined) {
-    drawSceneObject(context, projectedCell, 'bush');
-  }
-
-  if (activeObjectKind.value === 'barrel' && getObjectAtCell(projectedCell.cell.x, projectedCell.cell.y) === undefined) {
-    drawSceneObject(context, projectedCell, 'barrel');
-  }
-
-  if (activeActorId.value !== null) {
-    const actor = gameActors.value.find((item) => item.id === activeActorId.value);
-
-    if (actor && getActorPlacementAtCell(projectedCell.cell.x, projectedCell.cell.y) === undefined) {
-      drawActor(context, projectedCell, {
-        actor,
-        actor_id: actor.id,
-        x: projectedCell.cell.x,
-        y: projectedCell.cell.y,
-      });
-    }
-  }
-
-  context.restore();
-}
-
 /**
  * Отрисовывает все объекты и актеров поверх клеток.
  */
@@ -1593,13 +1695,6 @@ function renderCanvasScene(): void {
 
   drawSceneEntities(context, projectedCells);
 
-  if (hoveredCellKey.value !== null && (activeObjectKind.value !== null || activeActorId.value !== null || activeEraseMode.value || activePlayerSpawnMode.value)) {
-    const hoveredProjection = projectedCells.find((projectedCell) => resolveCellKey(projectedCell.cell.x, projectedCell.cell.y) === hoveredCellKey.value);
-
-    if (hoveredProjection) {
-      drawGhostPreview(context, hoveredProjection);
-    }
-  }
 }
 
 /**
@@ -1641,10 +1736,7 @@ watch(
     gridWidth,
     gridHeight,
     activeTerrain,
-    activeObjectKind,
-    activeActorId,
     activeEraseMode,
-    activePlayerSpawnMode,
     playerSpawnPoint,
     hoveredCellKey,
     selectedCellKey,
@@ -1668,6 +1760,7 @@ watch(
 );
 
 onMounted(async () => {
+  window.addEventListener('mousedown', handleGlobalPointerDown);
   window.addEventListener('mousemove', handleGlobalMouseMove);
   window.addEventListener('mouseup', handleGlobalMouseUp);
   window.addEventListener('keydown', handleGlobalKeyDown);
@@ -1690,6 +1783,7 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
+  window.removeEventListener('mousedown', handleGlobalPointerDown);
   window.removeEventListener('mousemove', handleGlobalMouseMove);
   window.removeEventListener('mouseup', handleGlobalMouseUp);
   window.removeEventListener('keydown', handleGlobalKeyDown);
@@ -1726,442 +1820,270 @@ onBeforeUnmount(() => {
         <Save class="h-4 w-4" />
         Сохранить
       </button>
+
     </div>
 
     <div
       v-if="sceneError"
-      class="fixed left-6 right-[25.5rem] top-24 z-20 rounded-[1.3rem] border border-rose-300/20 bg-rose-500/10 px-4 py-3 text-sm leading-6 text-rose-100 backdrop-blur"
+      class="fixed left-6 right-6 top-24 z-20 rounded-[1.3rem] border border-rose-300/20 bg-rose-500/10 px-4 py-3 text-sm leading-6 text-rose-100 backdrop-blur"
     >
       {{ sceneError }}
     </div>
 
     <div
       v-else-if="isSceneLoading"
-      class="fixed left-6 right-[25.5rem] top-24 z-20 rounded-[1.75rem] border border-amber-200/10 bg-white/5 px-5 py-8 text-sm text-slate-300 backdrop-blur"
+      class="fixed left-6 right-6 top-24 z-20 rounded-[1.75rem] border border-amber-200/10 bg-white/5 px-5 py-8 text-sm text-slate-300 backdrop-blur"
     >
       Загружаем сцену...
     </div>
 
     <template v-else>
-      <div class="scene-editor-layout">
-        <section class="scene-editor-shell">
-          <div class="scene-editor-hintbar">
-            <span>Canvas viewport</span>
-            <span>ЛКМ по материалу: paint drag</span>
-            <span>ЛКМ зажать без инструмента: перемещение поля</span>
-            <span>СКМ зажать: наклон и поворот</span>
-            <span>Клик по клетке: материал, объект или NPC</span>
-            <span>Размер: {{ gridWidth }}x{{ gridHeight }}</span>
-          </div>
+      <div
+        ref="canvasViewportRef"
+        class="scene-editor-viewport"
+        @contextmenu.prevent="handleCanvasContextMenu"
+        @mousedown="handleCanvasMouseDown"
+        @mouseleave="handleCanvasMouseLeave"
+        @wheel="handleCanvasWheel"
+      >
+        <canvas ref="canvasRef" class="scene-editor-canvas" />
 
-          <div
-            ref="canvasViewportRef"
-            class="scene-editor-viewport"
-            @auxclick="handleCanvasAuxClick"
-            @contextmenu.prevent
-            @mousedown="handleCanvasMouseDown"
-            @mouseleave="handleCanvasMouseLeave"
-            @wheel="handleCanvasWheel"
-          >
-            <canvas ref="canvasRef" class="scene-editor-canvas" />
-
-            <div
-              v-if="hoveredActorTooltip"
-              class="scene-hover-tooltip"
-              :style="{ left: `${hoveredActorTooltip.x}px`, top: `${hoveredActorTooltip.y}px` }"
-            >
-              {{ hoveredActorTooltip.name }}
-            </div>
-          </div>
-        </section>
-
-        <aside class="scene-tools-panel">
-          <div class="scene-tools-panel-scroll">
-            <section class="rounded-[1.5rem] border border-amber-200/10 bg-slate-950/30 p-4">
-              <div class="flex items-center justify-between gap-3">
-                <span class="text-xs uppercase tracking-[0.2em] text-amber-200/50">Выбор</span>
-                <span
-                  v-if="selectedCell"
-                  class="text-xs text-slate-400"
-                >
-                  {{ selectedCell.x }},{{ selectedCell.y }}
-                </span>
-              </div>
-
-              <div class="mt-4 space-y-3">
-                <div
-                  v-if="!selectedCell"
-                  class="rounded-2xl border border-amber-200/10 bg-white/5 px-4 py-3 text-sm text-slate-300"
-                >
-                  Выбери клетку, объект или NPC на поле.
-                </div>
-
-                <template v-else>
-                  <div class="rounded-2xl border border-amber-200/10 bg-white/5 px-4 py-3 text-sm text-slate-300">
-                    Клетка: {{ selectedCell.x }},{{ selectedCell.y }} · {{ selectedCell.terrain_type }}
-                  </div>
-
-                  <div
-                    v-if="selectedSceneObject"
-                    class="rounded-2xl border border-amber-200/10 bg-white/5 px-4 py-3"
-                  >
-                    <p class="text-sm text-amber-50">{{ selectedSceneObject.name || selectedSceneObject.kind }}</p>
-                    <p class="mt-1 text-xs text-slate-300">
-                      Объект · {{ selectedSceneObject.kind }}
-                    </p>
-                  </div>
-
-                  <div
-                    v-if="selectedActorPlacement"
-                    class="rounded-2xl border border-amber-200/10 bg-white/5 px-4 py-3"
-                  >
-                    <p class="text-sm text-amber-50">{{ selectedActorPlacement.actor.name }}</p>
-                    <p class="mt-1 text-xs text-slate-300">
-                      NPC · {{ selectedActorPlacement.actor.race || 'Без расы' }} · {{ selectedActorPlacement.actor.character_class || 'Без класса' }}
-                    </p>
-                    <p class="mt-1 text-xs text-slate-400">
-                      Ур. {{ selectedActorPlacement.actor.level }} · HP {{ selectedActorPlacement.actor.base_health ?? selectedActorPlacement.actor.health_max ?? 0 }} · {{ selectedActorPlacement.actor.movement_speed }} кл.
-                    </p>
-                  </div>
-
-                  <div
-                    v-if="selectedSceneObject || selectedActorPlacement"
-                    class="rounded-2xl border border-rose-300/15 bg-rose-500/10 px-4 py-3 text-xs leading-5 text-rose-100"
-                  >
-                    `Delete` или `Backspace`, либо ПКМ по занятой клетке удаляет выбранную сущность.
-                  </div>
-                </template>
-              </div>
-            </section>
-
-            <section class="rounded-[1.5rem] border border-amber-200/10 bg-slate-950/30 p-4">
-              <button
-                class="flex w-full items-center justify-between gap-3 text-left"
-                type="button"
-                @click="toggleToolSection('base')"
-              >
-                <span class="text-xs uppercase tracking-[0.2em] text-amber-200/50">Базовое</span>
-                <span class="text-lg text-amber-100/70">{{ openToolSections.includes('base') ? '−' : '+' }}</span>
-              </button>
-
-              <div
-                v-if="openToolSections.includes('base')"
-                class="mt-4 space-y-4"
-              >
-                <label class="block">
-                  <span class="text-xs uppercase text-amber-200/50">Название сцены</span>
-                  <input
-                    v-model="sceneName"
-                    class="mt-2 w-full rounded-2xl border border-amber-200/10 bg-slate-950/50 px-4 py-3 text-sm text-amber-50 outline-none transition focus:border-amber-300/30"
-                    maxlength="120"
-                    type="text"
-                  >
-                </label>
-
-                <label class="block">
-                  <span class="text-xs uppercase text-amber-200/50">Описание</span>
-                  <textarea
-                    v-model="sceneDescription"
-                    class="mt-2 min-h-28 w-full rounded-2xl border border-amber-200/10 bg-slate-950/50 px-4 py-3 text-sm text-amber-50 outline-none transition focus:border-amber-300/30"
-                    maxlength="1000"
-                  />
-                </label>
-
-                <div class="rounded-2xl border border-amber-200/10 bg-white/5 p-4">
-                  <p class="text-xs uppercase text-amber-200/50">
-                    Размер поля
-                  </p>
-                  <div class="mt-3 space-y-3">
-                    <div class="flex items-center justify-between gap-3">
-                      <span class="text-sm text-slate-300">Ширина</span>
-                      <div class="flex items-center gap-2">
-                        <button
-                          class="rounded-full border border-amber-200/10 bg-white/5 p-2 text-amber-50"
-                          type="button"
-                          @click="resizeGrid('width', -1)"
-                        >
-                          <Minus class="h-4 w-4" />
-                        </button>
-                        <span class="min-w-10 text-center text-sm text-amber-50">{{ gridWidth }}</span>
-                        <button
-                          class="rounded-full border border-amber-200/10 bg-white/5 p-2 text-amber-50"
-                          type="button"
-                          @click="resizeGrid('width', 1)"
-                        >
-                          <Plus class="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div class="flex items-center justify-between gap-3">
-                      <span class="text-sm text-slate-300">Высота</span>
-                      <div class="flex items-center gap-2">
-                        <button
-                          class="rounded-full border border-amber-200/10 bg-white/5 p-2 text-amber-50"
-                          type="button"
-                          @click="resizeGrid('height', -1)"
-                        >
-                          <Minus class="h-4 w-4" />
-                        </button>
-                        <span class="min-w-10 text-center text-sm text-amber-50">{{ gridHeight }}</span>
-                        <button
-                          class="rounded-full border border-amber-200/10 bg-white/5 p-2 text-amber-50"
-                          type="button"
-                          @click="resizeGrid('height', 1)"
-                        >
-                          <Plus class="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section class="rounded-[1.5rem] border border-amber-200/10 bg-slate-950/30 p-4">
-              <button
-                class="flex w-full items-center justify-between gap-3 text-left"
-                type="button"
-                @click="toggleToolSection('materials')"
-              >
-                <span class="text-xs uppercase tracking-[0.2em] text-amber-200/50">Материалы</span>
-                <span class="text-lg text-amber-100/70">{{ openToolSections.includes('materials') ? '−' : '+' }}</span>
-              </button>
-
-              <div
-                v-if="openToolSections.includes('materials')"
-                class="mt-4 space-y-4"
-              >
-                <button
-                  :class="activeEraseMode ? 'border-rose-300/35 bg-rose-500/10 text-rose-100' : 'border-amber-200/10 bg-white/5 text-slate-200'"
-                  class="flex w-full items-center justify-center rounded-2xl border px-4 py-3 text-sm transition hover:border-rose-300/35"
-                  type="button"
-                  @click="activeEraseMode = !activeEraseMode; activeObjectKind = null; activeActorId = null"
-                >
-                  {{ activeEraseMode ? 'Удаление включено' : 'Режим удаления' }}
-                </button>
-
-                <div class="grid gap-3">
-                  <button
-                    v-for="surface in surfaceCatalog"
-                    :key="surface.code"
-                    :class="activeTerrain === surface.code ? 'border-amber-300/40 bg-amber-300/10' : 'border-amber-200/10 bg-white/5'"
-                    class="flex items-center gap-3 rounded-2xl border p-3 text-left transition hover:border-amber-200/30"
-                    type="button"
-                    @click="activeTerrain = surface.code; activeObjectKind = null; activeActorId = null; activeEraseMode = false"
-                  >
-                    <span :class="resolveSurfacePreviewClass(surface.code)" class="terrain-preview" />
-                    <span class="text-sm text-amber-50">{{ surface.name }}</span>
-                  </button>
-                </div>
-              </div>
-            </section>
-
-            <section class="rounded-[1.5rem] border border-amber-200/10 bg-slate-950/30 p-4">
-              <button
-                class="flex w-full items-center justify-between gap-3 text-left"
-                type="button"
-                @click="toggleToolSection('spawn')"
-              >
-                <span class="text-xs uppercase tracking-[0.2em] text-amber-200/50">Спаун игроков</span>
-                <span class="text-lg text-amber-100/70">{{ openToolSections.includes('spawn') ? '−' : '+' }}</span>
-              </button>
-
-              <div
-                v-if="openToolSections.includes('spawn')"
-                class="mt-4 space-y-4"
-              >
-                <div class="rounded-2xl border border-amber-200/10 bg-white/5 px-4 py-3 text-sm text-slate-300">
-                  <template v-if="playerSpawnPoint">
-                    Точка спауна: {{ playerSpawnPoint.x }},{{ playerSpawnPoint.y }}
-                  </template>
-                  <template v-else>
-                    Точка спауна еще не выбрана.
-                  </template>
-                </div>
-
-                <button
-                  :class="activePlayerSpawnMode ? 'border-emerald-300/35 bg-emerald-500/10 text-emerald-100' : 'border-amber-200/10 bg-white/5 text-slate-200'"
-                  class="flex w-full items-center justify-center rounded-2xl border px-4 py-3 text-sm transition hover:border-emerald-300/35"
-                  type="button"
-                  @click="activePlayerSpawnMode = !activePlayerSpawnMode; activeObjectKind = null; activeActorId = null; activeEraseMode = false"
-                >
-                  {{ activePlayerSpawnMode ? 'Кликни по клетке для точки спауна' : 'Выбрать точку спауна' }}
-                </button>
-
-                <button
-                  v-if="playerSpawnPoint"
-                  class="flex w-full items-center justify-center rounded-2xl border border-rose-300/15 bg-rose-500/10 px-4 py-3 text-sm text-rose-100 transition hover:bg-rose-500/20"
-                  type="button"
-                  @click="playerSpawnPoint = null; activePlayerSpawnMode = false"
-                >
-                  Очистить точку спауна
-                </button>
-
-                <p class="text-sm leading-6 text-slate-300">
-                  После запуска сцены герои игроков появятся рядом с этой клеткой, если она указана.
-                </p>
-              </div>
-            </section>
-
-            <section class="rounded-[1.5rem] border border-amber-200/10 bg-slate-950/30 p-4">
-              <button
-                class="flex w-full items-center justify-between gap-3 text-left"
-                type="button"
-                @click="toggleToolSection('objects')"
-              >
-                <span class="text-xs uppercase tracking-[0.2em] text-amber-200/50">Объекты</span>
-                <span class="text-lg text-amber-100/70">{{ openToolSections.includes('objects') ? '−' : '+' }}</span>
-              </button>
-
-              <div
-                v-if="openToolSections.includes('objects')"
-                class="mt-4 space-y-4"
-              >
-                <div class="grid gap-3">
-                  <button
-                    v-for="object in objectCatalog"
-                    :key="object.code"
-                    :class="activeObjectKind === object.code ? 'border-amber-300/40 bg-amber-300/10' : 'border-amber-200/10 bg-white/5'"
-                    class="flex items-center gap-3 rounded-2xl border p-3 text-left transition hover:border-amber-200/30"
-                    type="button"
-                    @click="activeObjectKind = activeObjectKind === object.code ? null : object.code; activeActorId = null; activeEraseMode = false"
-                  >
-                    <span :class="resolveObjectPreviewClass(object.code)" class="terrain-preview" />
-                    <span class="text-sm text-amber-50">{{ object.name }}</span>
-                  </button>
-                </div>
-
-                <p class="text-sm leading-6 text-slate-300">
-                  На одной клетке может находиться только один объект. Повторный клик по клетке тем же объектом убирает его.
-                </p>
-              </div>
-            </section>
-
-            <section class="rounded-[1.5rem] border border-amber-200/10 bg-slate-950/30 p-4">
-              <button
-                class="flex w-full items-center justify-between gap-3 text-left"
-                type="button"
-                @click="toggleToolSection('actors')"
-              >
-                <span class="text-xs uppercase tracking-[0.2em] text-amber-200/50">NPC</span>
-                <span class="text-lg text-amber-100/70">{{ openToolSections.includes('actors') ? '−' : '+' }}</span>
-              </button>
-
-              <div
-                v-if="openToolSections.includes('actors')"
-                class="mt-4 space-y-4"
-              >
-                <div
-                  v-if="gameActors.length === 0"
-                  class="rounded-2xl border border-amber-200/10 bg-white/5 px-4 py-3 text-sm text-slate-300"
-                >
-                  В игре пока нет NPC.
-                </div>
-
-                <div
-                  v-else
-                  class="grid gap-3"
-                >
-                  <button
-                    v-for="actor in gameActors"
-                    :key="actor.id"
-                    :class="activeActorId === actor.id ? 'border-amber-300/40 bg-amber-300/10' : 'border-amber-200/10 bg-white/5'"
-                    class="flex items-center gap-3 rounded-2xl border p-3 text-left transition hover:border-amber-200/30"
-                    type="button"
-                    @click="activeActorId = activeActorId === actor.id ? null : actor.id; activeObjectKind = null; activeEraseMode = false"
-                  >
-                    <img
-                      v-if="actor.image_url"
-                      :src="actor.image_url"
-                      :alt="actor.name"
-                      class="h-14 w-12 rounded-xl border border-white/10 object-cover"
-                    >
-                    <span
-                      v-else
-                      class="flex h-14 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-sm font-semibold text-amber-100"
-                    >
-                      {{ actor.name.slice(0, 1) }}
-                    </span>
-                    <span class="min-w-0">
-                      <span class="block truncate text-sm text-amber-50">{{ actor.name }}</span>
-                      <span class="block truncate text-xs text-slate-300">
-                        {{ actor.race || 'Неизвестная раса' }} · {{ actor.character_class || 'Без класса' }}
-                      </span>
-                      <span class="block text-xs text-slate-400">
-                        Ур. {{ actor.level }} · HP {{ actor.base_health ?? actor.health_max ?? 0 }} · {{ actor.movement_speed }} кл.
-                      </span>
-                    </span>
-                  </button>
-                </div>
-              </div>
-            </section>
-
-            <section class="rounded-[1.5rem] border border-amber-200/10 bg-slate-950/30 p-4">
-              <button
-                class="flex w-full items-center justify-between gap-3 text-left"
-                type="button"
-                @click="toggleToolSection('help')"
-              >
-                <span class="text-xs uppercase tracking-[0.2em] text-amber-200/50">Навигация</span>
-                <span class="text-lg text-amber-100/70">{{ openToolSections.includes('help') ? '−' : '+' }}</span>
-              </button>
-
-              <div
-                v-if="openToolSections.includes('help')"
-                class="mt-4 flex items-start gap-3"
-              >
-                <div class="rounded-2xl border border-amber-200/10 bg-white/5 p-2.5 text-amber-100">
-                  <Move3D class="h-5 w-5" />
-                </div>
-                <div class="text-sm leading-6 text-slate-300">
-                  Редактор теперь рисуется через canvas. Для материалов доступна paint-drag покраска клеток. Зажатая левая кнопка без активного объекта, NPC или удаления двигает сцену. Зажатая средняя кнопка меняет угол обзора.
-                </div>
-              </div>
-            </section>
-          </div>
-        </aside>
+        <div
+          v-if="hoveredActorTooltip"
+          class="scene-hover-tooltip"
+          :style="{ left: `${hoveredActorTooltip.x}px`, top: `${hoveredActorTooltip.y}px` }"
+        >
+          {{ hoveredActorTooltip.name }}
+        </div>
       </div>
+
+      <div class="scene-editor-size-widget">
+        <div class="scene-editor-size-grid">
+          <div />
+          <div class="scene-editor-size-side">
+            <button class="scene-editor-size-button" type="button" @click="resizeGridFromEdge('top', 'shrink')">
+              <Minus class="h-3.5 w-3.5" />
+            </button>
+            <button class="scene-editor-size-button" type="button" @click="resizeGridFromEdge('top', 'expand')">
+              <Plus class="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <div />
+          <div class="scene-editor-size-side scene-editor-size-side-vertical">
+            <button class="scene-editor-size-button" type="button" @click="resizeGridFromEdge('left', 'shrink')">
+              <Minus class="h-3.5 w-3.5" />
+            </button>
+            <button class="scene-editor-size-button" type="button" @click="resizeGridFromEdge('left', 'expand')">
+              <Plus class="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <div class="scene-editor-size-center">{{ gridWidth }}x{{ gridHeight }}</div>
+          <div class="scene-editor-size-side scene-editor-size-side-vertical">
+            <button class="scene-editor-size-button" type="button" @click="resizeGridFromEdge('right', 'shrink')">
+              <Minus class="h-3.5 w-3.5" />
+            </button>
+            <button class="scene-editor-size-button" type="button" @click="resizeGridFromEdge('right', 'expand')">
+              <Plus class="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <div />
+          <div class="scene-editor-size-side">
+            <button class="scene-editor-size-button" type="button" @click="resizeGridFromEdge('bottom', 'shrink')">
+              <Minus class="h-3.5 w-3.5" />
+            </button>
+            <button class="scene-editor-size-button" type="button" @click="resizeGridFromEdge('bottom', 'expand')">
+              <Plus class="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <div />
+        </div>
+      </div>
+
+      <div
+        v-if="editorContextMenu"
+        class="fixed z-40 min-w-56 rounded-[1.15rem] border border-amber-200/10 bg-slate-950/95 p-2 shadow-[0_18px_50px_rgba(2,6,23,0.55)]"
+        :style="{ left: `${editorContextMenu.x}px`, top: `${editorContextMenu.y}px` }"
+        @click.stop
+        @mousedown.stop
+        @contextmenu.prevent.stop
+      >
+        <div class="mb-2 rounded-xl border border-amber-200/10 bg-white/5 px-3 py-2 text-xs leading-5 text-slate-300">
+          Клетка {{ editorContextMenu.cellX }},{{ editorContextMenu.cellY }}: {{ describeCellState(editorContextMenu.cellX, editorContextMenu.cellY) }}
+        </div>
+        <button
+          class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-amber-50 transition hover:bg-white/5"
+          type="button"
+          @click.stop="openSurfacePickerForCell(editorContextMenu.cellX, editorContextMenu.cellY)"
+        >
+          Поверхность
+        </button>
+        <button
+          class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-amber-50 transition hover:bg-white/5"
+          type="button"
+          @click.stop="openObjectPickerForCell(editorContextMenu.cellX, editorContextMenu.cellY)"
+        >
+          Объект
+        </button>
+        <button
+          class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-amber-50 transition hover:bg-white/5"
+          type="button"
+          @click.stop="openActorPickerForCell(editorContextMenu.cellX, editorContextMenu.cellY)"
+        >
+          NPC
+        </button>
+        <button
+          v-if="playerSpawnPoint?.x === editorContextMenu.cellX && playerSpawnPoint?.y === editorContextMenu.cellY"
+          class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-emerald-100 transition hover:bg-white/5"
+          type="button"
+          @click.stop="setPlayerSpawnAtCell(editorContextMenu.cellX, editorContextMenu.cellY); closeEditorContextMenu()"
+        >
+          Убрать спаун игроков
+        </button>
+        <button
+          v-else
+          class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-emerald-100 transition hover:bg-white/5"
+          type="button"
+          @click.stop="setPlayerSpawnAtCell(editorContextMenu.cellX, editorContextMenu.cellY); closeEditorContextMenu()"
+        >
+          Спаун игроков
+        </button>
+        <button
+          v-if="getObjectAtCell(editorContextMenu.cellX, editorContextMenu.cellY) || getActorPlacementAtCell(editorContextMenu.cellX, editorContextMenu.cellY)"
+          class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-rose-100 transition hover:bg-white/5"
+          type="button"
+          @click.stop="eraseCellContent(editorContextMenu.cellX, editorContextMenu.cellY); closeEditorContextMenu()"
+        >
+          Удалить содержимое
+        </button>
+        <button
+          class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-white/5"
+          type="button"
+          @click.stop="closeEditorContextMenu()"
+        >
+          Закрыть
+        </button>
+      </div>
+
+      <Teleport to="body">
+        <div
+          v-if="surfacePickerCell !== null"
+          class="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/70 p-6 backdrop-blur-sm"
+        >
+          <div class="absolute inset-0" @click="surfacePickerCell = null" />
+          <section class="relative z-10 flex max-h-[min(44rem,calc(100vh-3rem))] w-full max-w-4xl flex-col overflow-hidden rounded-[2rem] border border-amber-200/10 bg-[linear-gradient(180deg,rgba(17,24,39,0.98),rgba(2,6,23,0.98))] shadow-[0_30px_80px_rgba(2,6,23,0.65)]">
+            <div class="flex items-start justify-between gap-4 border-b border-amber-200/10 p-6">
+              <div>
+                <p class="text-xs uppercase tracking-[0.2em] text-amber-200/50">Поверхность</p>
+                <h2 class="mt-2 text-2xl text-amber-50">Клетка {{ surfacePickerCell.x }},{{ surfacePickerCell.y }}</h2>
+                <p class="mt-2 text-sm text-slate-300">{{ describeCellState(surfacePickerCell.x, surfacePickerCell.y) }}</p>
+              </div>
+              <button class="rounded-full border border-amber-200/10 bg-white/5 p-2 text-slate-300 transition hover:border-amber-200/30 hover:text-amber-50" type="button" @click="surfacePickerCell = null">
+                <X class="h-4 w-4" />
+              </button>
+            </div>
+            <div class="grid gap-3 overflow-y-auto p-6 sm:grid-cols-2">
+              <button
+                v-for="surface in surfaceCatalog"
+                :key="surface.code"
+                class="flex items-center gap-3 rounded-2xl border border-amber-200/10 bg-white/5 p-3 text-left transition hover:border-amber-200/30"
+                type="button"
+                @click="applySurfaceSelection(surface.code)"
+              >
+                <span class="terrain-preview">
+                  <img v-if="surface.image_url" :src="surface.image_url" :alt="surface.name" class="terrain-preview-image">
+                  <span v-else :class="resolveSurfacePreviewClass(surface.code)" class="terrain-preview-fallback" />
+                </span>
+                <span class="text-sm text-amber-50">{{ surface.name }}</span>
+              </button>
+            </div>
+          </section>
+        </div>
+      </Teleport>
+
+      <Teleport to="body">
+        <div
+          v-if="objectPickerCell !== null"
+          class="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/70 p-6 backdrop-blur-sm"
+        >
+          <div class="absolute inset-0" @click="objectPickerCell = null" />
+          <section class="relative z-10 flex max-h-[min(44rem,calc(100vh-3rem))] w-full max-w-4xl flex-col overflow-hidden rounded-[2rem] border border-amber-200/10 bg-[linear-gradient(180deg,rgba(17,24,39,0.98),rgba(2,6,23,0.98))] shadow-[0_30px_80px_rgba(2,6,23,0.65)]">
+            <div class="flex items-start justify-between gap-4 border-b border-amber-200/10 p-6">
+              <div>
+                <p class="text-xs uppercase tracking-[0.2em] text-amber-200/50">Объект</p>
+                <h2 class="mt-2 text-2xl text-amber-50">Клетка {{ objectPickerCell.x }},{{ objectPickerCell.y }}</h2>
+                <p class="mt-2 text-sm text-slate-300">{{ describeCellState(objectPickerCell.x, objectPickerCell.y) }}</p>
+              </div>
+              <button class="rounded-full border border-amber-200/10 bg-white/5 p-2 text-slate-300 transition hover:border-amber-200/30 hover:text-amber-50" type="button" @click="objectPickerCell = null">
+                <X class="h-4 w-4" />
+              </button>
+            </div>
+            <div class="grid gap-3 overflow-y-auto p-6 sm:grid-cols-2">
+              <button
+                v-for="object in objectCatalog"
+                :key="object.code"
+                class="flex items-center gap-3 rounded-2xl border border-amber-200/10 bg-white/5 p-3 text-left transition hover:border-amber-200/30"
+                type="button"
+                @click="applyObjectSelection(object.code)"
+              >
+                <span class="terrain-preview">
+                  <img v-if="object.image_url" :src="object.image_url" :alt="object.name" class="terrain-preview-image terrain-preview-image-contain">
+                  <span v-else :class="resolveObjectPreviewClass(object.code)" class="terrain-preview-fallback" />
+                </span>
+                <span class="text-sm text-amber-50">{{ object.name }}</span>
+              </button>
+            </div>
+          </section>
+        </div>
+      </Teleport>
+
+      <Teleport to="body">
+        <div
+          v-if="actorPickerCell !== null"
+          class="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/70 p-6 backdrop-blur-sm"
+        >
+          <div class="absolute inset-0" @click="actorPickerCell = null" />
+          <section class="relative z-10 flex max-h-[min(44rem,calc(100vh-3rem))] w-full max-w-4xl flex-col overflow-hidden rounded-[2rem] border border-amber-200/10 bg-[linear-gradient(180deg,rgba(17,24,39,0.98),rgba(2,6,23,0.98))] shadow-[0_30px_80px_rgba(2,6,23,0.65)]">
+            <div class="flex items-start justify-between gap-4 border-b border-amber-200/10 p-6">
+              <div>
+                <p class="text-xs uppercase tracking-[0.2em] text-amber-200/50">NPC</p>
+                <h2 class="mt-2 text-2xl text-amber-50">Клетка {{ actorPickerCell.x }},{{ actorPickerCell.y }}</h2>
+                <p class="mt-2 text-sm text-slate-300">{{ describeCellState(actorPickerCell.x, actorPickerCell.y) }}</p>
+              </div>
+              <button class="rounded-full border border-amber-200/10 bg-white/5 p-2 text-slate-300 transition hover:border-amber-200/30 hover:text-amber-50" type="button" @click="actorPickerCell = null">
+                <X class="h-4 w-4" />
+              </button>
+            </div>
+            <div class="grid gap-3 overflow-y-auto p-6">
+              <button
+                v-for="actor in gameActors"
+                :key="actor.id"
+                class="flex items-center gap-3 rounded-2xl border border-amber-200/10 bg-white/5 p-3 text-left transition hover:border-amber-200/30"
+                type="button"
+                @click="applyActorSelection(actor.id)"
+              >
+                <img v-if="actor.image_url" :src="actor.image_url" :alt="actor.name" class="h-14 w-12 rounded-xl border border-white/10 object-cover">
+                <span v-else class="flex h-14 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-sm font-semibold text-amber-100">
+                  {{ actor.name.slice(0, 1) }}
+                </span>
+                <span class="min-w-0">
+                  <span class="block truncate text-sm text-amber-50">{{ actor.name }}</span>
+                  <span class="block truncate text-xs text-slate-300">{{ actor.race || 'Неизвестная раса' }} · {{ actor.character_class || 'Без класса' }}</span>
+                </span>
+              </button>
+            </div>
+          </section>
+        </div>
+      </Teleport>
     </template>
   </main>
 </template>
 
 <style scoped>
-.scene-editor-layout {
+.scene-editor-viewport {
   position: absolute;
   inset: 0;
-  display: flex;
-  gap: 1.5rem;
-  padding: 1.5rem;
-}
-
-.scene-editor-shell {
-  position: relative;
-  flex: 1 1 auto;
-  min-width: 0;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  padding-top: 5rem;
-}
-
-.scene-editor-hintbar {
-  margin-bottom: 1rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  font-size: 0.75rem;
-  color: rgb(203 213 225);
-}
-
-.scene-editor-viewport {
-  position: relative;
-  flex: 1 1 auto;
   overflow: hidden;
   cursor: crosshair;
-  border-radius: 1.5rem;
-  border: 1px solid rgba(251, 191, 36, 0.12);
   background:
     radial-gradient(circle at 20% 20%, rgba(148, 163, 184, 0.14), transparent 30%),
     linear-gradient(180deg, rgba(15, 23, 42, 0.65), rgba(2, 6, 23, 0.94));
@@ -2188,35 +2110,96 @@ onBeforeUnmount(() => {
   backdrop-filter: blur(8px);
 }
 
-.scene-tools-panel {
-  position: relative;
-  z-index: 10;
-  width: 24rem;
-  min-width: 24rem;
-  height: 100%;
-  overflow: hidden;
-  border-left: 1px solid rgba(251, 191, 36, 0.1);
-  border-radius: 1.75rem;
+.scene-editor-size-widget {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 30;
+  width: 12rem;
+  padding: 0.75rem;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(251, 191, 36, 0.1);
   background: linear-gradient(180deg, rgba(17, 24, 39, 0.94), rgba(2, 6, 23, 0.99));
+  backdrop-filter: blur(14px);
 }
 
-.scene-tools-panel-scroll {
-  height: 100%;
-  overflow-y: auto;
-  padding: 1.5rem;
+.scene-editor-size-grid {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr) 2.25rem;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.scene-editor-size-side {
   display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(251, 191, 36, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.35rem;
+}
+
+.scene-editor-size-side-vertical {
   flex-direction: column;
-  gap: 1.5rem;
+}
+
+.scene-editor-size-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.9rem;
+  width: 1.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(251, 191, 36, 0.1);
+  background: rgba(2, 6, 23, 0.45);
+  color: rgb(254 243 199);
+}
+
+.scene-editor-size-center {
+  display: flex;
+  min-height: 4.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1rem;
+  border: 1px solid rgba(251, 191, 36, 0.1);
+  background: rgba(2, 6, 23, 0.42);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(254 243 199);
 }
 
 .terrain-preview {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   height: 3rem;
   width: 3rem;
   flex-shrink: 0;
+  overflow: hidden;
   border-radius: 0.9rem;
   border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.35);
+}
+
+.terrain-preview-image,
+.terrain-preview-fallback {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.terrain-preview-image {
+  object-fit: cover;
+}
+
+.terrain-preview-image-contain {
+  object-fit: contain;
+  padding: 0.2rem;
 }
 
 .terrain-preview-grass {
@@ -2286,9 +2269,8 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 1279px) {
-  .scene-tools-panel {
-    width: 22rem;
-    min-width: 22rem;
+  .scene-editor-size-widget {
+    width: 10.5rem;
   }
 }
 </style>

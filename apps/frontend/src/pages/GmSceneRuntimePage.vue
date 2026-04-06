@@ -3,6 +3,7 @@ import { ArrowLeft, Crosshair, Package, Play, Swords, UserRound, Waves } from 'l
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import RuntimeActorInventoryModal from '@/components/runtime/RuntimeActorInventoryModal.vue';
+import RuntimeSceneCanvas from '@/components/runtime/RuntimeSceneCanvas.vue';
 import { useAuthSession } from '@/composables/useAuthSession';
 import { connectRealtime, subscribeRealtime } from '@/composables/useRealtimeSocket';
 import { useToastCenter } from '@/composables/useToastCenter';
@@ -74,6 +75,7 @@ const route = useRoute();
 const router = useRouter();
 const { currentUser, ensureSessionLoaded, isAuthenticated, isPending } = useAuthSession();
 const { pushToast } = useToastCenter();
+const isCanvasOnlyMode = true;
 
 const runtimeScene = ref<RuntimeSceneDetail | null>(null);
 const gameDetail = ref<GameDetail | null>(null);
@@ -1238,6 +1240,50 @@ async function handleCellClick(x: number, y: number): Promise<void> {
   }
 }
 
+async function handleCanvasMoveRequest(payload: { actor: RuntimeActorInstance; x: number; y: number }): Promise<void> {
+  if (gameId.value === null || runtimeScene.value === null || isActorMoving.value) {
+    return;
+  }
+
+  try {
+    isActorMoving.value = true;
+    runtimeError.value = '';
+    const movingActor = payload.actor;
+    const movementDistance = resolveEncounterDistance(movingActor, payload.x, payload.y);
+
+    if (!canActorMoveNow(movingActor)) {
+      runtimeError.value = `Сейчас ходит ${currentEncounterActor.value?.name ?? 'другой участник'}.`;
+      return;
+    }
+
+    if (activeEncounter.value !== null && movementDistance > (selectedEncounterParticipant.value?.movement_left ?? 0)) {
+      runtimeError.value = 'Для такого перемещения не хватает оставшейся скорости.';
+      return;
+    }
+
+    const previousPosition = {
+      x: movingActor.x,
+      y: movingActor.y,
+    };
+    const updatedActor = await moveRuntimeActor(gameId.value, movingActor.id, { x: payload.x, y: payload.y });
+    const actorIndex = runtimeScene.value.actor_instances.findIndex((actor) => actor.id === movingActor.id);
+
+    if (actorIndex >= 0) {
+      runtimeScene.value.actor_instances.splice(actorIndex, 1, updatedActor);
+      applyLocalEncounterMovement(movingActor.id, updatedActor, movementDistance);
+      runtimeScene.value.version += 1;
+      startMovementAnimation(movingActor.id, previousPosition.x, previousPosition.y, payload.x, payload.y);
+      selectedActorId.value = updatedActor.id;
+      selectedCellKey.value = resolveCellKey(payload.x, payload.y);
+    }
+  } catch (error) {
+    runtimeError.value = (error as Error).message;
+  } finally {
+    isActorMoving.value = false;
+    scheduleCanvasRender();
+  }
+}
+
 function handleGlobalMouseUp(event: MouseEvent): void {
   const mode = pointerMode.value;
   pointerMode.value = null;
@@ -1662,9 +1708,12 @@ onMounted(async () => {
 
   await reconnectRuntimeScene();
   connectRealtime();
-  window.addEventListener('resize', setupCanvasSize);
-  window.addEventListener('mousemove', handleGlobalMouseMove);
-  window.addEventListener('mouseup', handleGlobalMouseUp);
+
+  if (!isCanvasOnlyMode) {
+    window.addEventListener('resize', setupCanvasSize);
+    window.addEventListener('mousemove', handleGlobalMouseMove);
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+  }
 });
 
 const unsubscribeRealtime = subscribeRealtime((message) => {
@@ -1673,9 +1722,12 @@ const unsubscribeRealtime = subscribeRealtime((message) => {
 
 onBeforeUnmount(() => {
   unsubscribeRealtime();
-  window.removeEventListener('resize', setupCanvasSize);
-  window.removeEventListener('mousemove', handleGlobalMouseMove);
-  window.removeEventListener('mouseup', handleGlobalMouseUp);
+
+  if (!isCanvasOnlyMode) {
+    window.removeEventListener('resize', setupCanvasSize);
+    window.removeEventListener('mousemove', handleGlobalMouseMove);
+    window.removeEventListener('mouseup', handleGlobalMouseUp);
+  }
 
   if (renderFrameId.value !== null) {
     cancelAnimationFrame(renderFrameId.value);
@@ -1707,7 +1759,8 @@ onBeforeUnmount(() => {
 
     <div
       v-if="runtimeError"
-      class="fixed left-6 right-[25.5rem] top-24 z-20 rounded-[1.3rem] border border-rose-300/20 bg-rose-500/10 px-4 py-3 text-sm leading-6 text-rose-100 backdrop-blur"
+      class="fixed left-6 top-24 z-20 rounded-[1.3rem] border border-rose-300/20 bg-rose-500/10 px-4 py-3 text-sm leading-6 text-rose-100 backdrop-blur"
+      :class="isCanvasOnlyMode ? 'right-6' : 'right-[25.5rem]'"
     >
       <div class="flex flex-wrap items-center justify-between gap-3">
         <span>{{ runtimeError }}</span>
@@ -1724,13 +1777,29 @@ onBeforeUnmount(() => {
 
     <div
       v-else-if="isRuntimeLoading"
-      class="fixed left-6 right-[25.5rem] top-24 z-20 rounded-[1.75rem] border border-amber-200/10 bg-white/5 px-5 py-8 text-sm text-slate-300 backdrop-blur"
+      class="fixed left-6 top-24 z-20 rounded-[1.75rem] border border-amber-200/10 bg-white/5 px-5 py-8 text-sm text-slate-300 backdrop-blur"
+      :class="isCanvasOnlyMode ? 'right-6' : 'right-[25.5rem]'"
     >
       Загружаем активную сцену...
     </div>
 
     <template v-else-if="runtimeScene && sceneTemplate">
-      <div class="scene-runtime-layout">
+      <RuntimeSceneCanvas
+        v-if="isCanvasOnlyMode"
+        v-model:selected-actor-id="selectedActorId"
+        v-model:selected-cell-key="selectedCellKey"
+        :current-user-id="currentUser.id"
+        :object-catalog="objectCatalog"
+        :runtime-scene="runtimeScene"
+        :surface-catalog="surfaceCatalog"
+        selection-mode="all"
+        @move-actor="void handleCanvasMoveRequest($event)"
+      />
+
+      <div
+        v-else
+        class="scene-runtime-layout"
+      >
         <section class="scene-runtime-shell">
           <div class="scene-runtime-hintbar">
             <span><Play class="mr-1 inline h-3.5 w-3.5" /> Сцена запущена</span>

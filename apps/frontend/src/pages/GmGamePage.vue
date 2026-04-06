@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {ChevronLeft, Map, Pencil, Play, Plus, ScrollText, Shield, Trash2, UserRound, Users} from 'lucide-vue-next';
+import {Check, ChevronLeft, Map, Pencil, Play, Plus, ScrollText, Shield, Trash2, UserRound, Users, X} from 'lucide-vue-next';
 import {computed, onMounted, onUnmounted, ref} from 'vue';
 import {RouterLink, useRoute, useRouter} from 'vue-router';
 import CabinetShell from '@/components/cabinet/CabinetShell.vue';
@@ -11,7 +11,7 @@ import {connectRealtime, subscribeRealtime} from '@/composables/useRealtimeSocke
 import {useToastCenter} from '@/composables/useToastCenter';
 import {fetchGameActors} from '@/services/actorApi';
 import {activateRuntimeScene} from '@/services/runtimeSceneApi';
-import {createGameScene, deleteGameScene} from '@/services/sceneApi';
+import {createGameScene, deleteGameScene, fetchGameScene, updateGameScene} from '@/services/sceneApi';
 import {fetchGame, inviteGameMember, removeGameMember, updateGameStatus} from '@/services/gameApi';
 import type {GameActor} from '@/types/actor';
 import type {GameDetail, GameStatus} from '@/types/game';
@@ -32,6 +32,9 @@ const isMemberUpdating = ref(false);
 const isSceneUpdating = ref(false);
 const actors = ref<GameActor[]>([]);
 const isNpcManagerOpen = ref(false);
+const editingSceneId = ref<number | null>(null);
+const editingSceneName = ref('');
+const editingSceneDescription = ref('');
 
 const gameId = computed<number | null>(() => {
   const rawValue = route.params.id;
@@ -192,6 +195,69 @@ async function handleDeleteScene(sceneId: number): Promise<void> {
 
   try {
     await deleteGameScene(game.value.id, sceneId);
+    await loadGame();
+  } catch (error) {
+    gameError.value = (error as Error).message;
+  } finally {
+    isSceneUpdating.value = false;
+  }
+}
+
+/**
+ * Включает режим редактирования названия и описания authored-сцены на карточке.
+ */
+function startSceneCardEditing(sceneId: number, name: string, description: string | null): void {
+  editingSceneId.value = sceneId;
+  editingSceneName.value = name;
+  editingSceneDescription.value = description ?? '';
+}
+
+/**
+ * Выключает режим редактирования карточки authored-сцены.
+ */
+function cancelSceneCardEditing(): void {
+  editingSceneId.value = null;
+  editingSceneName.value = '';
+  editingSceneDescription.value = '';
+}
+
+/**
+ * Сохраняет название и описание authored-сцены с карточки игры.
+ */
+async function saveSceneCardEditing(sceneId: number): Promise<void> {
+  if (game.value === null) {
+    return;
+  }
+
+  isSceneUpdating.value = true;
+  gameError.value = '';
+
+  try {
+    const sceneDetail = await fetchGameScene(game.value.id, sceneId);
+    await updateGameScene(game.value.id, sceneId, {
+      name: editingSceneName.value.trim() || sceneDetail.scene_template.name,
+      description: editingSceneDescription.value,
+      width: sceneDetail.scene_template.width,
+      height: sceneDetail.scene_template.height,
+      metadata: {
+        player_spawn_point: sceneDetail.scene_template.metadata?.player_spawn_point ?? null,
+        viewport: sceneDetail.scene_template.metadata?.viewport ?? {
+          offsetX: 0,
+          offsetY: 0,
+          rotateX: 45,
+          rotateZ: 45,
+          zoom: 1,
+        },
+      },
+      cells: sceneDetail.scene_template.cells,
+      objects: sceneDetail.scene_template.objects.filter((object) => object.x !== null && object.y !== null),
+      actors: sceneDetail.scene_template.actor_placements.map((placement) => ({
+        actor_id: placement.actor_id,
+        x: placement.x,
+        y: placement.y,
+      })),
+    });
+    cancelSceneCardEditing();
     await loadGame();
   } catch (error) {
     gameError.value = (error as Error).message;
@@ -591,20 +657,65 @@ onUnmounted(() => {
             >
               <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
-                  <p class="font-medium text-amber-50">
-                    {{ scene.scene_template.name }}
-                  </p>
-                  <p class="mt-2 text-sm text-slate-300">
-                    {{ scene.scene_template.description || 'Описание сцены пока не заполнено.' }}
-                  </p>
+                  <template v-if="editingSceneId === scene.id">
+                    <input
+                        v-model="editingSceneName"
+                        class="w-full rounded-xl border border-amber-200/10 bg-slate-950/50 px-3 py-2 text-sm text-amber-50 outline-none transition focus:border-amber-300/30"
+                        maxlength="120"
+                        type="text"
+                    >
+                    <textarea
+                        v-model="editingSceneDescription"
+                        class="mt-2 min-h-24 w-full rounded-xl border border-amber-200/10 bg-slate-950/50 px-3 py-2 text-sm text-slate-300 outline-none transition focus:border-amber-300/30"
+                        maxlength="1000"
+                    />
+                  </template>
+
+                  <template v-else>
+                    <p class="font-medium text-amber-50">
+                      {{ scene.scene_template.name }}
+                    </p>
+                    <p class="mt-2 text-sm text-slate-300">
+                      {{ scene.scene_template.description || 'Описание сцены пока не заполнено.' }}
+                    </p>
+                  </template>
                 </div>
 
-                <span
-                    v-if="game.active_scene_state_id === scene.id"
-                    class="shrink-0 rounded-full border border-emerald-300/20 bg-emerald-500/10 px-3 py-1 text-xs uppercase text-emerald-100"
-                >
-                  Активна
-                </span>
+                <div class="flex shrink-0 items-center gap-2">
+                  <button
+                      v-if="editingSceneId === scene.id"
+                      :disabled="isSceneUpdating"
+                      class="rounded-full border border-emerald-300/20 bg-emerald-500/10 p-2 text-emerald-100 transition hover:bg-emerald-500/20"
+                      type="button"
+                      @click="saveSceneCardEditing(scene.id)"
+                  >
+                    <Check class="h-4 w-4"/>
+                  </button>
+                  <button
+                      v-if="editingSceneId === scene.id"
+                      :disabled="isSceneUpdating"
+                      class="rounded-full border border-amber-200/10 bg-white/5 p-2 text-slate-300 transition hover:border-amber-200/30 hover:text-amber-50"
+                      type="button"
+                      @click="cancelSceneCardEditing()"
+                  >
+                    <X class="h-4 w-4"/>
+                  </button>
+                  <button
+                      v-else
+                      :disabled="isSceneUpdating"
+                      class="rounded-full border border-amber-200/10 bg-white/5 p-2 text-slate-300 transition hover:border-amber-200/30 hover:text-amber-50"
+                      type="button"
+                      @click="startSceneCardEditing(scene.id, scene.scene_template.name, scene.scene_template.description)"
+                  >
+                    <Pencil class="h-4 w-4"/>
+                  </button>
+                  <span
+                      v-if="game.active_scene_state_id === scene.id"
+                      class="shrink-0 rounded-full border border-emerald-300/20 bg-emerald-500/10 px-3 py-1 text-xs uppercase text-emerald-100"
+                  >
+                    Активна
+                  </span>
+                </div>
               </div>
 
               <div class="mt-3 flex flex-wrap items-center gap-2 text-xs uppercase text-slate-400">
@@ -642,8 +753,8 @@ onUnmounted(() => {
                     :to="`/cabinet/gm/games/${game.id}/scenes/${scene.id}`"
                     class="inline-flex items-center gap-2 rounded-full border border-sky-300/20 bg-sky-500/10 px-4 py-2 text-sm text-sky-100 transition hover:bg-sky-500/20"
                 >
-                  <Pencil class="h-4 w-4"/>
-                  Редактировать
+                  <Map class="h-4 w-4"/>
+                  Открыть редактор
                 </RouterLink>
 
                 <button
