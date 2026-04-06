@@ -9,6 +9,8 @@ use App\Domain\Actor\Dice;
 use App\Domain\Actor\LuckScale;
 use App\Models\Actor;
 use App\Models\ActorInstance;
+use App\Models\Encounter;
+use App\Models\EncounterParticipant;
 use App\Models\Game;
 use App\Models\GameSceneState;
 use App\Models\SceneTemplate;
@@ -168,6 +170,126 @@ final class GmRuntimeSceneControllerTest extends TestCase
 			'name' => 'Орк-разведчик',
 			'x' => 2,
 			'y' => 3,
+		]);
+	}
+
+	/**
+	 * Проверяет, что активация сцены сбрасывает ранее активное сражение.
+	 */
+	public function test_game_master_activate_scene_resolves_previous_encounter(): void
+	{
+		$gameMaster = User::query()->create([
+			'name' => 'gm-runtime-reset-encounter',
+			'email' => 'gm-runtime-reset-encounter@example.com',
+			'can_access_gm' => true,
+			'password' => 'secret-pass',
+		]);
+
+		$game = Game::query()->create([
+			'title' => 'Runtime reset encounter game',
+			'gm_user_id' => $gameMaster->id,
+			'status' => 'active',
+		]);
+
+		$sceneTemplate = SceneTemplate::query()->create([
+			'created_by' => $gameMaster->id,
+			'name' => 'Runtime reset encounter scene',
+			'width' => 6,
+			'height' => 6,
+			'status' => 'draft',
+		]);
+
+		for ($y = 0; $y < 6; $y++) {
+			for ($x = 0; $x < 6; $x++) {
+				$sceneTemplate->cells()->create([
+					'x' => $x,
+					'y' => $y,
+					'terrain_type' => 'grass',
+					'elevation' => 0,
+					'is_passable' => true,
+					'blocks_vision' => false,
+				]);
+			}
+		}
+
+		$sceneState = GameSceneState::query()->create([
+			'game_id' => $game->id,
+			'scene_template_id' => $sceneTemplate->id,
+			'status' => 'prepared',
+			'version' => 1,
+		]);
+
+		$actor = Actor::query()->create([
+			'gm_user_id' => $gameMaster->id,
+			'kind' => 'npc',
+			'name' => 'Старый орк',
+			'level' => 2,
+			'movement_speed' => 6,
+			'base_health' => 18,
+			'health_current' => 18,
+			'health_max' => 18,
+		]);
+
+		$sceneTemplate->actorPlacements()->create([
+			'actor_id' => $actor->id,
+			'x' => 2,
+			'y' => 3,
+		]);
+
+		$actorInstance = ActorInstance::query()->create([
+			'game_id' => $game->id,
+			'game_scene_state_id' => $sceneState->id,
+			'kind' => 'npc',
+			'controller_type' => 'gm',
+			'name' => 'Старый орк',
+			'status' => 'active',
+			'x' => 2,
+			'y' => 3,
+			'hp_current' => 18,
+			'hp_max' => 18,
+			'luck' => 'normal',
+			'runtime_state' => [
+				'movement_speed' => 6,
+			],
+		]);
+
+		$encounter = Encounter::query()->create([
+			'game_id' => $game->id,
+			'game_scene_state_id' => $sceneState->id,
+			'status' => 'active',
+			'round' => 2,
+			'started_at' => now(),
+		]);
+
+		$participant = EncounterParticipant::query()->create([
+			'encounter_id' => $encounter->id,
+			'actor_id' => $actorInstance->id,
+			'initiative' => 12,
+			'turn_order' => 1,
+			'joined_round' => 1,
+			'movement_left' => 6,
+			'action_available' => true,
+			'bonus_action_available' => true,
+			'reaction_available' => true,
+			'combat_result_state' => 'active',
+		]);
+
+		$encounter->forceFill([
+			'current_participant_id' => $participant->id,
+		])->save();
+
+		$csrfToken = $this->authenticate($gameMaster);
+
+		$this->withHeaders([
+			...$this->frontendHeaders(),
+			'X-CSRF-TOKEN' => $csrfToken,
+		])->postJson('/api/games/'.$game->id.'/runtime/scenes/'.$sceneState->id.'/activate')
+			->assertOk()
+			->assertJsonPath('encounter', null);
+
+		$this->assertDatabaseHas('encounters', [
+			'id' => $encounter->id,
+			'status' => 'resolved',
 		]);
 	}
 
@@ -426,6 +548,102 @@ final class GmRuntimeSceneControllerTest extends TestCase
 			'game_id' => $game->id,
 			'game_scene_state_id' => $sceneState->id,
 			'status' => 'active',
+		]);
+	}
+
+	/**
+	 * Проверяет, что мастер может вручную завершить активное сражение.
+	 */
+	public function test_game_master_can_end_encounter_for_runtime_scene(): void
+	{
+		$gameMaster = User::query()->create([
+			'name' => 'gm-end-encounter',
+			'email' => 'gm-end-encounter@example.com',
+			'can_access_gm' => true,
+			'password' => 'secret-pass',
+		]);
+
+		$game = Game::query()->create([
+			'title' => 'End encounter game',
+			'gm_user_id' => $gameMaster->id,
+			'status' => 'active',
+		]);
+
+		$sceneTemplate = SceneTemplate::query()->create([
+			'created_by' => $gameMaster->id,
+			'name' => 'End encounter scene',
+			'width' => 6,
+			'height' => 6,
+			'status' => 'draft',
+		]);
+
+		$sceneState = GameSceneState::query()->create([
+			'game_id' => $game->id,
+			'scene_template_id' => $sceneTemplate->id,
+			'status' => 'active',
+			'version' => 7,
+			'loaded_at' => now(),
+		]);
+
+		$game->forceFill([
+			'active_scene_state_id' => $sceneState->id,
+		])->save();
+
+		$actorInstance = ActorInstance::query()->create([
+			'game_id' => $game->id,
+			'game_scene_state_id' => $sceneState->id,
+			'kind' => 'npc',
+			'controller_type' => 'gm',
+			'name' => 'Орк',
+			'status' => 'active',
+			'x' => 1,
+			'y' => 1,
+			'hp_current' => 18,
+			'hp_max' => 18,
+			'luck' => 'normal',
+			'runtime_state' => [
+				'movement_speed' => 6,
+				'stats' => ['dex' => 12],
+			],
+		]);
+
+		$encounter = Encounter::query()->create([
+			'game_id' => $game->id,
+			'game_scene_state_id' => $sceneState->id,
+			'status' => 'active',
+			'round' => 1,
+			'started_at' => now(),
+		]);
+
+		$participant = EncounterParticipant::query()->create([
+			'encounter_id' => $encounter->id,
+			'actor_id' => $actorInstance->id,
+			'initiative' => 12,
+			'turn_order' => 1,
+			'joined_round' => 1,
+			'movement_left' => 6,
+			'action_available' => true,
+			'bonus_action_available' => true,
+			'reaction_available' => true,
+			'combat_result_state' => 'active',
+		]);
+
+		$encounter->forceFill([
+			'current_participant_id' => $participant->id,
+		])->save();
+
+		$csrfToken = $this->authenticate($gameMaster);
+
+		$this->withHeaders([
+			...$this->frontendHeaders(),
+			'X-CSRF-TOKEN' => $csrfToken,
+		])->postJson('/api/games/'.$game->id.'/runtime/encounter/end')
+			->assertOk()
+			->assertJsonPath('encounter', null);
+
+		$this->assertDatabaseHas('encounters', [
+			'id' => $encounter->id,
+			'status' => 'resolved',
 		]);
 	}
 

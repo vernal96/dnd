@@ -147,6 +147,7 @@ Route::middleware([
             Route::post('/scenes/{sceneState}/activate', [GmRuntimeSceneController::class, 'activate']);
             Route::prefix('encounter')->group(function (): void {
                 Route::post('/start', [GmRuntimeSceneController::class, 'startEncounter']);
+                Route::post('/end', [GmRuntimeSceneController::class, 'endEncounter']);
                 Route::post('/end-turn', [GmRuntimeSceneController::class, 'nextTurn']);
             });
             Route::prefix('actors')->group(function (): void {

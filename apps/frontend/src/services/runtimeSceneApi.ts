@@ -109,6 +109,15 @@ export function endRuntimeTurn(gameId: number): Promise<RuntimeSceneDetail> {
 }
 
 /**
+ * Завершает активное сражение на runtime-сцене.
+ */
+export function endRuntimeEncounter(gameId: number): Promise<RuntimeSceneDetail> {
+  return fetchWithSession<RuntimeSceneDetail>(`/games/${gameId}/runtime/encounter/end`, {
+    method: 'POST',
+  });
+}
+
+/**
  * Добавляет героя или NPC на активную сцену.
  */
 export function spawnRuntimeActor(

@@ -266,6 +266,15 @@ final class RuntimeSceneManagementService
 				->where('game_scene_state_id', $sceneState->id)
 				->delete();
 
+			Encounter::query()
+				->where('game_scene_state_id', $sceneState->id)
+				->where('status', 'active')
+				->update([
+					'status' => 'resolved',
+					'resolved_at' => now(),
+					'current_participant_id' => null,
+				]);
+
 			$occupiedCells = [];
 
 			foreach ($sceneState->sceneTemplate->actorPlacements as $placement) {
@@ -380,6 +389,45 @@ final class RuntimeSceneManagementService
 
 		try {
 			$this->realtimePublisher->publishGameSceneActivated($game, $sceneState);
+		} catch (Throwable $throwable) {
+			report($throwable);
+		}
+
+		return $this->findActiveSceneForGameMaster($gameId, $user);
+	}
+
+	/**
+	 * Завершает активный encounter на runtime-сцене по инициативе мастера.
+	 *
+	 * @throws Throwable Если завершение encounter завершилось технической ошибкой.
+	 */
+	public function endEncounter(int $gameId, User $user): ?GameSceneState
+	{
+		[$game, $sceneState] = $this->resolveOwnedActiveScene($gameId, $user);
+
+		if ($game === null || $sceneState === null) {
+			return null;
+		}
+
+		DB::transaction(function () use ($sceneState): void {
+			Encounter::query()
+				->where('game_scene_state_id', $sceneState->id)
+				->where('status', 'active')
+				->update([
+					'status' => 'resolved',
+					'resolved_at' => now(),
+					'current_participant_id' => null,
+				]);
+
+			$sceneState->forceFill([
+				'version' => $sceneState->version + 1,
+			])->save();
+		});
+
+		$sceneState->refresh();
+
+		try {
+			$this->realtimePublisher->publishGameSceneUpdated($game, $sceneState);
 		} catch (Throwable $throwable) {
 			report($throwable);
 		}

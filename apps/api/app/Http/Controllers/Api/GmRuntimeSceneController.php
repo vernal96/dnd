@@ -320,6 +320,38 @@ final class GmRuntimeSceneController extends Controller
 	}
 
 	/**
+	 * Завершает активное сражение на runtime-сцене.
+	 */
+	public function endEncounter(int $game, ListGamesRequest $request): JsonResponse
+	{
+		/** @var User $user */
+		$user = $request->user('web');
+
+		try {
+			$sceneState = $this->runtimeSceneManagementService->endEncounter($game, $user);
+		} catch (RuntimeException $exception) {
+			return ApiPayloadResource::json([
+				'message' => $exception->getMessage(),
+			], ResponseAlias::HTTP_UNPROCESSABLE_ENTITY);
+		} catch (Throwable $throwable) {
+			report($throwable);
+
+			return ApiPayloadResource::json([
+				'message' => 'Не удалось завершить сражение.',
+			], ResponseAlias::HTTP_INTERNAL_SERVER_ERROR);
+		}
+
+		if ($sceneState === null) {
+			return ApiPayloadResource::json([
+				'message' => 'Активная сцена игры не найдена.',
+			], ResponseAlias::HTTP_NOT_FOUND);
+		}
+
+		return RuntimeSceneViewResource::make($this->runtimeSceneManagementService->buildSceneView($sceneState))
+			->response();
+	}
+
+	/**
 	 * Выполняет расход указанного боевого ресурса текущего участника encounter.
 	 */
 	private function useEncounterAction(int $game, int $actor, string $actionType, ListGamesRequest $request): JsonResponse

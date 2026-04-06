@@ -12,6 +12,7 @@ import { fetchItems } from '@/services/itemApi';
 import { fetchSceneObjects, fetchSceneSurfaces } from '@/services/sceneCatalogApi';
 import {
   dropRuntimeItem,
+  endRuntimeEncounter,
   endRuntimeTurn,
   fetchActiveRuntimeScene,
   moveRuntimeActor,
@@ -107,6 +108,7 @@ const canvasSize = ref({
   height: MIN_CANVAS_HEIGHT,
   width: 1200,
 });
+const hasCanvasMeasurement = ref(false);
 
 const pointerMode = ref<PointerMode>(null);
 const pointerStartX = ref(0);
@@ -125,8 +127,6 @@ const isEncounterStarting = ref(false);
 const isEncounterUpdating = ref(false);
 const isEncounterStartModalOpen = ref(false);
 const selectedEncounterActorIds = ref<number[]>([]);
-
-let resizeObserver: ResizeObserver | null = null;
 
 const imageCache = new Map<string, HTMLImageElement>();
 const brokenImageUrls = new Set<string>();
@@ -908,6 +908,11 @@ function drawSceneEntities(context: CanvasRenderingContext2D, projectedCells: Pr
 }
 
 function renderCanvasScene(): void {
+  if (setupCanvasSize()) {
+    scheduleCanvasRender();
+    return;
+  }
+
   const canvas = canvasRef.value;
 
   if (canvas === null) {
@@ -1001,36 +1006,39 @@ function startMovementAnimation(actorId: number, fromX: number, fromY: number, t
   animationFrameId.value = window.requestAnimationFrame(tickMovementAnimation);
 }
 
-function setupCanvasSize(): void {
+function setupCanvasSize(): boolean {
   const canvas = canvasRef.value;
   const viewportElement = canvasViewportRef.value;
 
   if (canvas === null || viewportElement === null) {
-    return;
+    return false;
   }
 
   const width = Math.max(680, Math.round(viewportElement.clientWidth));
   const height = Math.max(MIN_CANVAS_HEIGHT, Math.round(viewportElement.clientHeight));
   const dpr = window.devicePixelRatio || 1;
+  const previousWidth = canvasSize.value.width;
+  const previousHeight = canvasSize.value.height;
+  const didSizeChange = !hasCanvasMeasurement.value || width !== previousWidth || height !== previousHeight;
+
+  if (!didSizeChange) {
+    return false;
+  }
 
   canvas.width = Math.round(width * dpr);
   canvas.height = Math.round(height * dpr);
-  canvas.style.width = `${width}px`;
-  canvas.style.height = `${height}px`;
-  canvasSize.value = { width, height };
-  scheduleCanvasRender();
-}
 
-function setupCanvasResizeObserver(): void {
-  if (canvasViewportRef.value === null) {
-    return;
+  if (hasCanvasMeasurement.value) {
+    viewport.value = {
+      ...viewport.value,
+      offsetX: viewport.value.offsetX + ((previousWidth - width) / 2),
+      offsetY: viewport.value.offsetY + ((previousHeight - height) / 2),
+    };
   }
 
-  resizeObserver?.disconnect();
-  resizeObserver = new ResizeObserver(() => {
-    setupCanvasSize();
-  });
-  resizeObserver.observe(canvasViewportRef.value);
+  canvasSize.value = { width, height };
+  hasCanvasMeasurement.value = true;
+  return true;
 }
 
 function handleCanvasMouseDown(event: MouseEvent): void {
@@ -1319,6 +1327,23 @@ async function consumeEncounterAction(actionType: 'action' | 'bonus-action'): Pr
   }
 }
 
+async function handleFinishEncounter(): Promise<void> {
+  if (gameId.value === null || activeEncounter.value === null) {
+    return;
+  }
+
+  try {
+    isEncounterUpdating.value = true;
+    runtimeError.value = '';
+    runtimeScene.value = await endRuntimeEncounter(gameId.value);
+    scheduleCanvasRender();
+  } catch (error) {
+    runtimeError.value = (error as Error).message;
+  } finally {
+    isEncounterUpdating.value = false;
+  }
+}
+
 async function handleEndEncounterTurn(): Promise<void> {
   if (gameId.value === null || activeEncounter.value === null) {
     return;
@@ -1471,6 +1496,7 @@ async function loadRuntimeScene(): Promise<boolean> {
   runtimeError.value = '';
 
   try {
+    const previousSceneId = runtimeScene.value?.id ?? null;
     const [scene, game, actors, items, surfaces, objects] = await Promise.all([
       fetchActiveRuntimeScene(gameId.value),
       fetchGame(gameId.value),
@@ -1486,7 +1512,7 @@ async function loadRuntimeScene(): Promise<boolean> {
     surfaceCatalog.value = surfaces;
     objectCatalog.value = objects;
 
-    if (scene.scene_template.metadata?.viewport) {
+    if (previousSceneId !== scene.id && scene.scene_template.metadata?.viewport) {
       viewport.value = {
         ...viewport.value,
         ...scene.scene_template.metadata.viewport,
@@ -1498,7 +1524,7 @@ async function loadRuntimeScene(): Promise<boolean> {
     syncEncounterSelection();
 
     await nextTick();
-    setupCanvasSize();
+
     scheduleCanvasRender();
     return true;
   } catch (error) {
@@ -1538,8 +1564,10 @@ async function handleRealtimeEvent(message: RealtimeEventMessage): Promise<void>
     return;
   }
 
+  const nextVersion = message.payload.version ?? 0;
+
   if (message.event === 'game-scene.activated') {
-    if (!isRuntimeApplying.value && !isActorMoving.value) {
+    if (!isRuntimeApplying.value && !isActorMoving.value && !isEncounterUpdating.value) {
       await loadRuntimeScene();
     }
 
@@ -1547,7 +1575,11 @@ async function handleRealtimeEvent(message: RealtimeEventMessage): Promise<void>
   }
 
   if (message.event === 'game-scene.updated') {
-    if (!isRuntimeApplying.value && !isActorMoving.value) {
+    if (runtimeScene.value !== null && nextVersion <= runtimeScene.value.version) {
+      return;
+    }
+
+    if (!isRuntimeApplying.value && !isActorMoving.value && !isEncounterUpdating.value) {
       await loadRuntimeScene();
     }
 
@@ -1557,8 +1589,6 @@ async function handleRealtimeEvent(message: RealtimeEventMessage): Promise<void>
   if (runtimeScene.value === null) {
     return;
   }
-
-  const nextVersion = message.payload.version ?? 0;
 
   if (nextVersion <= runtimeScene.value.version) {
     return;
@@ -1632,7 +1662,7 @@ onMounted(async () => {
 
   await reconnectRuntimeScene();
   connectRealtime();
-  setupCanvasResizeObserver();
+  window.addEventListener('resize', setupCanvasSize);
   window.addEventListener('mousemove', handleGlobalMouseMove);
   window.addEventListener('mouseup', handleGlobalMouseUp);
 });
@@ -1643,8 +1673,7 @@ const unsubscribeRealtime = subscribeRealtime((message) => {
 
 onBeforeUnmount(() => {
   unsubscribeRealtime();
-  resizeObserver?.disconnect();
-  resizeObserver = null;
+  window.removeEventListener('resize', setupCanvasSize);
   window.removeEventListener('mousemove', handleGlobalMouseMove);
   window.removeEventListener('mouseup', handleGlobalMouseUp);
 
@@ -1877,6 +1906,14 @@ onBeforeUnmount(() => {
                   @click="handleEndEncounterTurn()"
                 >
                   Завершить ход
+                </button>
+                <button
+                  class="rounded-full border border-rose-300/30 bg-rose-300/10 px-4 py-3 text-sm text-rose-50 transition hover:border-rose-200/40 disabled:cursor-not-allowed disabled:opacity-50"
+                  :disabled="isEncounterUpdating"
+                  type="button"
+                  @click="handleFinishEncounter()"
+                >
+                  Завершить бой
                 </button>
               </div>
             </section>
