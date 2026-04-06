@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Data\Catalog;
 
-use App\Domain\Catalog\AbstractSkill;
+use App\Domain\Actor\AbstractSkill;
 
 /**
  * Хранит распределение навыков класса персонажа по уровням с 1 по 20.

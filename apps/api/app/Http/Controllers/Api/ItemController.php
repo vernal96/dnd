@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Application\Catalog\ItemCatalog;
 use App\Application\Catalog\ItemCatalogImageStorageService;
-use App\Domain\Catalog\Item;
+use App\Domain\Actor\Item;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApiPayloadResource;
 use App\Http\Resources\Catalog\CatalogItemResource;

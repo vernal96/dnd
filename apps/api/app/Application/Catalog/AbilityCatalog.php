@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Application\Catalog;
 
-use App\Domain\Catalog\Abilities\CharismaAbility;
-use App\Domain\Catalog\Abilities\ConstitutionAbility;
-use App\Domain\Catalog\Abilities\DexterityAbility;
-use App\Domain\Catalog\Abilities\IntelligenceAbility;
-use App\Domain\Catalog\Abilities\StrengthAbility;
-use App\Domain\Catalog\Abilities\WisdomAbility;
-use App\Domain\Catalog\Ability;
+use App\Domain\Actor\Abilities\CharismaAbility;
+use App\Domain\Actor\Abilities\ConstitutionAbility;
+use App\Domain\Actor\Abilities\DexterityAbility;
+use App\Domain\Actor\Abilities\IntelligenceAbility;
+use App\Domain\Actor\Abilities\StrengthAbility;
+use App\Domain\Actor\Abilities\WisdomAbility;
+use App\Domain\Actor\Ability;
 
 /**
  * Хранит кодовый справочник базовых характеристик персонажа.

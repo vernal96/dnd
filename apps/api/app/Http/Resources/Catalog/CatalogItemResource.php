@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Catalog;
 
-use App\Domain\Catalog\Ability;
-use App\Domain\Catalog\Item;
+use App\Domain\Actor\Ability;
+use App\Domain\Actor\Item;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -58,7 +58,7 @@ final class CatalogItemResource extends JsonResource
 	/**
 	 * Форматирует кость урона оружия для API.
 	 */
-	private function formatWeaponDice(string $itemCode, ?\App\Domain\Catalog\Dice $dice): ?string
+	private function formatWeaponDice(string $itemCode, ?\App\Domain\Actor\Dice $dice): ?string
 	{
 		if ($dice === null) {
 			return null;

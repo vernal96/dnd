@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Catalog;
 
-use App\Domain\Catalog\AbstractSkill;
+use App\Domain\Actor\AbstractSkill;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

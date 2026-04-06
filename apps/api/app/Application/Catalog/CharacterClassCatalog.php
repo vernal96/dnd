@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace App\Application\Catalog;
 
-use App\Domain\Catalog\AbstractCharacterClass;
-use App\Domain\Catalog\CharacterClasses\BarbarianCharacterClass;
-use App\Domain\Catalog\CharacterClasses\BardCharacterClass;
-use App\Domain\Catalog\CharacterClasses\ClericCharacterClass;
-use App\Domain\Catalog\CharacterClasses\DruidCharacterClass;
-use App\Domain\Catalog\CharacterClasses\FighterCharacterClass;
-use App\Domain\Catalog\CharacterClasses\MonkCharacterClass;
-use App\Domain\Catalog\CharacterClasses\PaladinCharacterClass;
-use App\Domain\Catalog\CharacterClasses\RangerCharacterClass;
-use App\Domain\Catalog\CharacterClasses\RogueCharacterClass;
-use App\Domain\Catalog\CharacterClasses\SorcererCharacterClass;
-use App\Domain\Catalog\CharacterClasses\WarlockCharacterClass;
-use App\Domain\Catalog\CharacterClasses\WizardCharacterClass;
+use App\Domain\Actor\AbstractCharacterClass;
+use App\Domain\Actor\CharacterClasses\BarbarianCharacterClass;
+use App\Domain\Actor\CharacterClasses\BardCharacterClass;
+use App\Domain\Actor\CharacterClasses\ClericCharacterClass;
+use App\Domain\Actor\CharacterClasses\DruidCharacterClass;
+use App\Domain\Actor\CharacterClasses\FighterCharacterClass;
+use App\Domain\Actor\CharacterClasses\MonkCharacterClass;
+use App\Domain\Actor\CharacterClasses\PaladinCharacterClass;
+use App\Domain\Actor\CharacterClasses\RangerCharacterClass;
+use App\Domain\Actor\CharacterClasses\RogueCharacterClass;
+use App\Domain\Actor\CharacterClasses\SorcererCharacterClass;
+use App\Domain\Actor\CharacterClasses\WarlockCharacterClass;
+use App\Domain\Actor\CharacterClasses\WizardCharacterClass;
 
 /**
  * Хранит кодовый справочник классов и подклассов персонажей.

@@ -7,12 +7,12 @@ namespace App\Http\Requests\Player;
 use App\Application\Catalog\AbilityCatalog;
 use App\Application\Catalog\CharacterClassCatalog;
 use App\Application\Catalog\RaceCatalog;
-use App\Domain\Catalog\Abilities\CharismaAbility;
-use App\Domain\Catalog\Abilities\ConstitutionAbility;
-use App\Domain\Catalog\Abilities\DexterityAbility;
-use App\Domain\Catalog\Abilities\IntelligenceAbility;
-use App\Domain\Catalog\Abilities\StrengthAbility;
-use App\Domain\Catalog\Abilities\WisdomAbility;
+use App\Domain\Actor\Abilities\CharismaAbility;
+use App\Domain\Actor\Abilities\ConstitutionAbility;
+use App\Domain\Actor\Abilities\DexterityAbility;
+use App\Domain\Actor\Abilities\IntelligenceAbility;
+use App\Domain\Actor\Abilities\StrengthAbility;
+use App\Domain\Actor\Abilities\WisdomAbility;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 

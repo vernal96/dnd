@@ -6,10 +6,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Application\SceneCatalog\SceneObjectImageStorageService;
 use App\Application\SceneCatalog\SceneSurfaceImageStorageService;
+use App\Domain\Scene\SceneObjectCatalog;
+use App\Domain\Scene\SceneSurfaceCatalog;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApiPayloadResource;
-use App\Catalog\Scene\SceneObjectCatalog;
-use App\Catalog\Scene\SceneSurfaceCatalog;
 use Illuminate\Http\JsonResponse;
 
 /**

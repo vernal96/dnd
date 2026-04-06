@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources\Catalog;
 
 use App\Data\Catalog\AbilityBonusChoiceData;
-use App\Domain\Catalog\Ability;
+use App\Domain\Actor\Ability;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Data\Catalog;
 
-use App\Domain\Catalog\Ability;
+use App\Domain\Actor\Ability;
 
 /**
  * Хранит один вариант выбора бонусов характеристик.

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Data\Catalog;
 
-use App\Domain\Catalog\Ability;
-use App\Domain\Catalog\Abilities\CharismaAbility;
-use App\Domain\Catalog\Abilities\ConstitutionAbility;
-use App\Domain\Catalog\Abilities\DexterityAbility;
-use App\Domain\Catalog\Abilities\IntelligenceAbility;
-use App\Domain\Catalog\Abilities\StrengthAbility;
-use App\Domain\Catalog\Abilities\WisdomAbility;
+use App\Domain\Actor\Ability;
+use App\Domain\Actor\Abilities\CharismaAbility;
+use App\Domain\Actor\Abilities\ConstitutionAbility;
+use App\Domain\Actor\Abilities\DexterityAbility;
+use App\Domain\Actor\Abilities\IntelligenceAbility;
+use App\Domain\Actor\Abilities\StrengthAbility;
+use App\Domain\Actor\Abilities\WisdomAbility;
 
 /**
  * Хранит полный набор бонусов характеристик с нулевыми значениями по умолчанию.

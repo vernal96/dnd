@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Resources\Catalog;
 
 use App\Data\Catalog\StartingEquipmentEntryData;
-use App\Domain\Catalog\AbstractCharacterClass;
-use App\Domain\Catalog\Ability;
-use App\Domain\Catalog\Items\BackpackItem;
-use App\Domain\Catalog\Items\ChainMailItem;
-use App\Domain\Catalog\Items\LongswordItem;
+use App\Domain\Actor\AbstractCharacterClass;
+use App\Domain\Actor\Ability;
+use App\Domain\Actor\Items\BackpackItem;
+use App\Domain\Actor\Items\ChainMailItem;
+use App\Domain\Actor\Items\LongswordItem;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

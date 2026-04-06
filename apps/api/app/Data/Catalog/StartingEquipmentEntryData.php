@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Data\Catalog;
 
-use App\Domain\Catalog\Item;
+use App\Domain\Actor\Item;
 
 /**
  * Хранит одну запись стартового снаряжения класса персонажа.

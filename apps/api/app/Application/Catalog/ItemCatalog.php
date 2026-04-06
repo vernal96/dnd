@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Application\Catalog;
 
-use App\Domain\Catalog\Item;
-use App\Domain\Catalog\Items\BackpackItem;
-use App\Domain\Catalog\Items\ChainMailItem;
-use App\Domain\Catalog\Items\LongswordItem;
+use App\Domain\Actor\Item;
+use App\Domain\Actor\Items\BackpackItem;
+use App\Domain\Actor\Items\ChainMailItem;
+use App\Domain\Actor\Items\LongswordItem;
 
 /**
  * Хранит кодовый справочник предметов и снаряжения.

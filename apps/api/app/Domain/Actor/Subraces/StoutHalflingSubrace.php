@@ -1,0 +1,48 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\Actor\Subraces;
+
+use App\Data\Catalog\AbilityBonusesData;
+use App\Domain\Actor\AbstractSubrace;
+
+/**
+ * Подраса коренастого полурослика.
+ */
+final class StoutHalflingSubrace extends AbstractSubrace
+{
+	/**
+	 * Возвращает код подрасы.
+	 */
+	public function getCode(): string
+	{
+		return 'stout-halfling';
+	}
+
+	/**
+	 * Возвращает название подрасы.
+	 */
+	public function getName(): string
+	{
+		return 'Коренастый';
+	}
+
+	/**
+	 * Возвращает описание подрасы.
+	 */
+	public function getDescription(): string
+	{
+		return 'Более крепкие и стойкие полурослики с выраженной выживаемостью.';
+	}
+
+	/**
+	 * Возвращает фиксированные бонусы характеристик коренастого полурослика.
+	 *
+	 */
+	public function getAbilityBonuses(): AbilityBonusesData
+	{
+		return new AbilityBonusesData(constitution: 1);
+	}
+
+}

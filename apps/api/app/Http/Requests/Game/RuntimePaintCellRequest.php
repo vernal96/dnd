@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Game;
 
-use App\Catalog\Scene\SceneSurfaceCatalog;
+use App\Domain\Scene\SceneSurfaceCatalog;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**

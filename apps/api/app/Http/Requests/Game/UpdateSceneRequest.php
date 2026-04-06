@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Game;
 
-use App\Models\Actor;
-use App\Catalog\Scene\SceneObjectCatalog;
-use App\Catalog\Scene\SceneSurfaceCatalog;
+use App\Domain\Scene\SceneObjectCatalog;
+use App\Domain\Scene\SceneSurfaceCatalog;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**

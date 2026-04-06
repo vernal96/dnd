@@ -1,0 +1,61 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\Actor\Items;
+
+use App\Domain\Actor\Item;
+use App\Domain\Actor\ItemType;
+
+/**
+ * Сущность предмета "Кольчуга".
+ */
+final class ChainMailItem extends Item
+{
+	/**
+	 * Возвращает код предмета.
+	 */
+	public function getCode(): string
+	{
+		return 'chain-mail';
+	}
+
+	/**
+	 * Возвращает название предмета.
+	 */
+	public function getName(): string
+	{
+		return 'Кольчуга';
+	}
+
+	/**
+	 * Возвращает тип предмета.
+	 */
+	public function getType(): ItemType
+	{
+		return ItemType::Armor;
+	}
+
+	/**
+	 * Возвращает категорию предмета.
+	 */
+	public function getCategory(): string
+	{
+		return 'heavy-armor';
+	}
+
+	/**
+	 * Возвращает базовый КД предмета брони.
+	 */
+	public function getArmorClassBase(): ?int
+	{
+		return 16;
+	}
+	/**
+	 * Возвращает описание предмета.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Полноценная кольчуга с поддоспешником и рукавицами, хорошо защищающая ценой веса и шума.';
+	}
+}

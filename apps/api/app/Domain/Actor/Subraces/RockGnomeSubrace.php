@@ -1,0 +1,48 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\Actor\Subraces;
+
+use App\Data\Catalog\AbilityBonusesData;
+use App\Domain\Actor\AbstractSubrace;
+
+/**
+ * Подраса скального гнома.
+ */
+final class RockGnomeSubrace extends AbstractSubrace
+{
+	/**
+	 * Возвращает код подрасы.
+	 */
+	public function getCode(): string
+	{
+		return 'rock-gnome';
+	}
+
+	/**
+	 * Возвращает название подрасы.
+	 */
+	public function getName(): string
+	{
+		return 'Скальный гном';
+	}
+
+	/**
+	 * Возвращает описание подрасы.
+	 */
+	public function getDescription(): string
+	{
+		return 'Изобретатели и ремесленники, любящие механизмы, минералы и мастерские.';
+	}
+
+	/**
+	 * Возвращает фиксированные бонусы характеристик скального гнома.
+	 *
+	 */
+	public function getAbilityBonuses(): AbilityBonusesData
+	{
+		return new AbilityBonusesData(constitution: 1);
+	}
+
+}

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Game;
 
 use App\Application\Catalog\ItemCatalog;
-use App\Domain\Catalog\Item;
+use App\Domain\Actor\Item;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;

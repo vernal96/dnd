@@ -1,0 +1,37 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\Actor\Abilities;
+
+use App\Domain\Actor\Ability;
+
+/**
+ * Сущность характеристики силы.
+ */
+final class StrengthAbility extends Ability
+{
+	/**
+	 * Возвращает код характеристики.
+	 */
+	public function getCode(): string
+	{
+		return 'str';
+	}
+
+	/**
+	 * Возвращает название характеристики.
+	 */
+	public function getName(): string
+	{
+		return 'Сила';
+	}
+
+	/**
+	 * Возвращает описание характеристики.
+	 */
+	public function getDescription(): ?string
+	{
+		return 'Сила отражает физическую мощь, атлетическую подготовку и способность прикладывать грубое усилие.';
+	}
+}

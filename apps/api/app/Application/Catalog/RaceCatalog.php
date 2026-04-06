@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Application\Catalog;
 
-use App\Domain\Catalog\AbstractRace;
-use App\Domain\Catalog\Races\DragonbornRace;
-use App\Domain\Catalog\Races\DwarfRace;
-use App\Domain\Catalog\Races\ElfRace;
-use App\Domain\Catalog\Races\GnomeRace;
-use App\Domain\Catalog\Races\HalfElfRace;
-use App\Domain\Catalog\Races\HalflingRace;
-use App\Domain\Catalog\Races\HalfOrcRace;
-use App\Domain\Catalog\Races\HumanRace;
-use App\Domain\Catalog\Races\TieflingRace;
+use App\Domain\Actor\AbstractRace;
+use App\Domain\Actor\Races\DragonbornRace;
+use App\Domain\Actor\Races\DwarfRace;
+use App\Domain\Actor\Races\ElfRace;
+use App\Domain\Actor\Races\GnomeRace;
+use App\Domain\Actor\Races\HalfElfRace;
+use App\Domain\Actor\Races\HalflingRace;
+use App\Domain\Actor\Races\HalfOrcRace;
+use App\Domain\Actor\Races\HumanRace;
+use App\Domain\Actor\Races\TieflingRace;
 
 /**
  * Хранит кодовый справочник рас и подрас.
