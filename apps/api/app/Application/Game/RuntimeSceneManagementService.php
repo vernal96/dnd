@@ -14,6 +14,7 @@ use App\Data\Game\RuntimeSceneViewData;
 use App\Domain\Actor\Abilities\ConstitutionAbility;
 use App\Domain\Actor\Abilities\DexterityAbility;
 use App\Domain\Scene\SceneSurfaceCatalog;
+use App\Domain\Scene\Surfaces\SceneSurfaceDefinition;
 use App\Models\Actor;
 use App\Models\ActorInstance;
 use App\Models\Encounter;
@@ -22,6 +23,7 @@ use App\Models\Game;
 use App\Models\GameMember;
 use App\Models\GameSceneState;
 use App\Models\PlayerCharacter;
+use App\Models\SceneTemplateCell;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -39,6 +41,7 @@ final class RuntimeSceneManagementService
 	public function __construct(
 		private readonly ItemCatalog $itemCatalog,
 		private readonly ItemCatalogImageStorageService $itemCatalogImageStorageService,
+		private readonly SurfaceEffectService $surfaceEffectService,
 		private readonly RealtimePublisher $realtimePublisher,
 	)
 	{
@@ -284,6 +287,7 @@ final class RuntimeSceneManagementService
 					'y' => $placement->y,
 					'hp_current' => $actor->health_current ?? $actor->base_health,
 					'hp_max' => $actor->health_max ?? $actor->base_health,
+					'luck' => $actor->luck,
 					'is_hidden' => false,
 					'resources' => null,
 					'temporary_effects' => null,
@@ -295,6 +299,7 @@ final class RuntimeSceneManagementService
 						'character_class' => $actor->character_class,
 						'level' => $actor->level,
 						'movement_speed' => $actor->movement_speed,
+						'luck' => $actor->luck,
 						'stats' => $actor->stats,
 						'inventory' => $actor->inventory,
 					],
@@ -337,6 +342,7 @@ final class RuntimeSceneManagementService
 					'y' => $spawnCell['y'],
 					'hp_current' => $hitPoints,
 					'hp_max' => $hitPoints,
+					'luck' => $playerCharacter->luck,
 					'is_hidden' => false,
 					'resources' => null,
 					'temporary_effects' => null,
@@ -348,6 +354,7 @@ final class RuntimeSceneManagementService
 						'character_class' => $playerCharacter->class,
 						'level' => $playerCharacter->level,
 						'movement_speed' => $playerCharacter->derived_stats['speed'] ?? 6,
+						'luck' => $playerCharacter->luck,
 						'stats' => $playerCharacter->base_stats,
 						'inventory' => [],
 					],
@@ -449,6 +456,12 @@ final class RuntimeSceneManagementService
 				'x' => $x,
 				'y' => $y,
 			])->save();
+
+			$surface = $this->resolveSurfaceAtCoordinates($sceneState, $x, $y);
+
+			if ($surface instanceof SceneSurfaceDefinition) {
+				$this->surfaceEffectService->applySurfaceEffect($actorInstance, $surface);
+			}
 
 			if ($activeEncounter instanceof Encounter && $movementDistance > 0) {
 				$participant = $this->findEncounterParticipant($activeEncounter, $actorInstance->id);
@@ -557,6 +570,12 @@ final class RuntimeSceneManagementService
 				'y' => $y,
 			])->save();
 
+			$surface = $this->resolveSurfaceAtCoordinates($sceneState, $x, $y);
+
+			if ($surface instanceof SceneSurfaceDefinition) {
+				$this->surfaceEffectService->applySurfaceEffect($actorInstance, $surface);
+			}
+
 			if ($activeEncounter instanceof Encounter && $distance > 0) {
 				$participant = $this->findEncounterParticipant($activeEncounter, $actorInstance->id);
 
@@ -628,6 +647,7 @@ final class RuntimeSceneManagementService
 					'y' => $y,
 					'hp_current' => $actor->health_current ?? $actor->base_health,
 					'hp_max' => $actor->health_max ?? $actor->base_health,
+					'luck' => $actor->luck,
 					'is_hidden' => false,
 					'resources' => null,
 					'temporary_effects' => null,
@@ -639,6 +659,7 @@ final class RuntimeSceneManagementService
 						'character_class' => $actor->character_class,
 						'level' => $actor->level,
 						'movement_speed' => $actor->movement_speed,
+						'luck' => $actor->luck,
 						'stats' => $actor->stats,
 						'inventory' => $actor->inventory,
 					],
@@ -690,6 +711,7 @@ final class RuntimeSceneManagementService
 					'y' => $y,
 					'hp_current' => $hitPoints,
 					'hp_max' => $hitPoints,
+					'luck' => $character->luck,
 					'is_hidden' => false,
 					'resources' => null,
 					'temporary_effects' => null,
@@ -701,6 +723,7 @@ final class RuntimeSceneManagementService
 						'character_class' => $character->class,
 						'level' => $character->level,
 						'movement_speed' => $character->derived_stats['speed'] ?? 6,
+						'luck' => $character->luck,
 						'stats' => $character->base_stats,
 						'inventory' => [],
 					],
@@ -1106,6 +1129,40 @@ final class RuntimeSceneManagementService
 			y: (int) ($itemDrop['y'] ?? 0),
 			imageUrl: $imageUrl,
 		);
+	}
+
+	/**
+	 * Возвращает кодовую поверхность клетки активной сцены.
+	 */
+	private function resolveSurfaceAtCoordinates(GameSceneState $sceneState, int $x, int $y): ?SceneSurfaceDefinition
+	{
+		$sceneState->loadMissing('sceneTemplate.cells');
+		$terrainType = null;
+		$gridState = is_array($sceneState->grid_state) ? $sceneState->grid_state : [];
+		$cellOverrides = is_array($gridState['cells'] ?? null) ? $gridState['cells'] : [];
+
+		foreach ($cellOverrides as $override) {
+			if (!is_array($override)) {
+				continue;
+			}
+
+			if (($override['x'] ?? null) === $x && ($override['y'] ?? null) === $y) {
+				$terrainType = is_string($override['terrain_type'] ?? null) ? $override['terrain_type'] : null;
+				break;
+			}
+		}
+
+		if ($terrainType === null) {
+			/** @var SceneTemplateCell|null $cell */
+			$cell = $sceneState->sceneTemplate->cells
+				->first(static fn ($cell): bool => $cell->x === $x && $cell->y === $y);
+
+			$terrainType = $cell?->terrain_type;
+		}
+
+		return is_string($terrainType)
+			? SceneSurfaceCatalog::findDefinition($terrainType)
+			: null;
 	}
 
 	/**

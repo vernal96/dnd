@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Scene\Surfaces;
 
+use App\Domain\Actor\Elements\ActorElementDefinition;
+
 /**
  * Описывает поверхность земли.
  */
@@ -32,6 +34,14 @@ final class SoilSceneSurface implements SceneSurfaceDefinition
 	public function blocksVision(): bool
 	{
 		return false;
+	}
+
+	/**
+	 * Возвращает стихию поверхности.
+	 */
+	public function element(): ?ActorElementDefinition
+	{
+		return null;
 	}
 
 	public function tags(): array

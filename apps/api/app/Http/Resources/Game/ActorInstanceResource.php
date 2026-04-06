@@ -40,6 +40,7 @@ final class ActorInstanceResource extends JsonResource
 			'initiative' => $actorInstance->initiative,
 			'hp_current' => $actorInstance->hp_current,
 			'hp_max' => $actorInstance->hp_max,
+			'luck' => $actorInstance->luck,
 			'is_hidden' => (bool) $actorInstance->is_hidden,
 			'resources' => $actorInstance->resources,
 			'temporary_effects' => $actorInstance->temporary_effects,

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Application\Game\RandomDiceRollerService;
+use App\Domain\Actor\Dice;
+use App\Domain\Actor\LuckScale;
 use App\Models\Actor;
 use App\Models\ActorInstance;
 use App\Models\Game;
@@ -19,6 +22,34 @@ use Tests\TestCase;
 final class GmRuntimeSceneControllerTest extends TestCase
 {
 	use RefreshDatabase;
+
+	/**
+	 * Подменяет сервис броска кубика предсказуемой последовательностью.
+	 *
+	 * @param list<int> $rolls
+	 */
+	private function fakeDiceRolls(array $rolls): void
+	{
+		$this->app->instance(RandomDiceRollerService::class, new class($rolls) extends RandomDiceRollerService
+		{
+			/**
+			 * @param list<int> $rolls
+			 */
+			public function __construct(
+				private array $rolls,
+			)
+			{
+			}
+
+			/**
+			 * Выполняет предсказуемый бросок.
+			 */
+			public function roll(Dice $dice, LuckScale $luckScale): int
+			{
+				return array_shift($this->rolls) ?? 1;
+			}
+		});
+	}
 
 	/**
 	 * Возвращает стандартные заголовки запросов нашего frontend.
@@ -211,6 +242,99 @@ final class GmRuntimeSceneControllerTest extends TestCase
 			'id' => $actorInstance->id,
 			'x' => 4,
 			'y' => 2,
+		]);
+	}
+
+	/**
+	 * Проверяет, что поверхность огня наносит уменьшенный расой урон после перемещения.
+	 */
+	public function test_game_master_move_applies_surface_damage_with_race_resistance(): void
+	{
+		$this->fakeDiceRolls([17, 5]);
+
+		$gameMaster = User::query()->create([
+			'name' => 'gm-runtime-damage',
+			'email' => 'gm-runtime-damage@example.com',
+			'can_access_gm' => true,
+			'password' => 'secret-pass',
+		]);
+
+		$game = Game::query()->create([
+			'title' => 'Runtime damage game',
+			'gm_user_id' => $gameMaster->id,
+			'status' => 'active',
+		]);
+
+		$sceneTemplate = SceneTemplate::query()->create([
+			'created_by' => $gameMaster->id,
+			'name' => 'Runtime damage scene',
+			'width' => 6,
+			'height' => 6,
+			'status' => 'draft',
+		]);
+
+		for ($y = 0; $y < 6; $y++) {
+			for ($x = 0; $x < 6; $x++) {
+				$sceneTemplate->cells()->create([
+					'x' => $x,
+					'y' => $y,
+					'terrain_type' => $x === 2 && $y === 1 ? 'fire' : 'grass',
+					'elevation' => 0,
+					'is_passable' => true,
+					'blocks_vision' => false,
+				]);
+			}
+		}
+
+		$sceneState = GameSceneState::query()->create([
+			'game_id' => $game->id,
+			'scene_template_id' => $sceneTemplate->id,
+			'status' => 'active',
+			'version' => 1,
+			'loaded_at' => now(),
+		]);
+
+		$game->forceFill([
+			'active_scene_state_id' => $sceneState->id,
+		])->save();
+
+		$actorInstance = ActorInstance::query()->create([
+			'game_id' => $game->id,
+			'game_scene_state_id' => $sceneState->id,
+			'kind' => 'npc',
+			'controller_type' => 'gm',
+			'name' => 'Тифлинг-разведчик',
+			'status' => 'active',
+			'x' => 1,
+			'y' => 1,
+			'hp_current' => 18,
+			'hp_max' => 18,
+			'luck' => 'normal',
+			'runtime_state' => [
+				'movement_speed' => 6,
+				'race' => 'tiefling',
+			],
+		]);
+
+		$csrfToken = $this->authenticate($gameMaster);
+
+		$this->withHeaders([
+			...$this->frontendHeaders(),
+			'X-CSRF-TOKEN' => $csrfToken,
+		])->postJson('/api/games/'.$game->id.'/runtime/actors/'.$actorInstance->id.'/move', [
+			'x' => 2,
+			'y' => 1,
+		])
+			->assertOk()
+			->assertJsonPath('x', 2)
+			->assertJsonPath('y', 1)
+			->assertJsonPath('hp_current', 15);
+
+		$this->assertDatabaseHas('actor_instances', [
+			'id' => $actorInstance->id,
+			'x' => 2,
+			'y' => 1,
+			'hp_current' => 15,
 		]);
 	}
 

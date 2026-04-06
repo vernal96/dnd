@@ -68,6 +68,20 @@ final class SceneSurfaceCatalog
 	}
 
 	/**
+	 * Возвращает объектное определение поверхности по коду.
+	 */
+	public static function findDefinition(string $code): ?SceneSurfaceDefinition
+	{
+		foreach (self::definitions() as $definition) {
+			if ($definition->code() === $code) {
+				return $definition;
+			}
+		}
+
+		return null;
+	}
+
+	/**
 	 * Возвращает объектные определения поверхностей сцены.
 	 *
 	 * @return array<int, SceneSurfaceDefinition>

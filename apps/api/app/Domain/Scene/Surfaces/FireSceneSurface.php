@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domain\Scene\Surfaces;
 
+use App\Domain\Actor\Elements\ActorElementDefinition;
+use App\Domain\Actor\Elements\FireElement;
+
 /**
  * Описывает поверхность огня.
  */
@@ -32,6 +35,14 @@ final class FireSceneSurface implements SceneSurfaceDefinition
 	public function blocksVision(): bool
 	{
 		return false;
+	}
+
+	/**
+	 * Возвращает стихию поверхности.
+	 */
+	public function element(): ActorElementDefinition
+	{
+		return new FireElement();
 	}
 
 	public function tags(): array

@@ -29,6 +29,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $initiative
  * @property int|null $hp_current
  * @property int|null $hp_max
+ * @property string $luck
  * @property bool $is_hidden
  * @property array<string, mixed>|null $resources
  * @property array<string, mixed>|null $temporary_effects
@@ -60,6 +61,7 @@ class ActorInstance extends Model
 		'initiative',
 		'hp_current',
 		'hp_max',
+		'luck',
 		'is_hidden',
 		'resources',
 		'temporary_effects',

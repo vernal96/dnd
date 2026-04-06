@@ -37,6 +37,7 @@ final class PlayerCharacterPayloadResource extends JsonResource
 			'level' => $character->level,
 			'experience' => $character->experience,
 			'status' => $character->status,
+			'luck' => $character->luck,
 			'base_stats' => $character->baseStats,
 			'derived_stats' => $character->derivedStats,
 			'image_path' => $character->imagePath,

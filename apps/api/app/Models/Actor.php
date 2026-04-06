@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Storage;
  * @property int|null $base_health
  * @property int|null $health_current
  * @property int|null $health_max
+ * @property string $luck
  * @property array<string, mixed>|null $stats
  * @property array<int, array<string, mixed>>|null $inventory
  * @property string|null $image_path
@@ -51,6 +52,7 @@ final class Actor extends Model
 		'base_health',
 		'health_current',
 		'health_max',
+		'luck',
 		'stats',
 		'inventory',
 		'image_path',

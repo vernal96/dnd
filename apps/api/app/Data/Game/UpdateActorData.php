@@ -27,6 +27,7 @@ final readonly class UpdateActorData
 		public ?int $baseHealth,
 		public ?int $healthCurrent,
 		public ?int $healthMax,
+		public string $luck,
 		public ?array $stats,
 		public array $inventory,
 		public ?string $imagePath,
@@ -38,7 +39,7 @@ final readonly class UpdateActorData
 	/**
 	 * Создает DTO из валидированного payload.
 	 *
-	 * @param array{kind:string,name:string,description?:?string,race?:?string,character_class?:?string,level:int,movement_speed:int,base_health?:?int,health_current?:?int,health_max?:?int,stats?:array<string, mixed>|null,inventory?:array<int, array<string, mixed>>,image_path?:?string,meta?:array<string, mixed>|null} $payload
+	 * @param array{kind:string,name:string,description?:?string,race?:?string,character_class?:?string,level:int,movement_speed:int,base_health?:?int,health_current?:?int,health_max?:?int,luck?:string,stats?:array<string, mixed>|null,inventory?:array<int, array<string, mixed>>,image_path?:?string,meta?:array<string, mixed>|null} $payload
 	 */
 	public static function fromArray(array $payload): self
 	{
@@ -53,6 +54,7 @@ final readonly class UpdateActorData
 			baseHealth: $payload['base_health'] ?? null,
 			healthCurrent: $payload['health_current'] ?? null,
 			healthMax: $payload['health_max'] ?? null,
+			luck: $payload['luck'] ?? 'normal',
 			stats: $payload['stats'] ?? null,
 			inventory: array_map(
 				static fn (array $item): ActorInventoryItemData => ActorInventoryItemData::fromArray($item),

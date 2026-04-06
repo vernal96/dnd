@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Actor;
 
+use App\Data\Actor\ElementResistanceData;
 use App\Data\Catalog\AbilityBonusesData;
 
 /**
@@ -74,6 +75,14 @@ abstract class AbstractRace
 	public function getHealthBonus(): int
 	{
 		return 0;
+	}
+
+	/**
+	 * Возвращает сопротивления расы ко всем поддерживаемым стихиям.
+	 */
+	public function getElementResistances(): ElementResistanceData
+	{
+		return new ElementResistanceData();
 	}
 
 	/**

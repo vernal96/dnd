@@ -27,6 +27,7 @@ final readonly class PlayerCharacterViewData
 		public int $level,
 		public int $experience,
 		public string $status,
+		public string $luck,
 		public ?array $baseStats,
 		public ?array $derivedStats,
 		public ?string $imagePath,

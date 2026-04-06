@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Actor\Races;
 
+use App\Data\Actor\ElementResistanceData;
 use App\Data\Catalog\AbilityBonusesData;
 use App\Domain\Actor\AbstractRace;
 
@@ -45,6 +46,16 @@ final class TieflingRace extends AbstractRace
 		return new AbilityBonusesData(
 			intelligence: 1,
 			charisma: 2,
+		);
+	}
+
+	/**
+	 * Возвращает сопротивления тифлинга ко всем поддерживаемым стихиям.
+	 */
+	public function getElementResistances(): ElementResistanceData
+	{
+		return new ElementResistanceData(
+			firePercent: 50,
 		);
 	}
 

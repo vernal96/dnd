@@ -23,6 +23,7 @@ use Illuminate\Support\Carbon;
  * @property int $level
  * @property int $experience
  * @property string $status
+ * @property string $luck
  * @property array<string, mixed>|null $base_stats
  * @property array<string, mixed>|null $derived_stats
  * @property string|null $image_path
@@ -48,6 +49,7 @@ class PlayerCharacter extends Model
 		'level',
 		'experience',
 		'status',
+		'luck',
 		'base_stats',
 		'derived_stats',
 		'image_path',

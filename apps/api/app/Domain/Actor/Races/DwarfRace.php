@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Actor\Races;
 
+use App\Data\Actor\ElementResistanceData;
 use App\Data\Catalog\AbilityBonusesData;
 use App\Domain\Actor\AbstractRace;
 use App\Domain\Actor\AbstractSubrace;
@@ -45,6 +46,16 @@ final class DwarfRace extends AbstractRace
 	public function getAbilityBonuses(): AbilityBonusesData
 	{
 		return new AbilityBonusesData(constitution: 2);
+	}
+
+	/**
+	 * Возвращает сопротивления дварфа ко всем поддерживаемым стихиям.
+	 */
+	public function getElementResistances(): ElementResistanceData
+	{
+		return new ElementResistanceData(
+			poisonPercent: 50,
+		);
 	}
 
 	/**

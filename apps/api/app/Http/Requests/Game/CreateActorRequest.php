@@ -6,6 +6,7 @@ namespace App\Http\Requests\Game;
 
 use App\Application\Catalog\ItemCatalog;
 use App\Domain\Actor\Item;
+use App\Domain\Actor\LuckScale;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -41,6 +42,7 @@ class CreateActorRequest extends FormRequest
 			'base_health' => ['nullable', 'integer', 'min:1', 'max:9999'],
 			'health_current' => ['nullable', 'integer', 'min:0'],
 			'health_max' => ['nullable', 'integer', 'min:1'],
+			'luck' => ['nullable', 'string', Rule::in(LuckScale::values())],
 			'stats' => ['nullable', 'array'],
 			'inventory' => ['nullable', 'array'],
 			'inventory.*.item_code' => ['required', 'string', Rule::in($this->getActiveItemCodes())],

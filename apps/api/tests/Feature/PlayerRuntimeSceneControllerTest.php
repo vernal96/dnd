@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Application\Game\RandomDiceRollerService;
+use App\Domain\Actor\Dice;
+use App\Domain\Actor\LuckScale;
 use App\Models\ActorInstance;
 use App\Models\Encounter;
 use App\Models\EncounterParticipant;
@@ -22,6 +25,34 @@ use Tests\TestCase;
 final class PlayerRuntimeSceneControllerTest extends TestCase
 {
 	use RefreshDatabase;
+
+	/**
+	 * Подменяет сервис броска кубика предсказуемой последовательностью.
+	 *
+	 * @param list<int> $rolls
+	 */
+	private function fakeDiceRolls(array $rolls): void
+	{
+		$this->app->instance(RandomDiceRollerService::class, new class($rolls) extends RandomDiceRollerService
+		{
+			/**
+			 * @param list<int> $rolls
+			 */
+			public function __construct(
+				private array $rolls,
+			)
+			{
+			}
+
+			/**
+			 * Выполняет предсказуемый бросок.
+			 */
+			public function roll(Dice $dice, LuckScale $luckScale): int
+			{
+				return array_shift($this->rolls) ?? 1;
+			}
+		});
+	}
 
 	/**
 	 * Возвращает стандартные заголовки запросов frontend.
@@ -365,6 +396,131 @@ final class PlayerRuntimeSceneControllerTest extends TestCase
 			'id' => $actorInstance->id,
 			'x' => 3,
 			'y' => 2,
+		]);
+	}
+
+	/**
+	 * Проверяет, что яд наносит урон игроку без сопротивления при удачной проверке поверхности.
+	 */
+	public function test_player_move_applies_surface_damage(): void
+	{
+		$this->fakeDiceRolls([18, 4]);
+
+		$gameMaster = User::query()->create([
+			'name' => 'gm-player-surface',
+			'email' => 'gm-player-surface@example.com',
+			'can_access_gm' => true,
+			'password' => 'secret-pass',
+		]);
+
+		$player = User::query()->create([
+			'name' => 'player-surface',
+			'email' => 'player-surface@example.com',
+			'can_access_gm' => false,
+			'password' => 'secret-pass',
+		]);
+
+		$character = PlayerCharacter::query()->create([
+			'user_id' => $player->id,
+			'name' => 'Арен',
+			'race' => 'human',
+			'class' => 'rogue',
+			'level' => 2,
+			'experience' => 280,
+			'status' => 'active',
+			'luck' => 'normal',
+			'base_stats' => ['str' => 9, 'dex' => 17, 'con' => 12, 'int' => 12, 'wis' => 11, 'cha' => 13],
+			'derived_stats' => ['str' => 9, 'dex' => 17, 'con' => 12, 'int' => 12, 'wis' => 11, 'cha' => 13, 'speed' => 6],
+		]);
+
+		$game = Game::query()->create([
+			'title' => 'Игрок и поверхность',
+			'gm_user_id' => $gameMaster->id,
+			'status' => 'active',
+		]);
+
+		$sceneTemplate = SceneTemplate::query()->create([
+			'created_by' => $gameMaster->id,
+			'name' => 'Ядовитый проход',
+			'width' => 6,
+			'height' => 6,
+			'status' => 'draft',
+		]);
+
+		for ($y = 0; $y < 6; $y++) {
+			for ($x = 0; $x < 6; $x++) {
+				$sceneTemplate->cells()->create([
+					'x' => $x,
+					'y' => $y,
+					'terrain_type' => $x === 3 && $y === 2 ? 'poison' : 'grass',
+					'elevation' => 0,
+					'is_passable' => true,
+					'blocks_vision' => false,
+				]);
+			}
+		}
+
+		$sceneState = GameSceneState::query()->create([
+			'game_id' => $game->id,
+			'scene_template_id' => $sceneTemplate->id,
+			'status' => 'active',
+			'version' => 1,
+			'loaded_at' => now(),
+		]);
+
+		$game->forceFill([
+			'active_scene_state_id' => $sceneState->id,
+		])->save();
+
+		GameMember::query()->create([
+			'game_id' => $game->id,
+			'user_id' => $player->id,
+			'player_character_id' => $character->id,
+			'role' => 'player',
+			'status' => 'active',
+			'joined_at' => now(),
+		]);
+
+		$actorInstance = ActorInstance::query()->create([
+			'game_id' => $game->id,
+			'game_scene_state_id' => $sceneState->id,
+			'player_character_id' => $character->id,
+			'controlled_by_user_id' => $player->id,
+			'kind' => 'player_character',
+			'controller_type' => 'player',
+			'name' => 'Арен',
+			'status' => 'active',
+			'x' => 1,
+			'y' => 1,
+			'hp_current' => 14,
+			'hp_max' => 14,
+			'luck' => 'normal',
+			'runtime_state' => [
+				'movement_speed' => 6,
+				'race' => 'human',
+			],
+		]);
+
+		$csrfToken = $this->authenticate($player);
+
+		$this->withHeaders([
+			...$this->frontendHeaders(),
+			'X-CSRF-TOKEN' => $csrfToken,
+		])->postJson('/api/player/games/'.$game->id.'/runtime/actors/'.$actorInstance->id.'/move', [
+			'x' => 3,
+			'y' => 2,
+		])
+			->assertOk()
+			->assertJsonPath('id', $actorInstance->id)
+			->assertJsonPath('x', 3)
+			->assertJsonPath('y', 2)
+			->assertJsonPath('hp_current', 10);
+
+		$this->assertDatabaseHas('actor_instances', [
+			'id' => $actorInstance->id,
+			'x' => 3,
+			'y' => 2,
+			'hp_current' => 10,
 		]);
 	}
 
