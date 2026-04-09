@@ -20,6 +20,18 @@ type ProjectedCell = {
   corners: CanvasPoint[];
 };
 
+type ProjectedObjectFootprint = {
+  bounds: {
+    maxX: number;
+    maxY: number;
+    minX: number;
+    minY: number;
+  };
+  center: CanvasPoint;
+  corners: CanvasPoint[];
+  object: RuntimeSceneDetail['scene_template']['objects'][number] & { x: number; y: number };
+};
+
 type PointerMode = 'pan' | 'rotate' | null;
 
 type MovementAnimation = {
@@ -149,7 +161,18 @@ function canMoveActor(actor: RuntimeActorInstance): boolean {
 }
 
 function getObjectAtCell(x: number, y: number): RuntimeSceneDetail['scene_template']['objects'][number] | undefined {
-  return sceneTemplate.value.objects.find((object) => object.x === x && object.y === y);
+  return sceneTemplate.value.objects.find((object) => objectOccupiesCell(object, x, y));
+}
+
+function objectOccupiesCell(object: RuntimeSceneDetail['scene_template']['objects'][number], x: number, y: number): boolean {
+  if (object.x === null || object.y === null) {
+    return false;
+  }
+
+  return x >= object.x
+    && x < object.x + Math.max(1, object.width)
+    && y >= object.y
+    && y < object.y + Math.max(1, object.height);
 }
 
 function getActorAtCell(x: number, y: number): RuntimeActorInstance | undefined {
@@ -199,6 +222,38 @@ function projectCell(cell: SceneCell): ProjectedCell {
 
   return {
     cell,
+    center,
+    corners,
+    bounds: {
+      minX: Math.min(...xs),
+      maxX: Math.max(...xs),
+      minY: Math.min(...ys),
+      maxY: Math.max(...ys),
+    },
+  };
+}
+
+function projectObjectFootprint(
+  object: RuntimeSceneDetail['scene_template']['objects'][number] & { x: number; y: number },
+): ProjectedObjectFootprint {
+  const x0 = resolveWorldCoordinate(object.x, gridWidth.value);
+  const y0 = resolveWorldCoordinate(object.y, gridHeight.value);
+  const x1 = x0 + (TILE_WORLD_SIZE * Math.max(1, object.width));
+  const y1 = y0 + (TILE_WORLD_SIZE * Math.max(1, object.height));
+  const anchorCell = sceneTemplate.value.cells.find((cell) => cell.x === object.x && cell.y === object.y);
+  const z = ((anchorCell?.elevation ?? 0) * ELEVATION_STEP);
+  const corners = [
+    projectWorldPoint(x0, y0, z),
+    projectWorldPoint(x1, y0, z),
+    projectWorldPoint(x1, y1, z),
+    projectWorldPoint(x0, y1, z),
+  ];
+  const center = projectWorldPoint((x0 + x1) / 2, (y0 + y1) / 2, z);
+  const xs = corners.map((corner) => corner.x);
+  const ys = corners.map((corner) => corner.y);
+
+  return {
+    object,
     center,
     corners,
     bounds: {
@@ -380,35 +435,44 @@ function drawCell(context: CanvasRenderingContext2D, projectedCell: ProjectedCel
 
 function drawStylizedObject(
   context: CanvasRenderingContext2D,
-  projectedCell: ProjectedCell,
+  footprint: ProjectedObjectFootprint,
   objectDefinition: SceneObjectDefinition,
   objectInstance: RuntimeSceneDetail['scene_template']['objects'][number],
 ): void {
-  const scale = Math.max(0.6, viewport.value.zoom);
-  const baseX = projectedCell.center.x;
-  const baseY = projectedCell.center.y - 8;
+  const footprintWidth = footprint.bounds.maxX - footprint.bounds.minX;
+  const footprintHeight = footprint.bounds.maxY - footprint.bounds.minY;
+  const objectWidthInCells = Math.max(1, objectInstance.width || objectDefinition.width || 1);
+  const objectHeightInCells = Math.max(1, objectInstance.height || objectDefinition.height || 1);
+  const isMultiCellObject = objectWidthInCells > 1 || objectHeightInCells > 1;
+  const baseScale = Math.max(0.72, viewport.value.zoom);
+  const billboardWidth = Math.max(40, objectWidthInCells * TILE_WORLD_SIZE * viewport.value.zoom * 0.72);
+  const billboardHeight = Math.max(44, objectHeightInCells * TILE_WORLD_SIZE * viewport.value.zoom * 0.72);
+  const baseX = footprint.center.x;
+  const baseY = isMultiCellObject
+    ? footprint.center.y + Math.max(4, footprintHeight * 0.06)
+    : footprint.bounds.maxY - Math.max(10, footprintHeight * 0.24);
 
   context.save();
   context.translate(baseX, baseY);
 
   if (objectDefinition.code === 'barrel') {
-    const bodyWidth = 28 * scale;
-    const bodyHeight = 36 * scale;
+    const bodyWidth = Math.max(28, billboardWidth * 0.3);
+    const bodyHeight = Math.max(36, billboardHeight * 0.44);
     context.fillStyle = '#6b3f22';
     context.beginPath();
-    context.ellipse(0, 0, bodyWidth / 2, 10 * scale, 0, 0, Math.PI * 2);
+    context.ellipse(0, 0, bodyWidth / 2, Math.max(8, bodyHeight * 0.22), 0, 0, Math.PI * 2);
     context.fill();
     context.fillRect(-(bodyWidth / 2), -bodyHeight, bodyWidth, bodyHeight);
     context.beginPath();
-    context.ellipse(0, -bodyHeight, bodyWidth / 2, 10 * scale, 0, 0, Math.PI * 2);
+    context.ellipse(0, -bodyHeight, bodyWidth / 2, Math.max(8, bodyHeight * 0.22), 0, 0, Math.PI * 2);
     context.fill();
 
     for (const offset of [-bodyHeight + (bodyHeight * 0.24), -bodyHeight + (bodyHeight * 0.52), -bodyHeight + (bodyHeight * 0.78)]) {
       context.strokeStyle = '#e5d2a9';
-      context.lineWidth = 3.5 * scale;
+      context.lineWidth = Math.max(2, baseScale * 3);
       context.beginPath();
-      context.moveTo(-(bodyWidth / 2) + (2 * scale), offset);
-      context.lineTo((bodyWidth / 2) - (2 * scale), offset);
+      context.moveTo(-(bodyWidth / 2) + Math.max(2, baseScale * 2), offset);
+      context.lineTo((bodyWidth / 2) - Math.max(2, baseScale * 2), offset);
       context.stroke();
     }
 
@@ -417,31 +481,54 @@ function drawStylizedObject(
     context.ellipse(-(bodyWidth * 0.16), -bodyHeight + (bodyHeight * 0.3), bodyWidth * 0.12, bodyHeight * 0.3, 0, 0, Math.PI * 2);
     context.fill();
   } else {
-    const radiusX = ((objectInstance.width || 1) * 18) * scale;
-    const radiusY = ((objectInstance.height || 1) * 12) * scale;
+    if (objectDefinition.code === 'house') {
+      const bodyWidth = Math.max(110, billboardWidth * 0.86);
+      const bodyHeight = Math.max(84, billboardHeight * 0.52);
+      const roofHeight = Math.max(58, bodyHeight * 0.68);
+      const doorWidth = bodyWidth * 0.18;
+      const doorHeight = bodyHeight * 0.42;
+      const windowWidth = bodyWidth * 0.16;
+      const windowHeight = bodyHeight * 0.22;
+      context.fillStyle = '#7c4a2d';
+      context.fillRect(-(bodyWidth / 2), -bodyHeight, bodyWidth, bodyHeight);
+      context.fillStyle = '#c2410c';
+      context.beginPath();
+      context.moveTo(-(bodyWidth * 0.6), -(bodyHeight * 0.96));
+      context.lineTo(0, -(bodyHeight + roofHeight));
+      context.lineTo(bodyWidth * 0.6, -(bodyHeight * 0.96));
+      context.closePath();
+      context.fill();
+      context.fillStyle = '#f5d0a9';
+      context.fillRect(-(doorWidth / 2), 0 - doorHeight, doorWidth, doorHeight);
+      context.fillRect(bodyWidth * 0.16, -(bodyHeight * 0.68), windowWidth, windowHeight);
+      context.fillRect(-(bodyWidth * 0.32), -(bodyHeight * 0.68), windowWidth, windowHeight);
+      context.restore();
+      return;
+    }
+
+    const radiusX = Math.max(20, billboardWidth * 0.42);
+    const radiusY = Math.max(16, billboardHeight * 0.2);
     context.fillStyle = '#1f5f3d';
     context.beginPath();
-    context.ellipse(0, -14 * scale, radiusX, radiusY, 0, 0, Math.PI * 2);
+    context.ellipse(0, -(billboardHeight * 0.18), radiusX, radiusY, 0, 0, Math.PI * 2);
     context.fill();
     context.fillStyle = '#2f855a';
     context.beginPath();
-    context.ellipse(-(8 * scale), -(6 * scale), radiusX * 0.85, radiusY * 0.8, 0, 0, Math.PI * 2);
+    context.ellipse(-(billboardWidth * 0.08), -(billboardHeight * 0.08), radiusX * 0.85, radiusY * 0.8, 0, 0, Math.PI * 2);
     context.fill();
     context.beginPath();
-    context.ellipse(10 * scale, -(2 * scale), radiusX * 0.72, radiusY * 0.7, 0, 0, Math.PI * 2);
+    context.ellipse(billboardWidth * 0.1, -(billboardHeight * 0.04), radiusX * 0.72, radiusY * 0.7, 0, 0, Math.PI * 2);
     context.fill();
   }
 
   context.restore();
 }
 
-function drawObject(context: CanvasRenderingContext2D, projectedCell: ProjectedCell): void {
-  const objectInstance = getObjectAtCell(projectedCell.cell.x, projectedCell.cell.y);
-
-  if (!objectInstance) {
-    return;
-  }
-
+function drawObject(
+  context: CanvasRenderingContext2D,
+  footprint: ProjectedObjectFootprint,
+  objectInstance: RuntimeSceneDetail['scene_template']['objects'][number] & { x: number; y: number },
+): void {
   const objectDefinition = props.objectCatalog.find((item) => item.code === objectInstance.kind);
 
   if (!objectDefinition) {
@@ -451,16 +538,26 @@ function drawObject(context: CanvasRenderingContext2D, projectedCell: ProjectedC
   const objectImage = resolveCachedImage(objectDefinition.image_url ?? null);
 
   if (objectImage !== null) {
-    const scale = Math.max(0.8, viewport.value.zoom);
-    const width = Math.max(48, objectDefinition.width * 46 * scale);
-    const height = Math.max(48, objectDefinition.height * 46 * scale);
-    const x = projectedCell.center.x - (width / 2);
-    const y = projectedCell.center.y - height - 10;
-    context.drawImage(objectImage, x, y, width, height);
+    const objectWidthInCells = Math.max(1, objectInstance.width || objectDefinition.width || 1);
+    const objectHeightInCells = Math.max(1, objectInstance.height || objectDefinition.height || 1);
+    const isMultiCellObject = objectWidthInCells > 1 || objectHeightInCells > 1;
+    const width = Math.max(48, objectWidthInCells * TILE_WORLD_SIZE * viewport.value.zoom * 0.82);
+    const maxHeight = Math.max(48, objectHeightInCells * TILE_WORLD_SIZE * viewport.value.zoom * 1.08);
+    let height = Math.max(48, width / Math.max(0.1, objectImage.width / objectImage.height));
+
+    if (height > maxHeight) {
+      height = maxHeight;
+    }
+
+    const normalizedWidth = height * Math.max(0.1, objectImage.width / objectImage.height);
+    const y = isMultiCellObject
+      ? footprint.center.y - (height / 2)
+      : footprint.bounds.maxY - height - Math.max(10, (objectHeightInCells * 8) * viewport.value.zoom);
+    context.drawImage(objectImage, footprint.center.x - (normalizedWidth / 2), y, normalizedWidth, height);
     return;
   }
 
-  drawStylizedObject(context, projectedCell, objectDefinition, objectInstance);
+  drawStylizedObject(context, footprint, objectDefinition, objectInstance);
 }
 
 function drawItemDrop(context: CanvasRenderingContext2D, itemDrop: RuntimeSceneDetail['item_drops'][number]): void {
@@ -604,29 +701,33 @@ function drawActor(context: CanvasRenderingContext2D, actor: RuntimeActorInstanc
 }
 
 function drawSceneEntities(context: CanvasRenderingContext2D, projectedCells: ProjectedCell[]): void {
-  const placements = projectedCells
-    .map((projectedCell) => ({
-      actor: getActorAtCell(projectedCell.cell.x, projectedCell.cell.y),
-      itemDrop: getItemDropAtCell(projectedCell.cell.x, projectedCell.cell.y),
-      projectedCell,
+  const objectPlacements = sceneTemplate.value.objects
+    .filter((object): object is RuntimeSceneDetail['scene_template']['objects'][number] & { x: number; y: number } => object.x !== null && object.y !== null)
+    .map((object) => ({
+      object,
+      footprint: projectObjectFootprint(object),
     }))
-    .sort((left, right) => left.projectedCell.center.y - right.projectedCell.center.y);
+    .sort((left, right) => left.footprint.bounds.maxY - right.footprint.bounds.maxY);
 
-  for (const placement of placements) {
-    drawObject(context, placement.projectedCell);
+  objectPlacements.forEach(({ object, footprint }) => {
+    drawObject(context, footprint, object);
+  });
 
-    if (placement.itemDrop) {
-      drawItemDrop(context, placement.itemDrop);
+  projectedCells.forEach((projectedCell) => {
+    const itemDrop = getItemDropAtCell(projectedCell.cell.x, projectedCell.cell.y);
+
+    if (itemDrop) {
+      drawItemDrop(context, itemDrop);
     }
-  }
+  });
 
-  for (const placement of placements) {
-    if (!placement.actor) {
-      continue;
+  projectedCells.forEach((projectedCell) => {
+    const actor = getActorAtCell(projectedCell.cell.x, projectedCell.cell.y);
+
+    if (actor) {
+      drawActor(context, actor, actor.id === props.selectedActorId);
     }
-
-    drawActor(context, placement.actor, placement.actor.id === props.selectedActorId);
-  }
+  });
 }
 
 function renderCanvasScene(): void {

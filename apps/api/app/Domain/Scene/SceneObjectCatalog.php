@@ -6,6 +6,7 @@ namespace App\Domain\Scene;
 
 use App\Domain\Scene\Objects\BarrelSceneObject;
 use App\Domain\Scene\Objects\BushSceneObject;
+use App\Domain\Scene\Objects\HouseSceneObject;
 use App\Domain\Scene\Objects\SceneObjectDefinition;
 
 /**
@@ -59,6 +60,7 @@ final class SceneObjectCatalog
 		return [
 			new BushSceneObject(),
 			new BarrelSceneObject(),
+			new HouseSceneObject(),
 		];
 	}
 }

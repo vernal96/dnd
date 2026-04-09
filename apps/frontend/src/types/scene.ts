@@ -26,7 +26,7 @@ export type SceneObject = {
   id?: number;
   is_hidden: boolean;
   is_interactive: boolean;
-  kind: 'barrel' | 'bush';
+  kind: 'barrel' | 'bush' | 'house';
   name: string | null;
   state: Record<string, unknown> | null;
   width: number;
@@ -36,7 +36,7 @@ export type SceneObject = {
 
 export type SceneObjectDefinition = {
   blocks_vision: boolean;
-  code: 'barrel' | 'bush';
+  code: 'barrel' | 'bush' | 'house';
   height: number;
   image_url: string | null;
   is_interactive: boolean;

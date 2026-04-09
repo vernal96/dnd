@@ -2,12 +2,16 @@
 import { ArrowLeft, Minus, Plus, Save, X } from 'lucide-vue-next';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
+import SceneObjectInventoryModal from '@/components/runtime/SceneObjectInventoryModal.vue';
 import { useAuthSession } from '@/composables/useAuthSession';
 import { useToastCenter } from '@/composables/useToastCenter';
 import { fetchGameActors } from '@/services/actorApi';
+import { fetchItems } from '@/services/itemApi';
 import { fetchSceneObjects, fetchSceneSurfaces } from '@/services/sceneCatalogApi';
 import { fetchGameScene, updateGameScene } from '@/services/sceneApi';
 import type { GameActor } from '@/types/actor';
+import type { CatalogItem } from '@/types/item';
+import type { RuntimeActorInventoryItem } from '@/types/runtimeScene';
 import type { SceneActorPlacement, SceneCell, SceneObject, SceneObjectDefinition, ScenePlayerSpawnPoint, SceneSurfaceDefinition, SceneViewportMetadata } from '@/types/scene';
 
 type GridResizeEdge = 'bottom' | 'left' | 'right' | 'top';
@@ -27,6 +31,17 @@ type ProjectedCell = {
   cell: SceneCell;
   center: CanvasPoint;
   corners: CanvasPoint[];
+};
+type ProjectedObjectFootprint = {
+  bounds: {
+    maxX: number;
+    maxY: number;
+    minX: number;
+    minY: number;
+  };
+  center: CanvasPoint;
+  corners: CanvasPoint[];
+  object: SceneObject & { x: number; y: number };
 };
 type HoverActorTooltip = {
   name: string;
@@ -56,6 +71,7 @@ const sceneObjects = ref<SceneObject[]>([]);
 const sceneActorPlacements = ref<SceneActorPlacement[]>([]);
 const surfaceCatalog = ref<SceneSurfaceDefinition[]>([]);
 const objectCatalog = ref<SceneObjectDefinition[]>([]);
+const itemCatalog = ref<CatalogItem[]>([]);
 const gameActors = ref<GameActor[]>([]);
 const activeTerrain = ref<SceneSurfaceDefinition['code']>('grass');
 const activeEraseMode = ref(false);
@@ -64,6 +80,7 @@ const editorContextMenu = ref<{ cellX: number; cellY: number; x: number; y: numb
 const surfacePickerCell = ref<{ x: number; y: number } | null>(null);
 const objectPickerCell = ref<{ x: number; y: number } | null>(null);
 const actorPickerCell = ref<{ x: number; y: number } | null>(null);
+const objectInventoryTarget = ref<SceneObject | null>(null);
 const viewport = ref<SceneViewportMetadata>({
   offsetX: 0,
   offsetY: 0,
@@ -152,7 +169,35 @@ function getCell(x: number, y: number): SceneCell | undefined {
  * Возвращает объект сцены по координатам клетки.
  */
 function getObjectAtCell(x: number, y: number): SceneObject | undefined {
-  return sceneObjects.value.find((object) => object.x === x && object.y === y);
+  return sceneObjects.value.find((object) => object.x !== null && object.y !== null && objectOccupiesCell(object, x, y));
+}
+
+/**
+ * Возвращает true, если объект занимает указанную authored-клетку.
+ */
+function objectOccupiesCell(object: SceneObject, x: number, y: number): boolean {
+  if (object.x === null || object.y === null) {
+    return false;
+  }
+
+  return x >= object.x
+    && x < object.x + Math.max(1, object.width)
+    && y >= object.y
+    && y < object.y + Math.max(1, object.height);
+}
+
+/**
+ * Возвращает true, если footprints двух authored-объектов пересекаются.
+ */
+function doObjectFootprintsIntersect(left: SceneObject, right: SceneObject): boolean {
+  if (left.x === null || left.y === null || right.x === null || right.y === null) {
+    return false;
+  }
+
+  return left.x < right.x + right.width
+    && left.x + left.width > right.x
+    && left.y < right.y + right.height
+    && left.y + left.height > right.y;
 }
 
 /**
@@ -207,7 +252,7 @@ function paintCell(x: number, y: number): void {
  * Удаляет объект и NPC с выбранной клетки.
  */
 function eraseCellContent(x: number, y: number): void {
-  sceneObjects.value = sceneObjects.value.filter((object) => !(object.x === x && object.y === y));
+  sceneObjects.value = sceneObjects.value.filter((object) => !objectOccupiesCell(object, x, y));
   sceneActorPlacements.value = sceneActorPlacements.value.filter((placement) => !(placement.x === x && placement.y === y));
 }
 
@@ -218,7 +263,7 @@ function toggleObjectAtCell(x: number, y: number, objectKind: SceneObjectDefinit
   const existingObject = getObjectAtCell(x, y);
 
   if (existingObject && existingObject.kind === objectKind) {
-    sceneObjects.value = sceneObjects.value.filter((object) => !(object.x === x && object.y === y));
+    sceneObjects.value = sceneObjects.value.filter((object) => object !== existingObject);
 
     return;
   }
@@ -229,19 +274,25 @@ function toggleObjectAtCell(x: number, y: number, objectKind: SceneObjectDefinit
     return;
   }
 
+  const nextObject: SceneObject = {
+    kind: objectDefinition.code,
+    name: objectDefinition.name,
+    x,
+    y,
+    width: objectDefinition.width,
+    height: objectDefinition.height,
+    is_hidden: false,
+    is_interactive: objectDefinition.is_interactive,
+    state: objectDefinition.code === 'house'
+      ? {
+          inventory: [],
+        }
+      : null,
+  };
+
   sceneObjects.value = [
-    ...sceneObjects.value.filter((object) => !(object.x === x && object.y === y)),
-    {
-      kind: objectDefinition.code,
-      name: objectDefinition.name,
-      x,
-      y,
-      width: objectDefinition.width,
-      height: objectDefinition.height,
-      is_hidden: false,
-      is_interactive: objectDefinition.is_interactive,
-      state: null,
-    },
+    ...sceneObjects.value.filter((object) => !doObjectFootprintsIntersect(object, nextObject)),
+    nextObject,
   ];
 }
 
@@ -391,16 +442,18 @@ async function loadScene(): Promise<void> {
   sceneError.value = '';
 
   try {
-    const [scene, surfaces, objects, actors] = await Promise.all([
+    const [scene, surfaces, objects, actors, items] = await Promise.all([
       fetchGameScene(gameId.value, sceneId.value),
       fetchSceneSurfaces(),
       fetchSceneObjects(),
       fetchGameActors(),
+      fetchItems(),
     ]);
 
     surfaceCatalog.value = surfaces;
     objectCatalog.value = objects;
     gameActors.value = actors.filter((actor) => actor.kind === 'npc');
+    itemCatalog.value = items;
     sceneName.value = scene.scene_template.name;
     sceneDescription.value = scene.scene_template.description ?? '';
     gridWidth.value = Math.max(6, scene.scene_template.width);
@@ -487,6 +540,20 @@ function isInsideGridBounds(x: number, y: number, width: number, height: number)
 }
 
 /**
+ * Возвращает true, если footprint authored-объекта полностью помещается в authored-сетку.
+ */
+function isObjectInsideGridBounds(object: SceneObject, width: number, height: number): boolean {
+  if (object.x === null || object.y === null) {
+    return false;
+  }
+
+  return object.x >= 0
+    && object.y >= 0
+    && object.x + Math.max(1, object.width) <= width
+    && object.y + Math.max(1, object.height) <= height;
+}
+
+/**
  * Обновляет ключ выбранной клетки после изменения размеров authored-сетки.
  */
 function updateSelectedCellAfterGridResize(edge: GridResizeEdge, mode: GridResizeMode, nextWidth: number, nextHeight: number): void {
@@ -542,7 +609,7 @@ function resizeGridFromEdge(edge: GridResizeEdge, mode: GridResizeMode): void {
       x: transformGridCoordinate(object.x, edge, mode),
       y: transformGridCoordinate(object.y, edge, mode),
     }))
-    .filter((object) => isInsideGridBounds(object.x, object.y, nextWidth, nextHeight));
+    .filter((object) => isObjectInsideGridBounds(object, nextWidth, nextHeight));
   sceneActorPlacements.value = sceneActorPlacements.value
     .map((placement) => ({
       ...placement,
@@ -636,6 +703,51 @@ function applyActorSelection(actorId: number): void {
 }
 
 /**
+ * Нормализует инвентарь authored-объекта к общему UI-контракту.
+ */
+function normalizeObjectInventory(inventory: unknown): RuntimeActorInventoryItem[] {
+  if (!Array.isArray(inventory)) {
+    return [];
+  }
+
+  return inventory
+    .map((entry) => {
+      if (typeof entry !== 'object' || entry === null) {
+        return null;
+      }
+
+      const itemCode = typeof (entry as Record<string, unknown>).itemCode === 'string'
+        ? (entry as Record<string, unknown>).itemCode as string
+        : typeof (entry as Record<string, unknown>).item_code === 'string'
+          ? (entry as Record<string, unknown>).item_code as string
+          : null;
+
+      if (itemCode === null) {
+        return null;
+      }
+
+      return {
+        isEquipped: Boolean((entry as Record<string, unknown>).isEquipped ?? (entry as Record<string, unknown>).is_equipped ?? false),
+        itemCode,
+        quantity: Number((entry as Record<string, unknown>).quantity ?? 1),
+        slot: typeof (entry as Record<string, unknown>).slot === 'string' ? (entry as Record<string, unknown>).slot as string : null,
+        state: typeof (entry as Record<string, unknown>).state === 'object' && (entry as Record<string, unknown>).state !== null
+          ? (entry as Record<string, unknown>).state as Record<string, unknown>
+          : null,
+      };
+    })
+    .filter((entry): entry is RuntimeActorInventoryItem => entry !== null);
+}
+
+/**
+ * Открывает инвентарь размещенного authored-объекта.
+ */
+function openObjectInventory(object: SceneObject): void {
+  objectInventoryTarget.value = object;
+  closeEditorContextMenu();
+}
+
+/**
  * Возвращает краткое состояние authored-клетки для меню и popup-окон.
  */
 function describeCellState(x: number, y: number): string {
@@ -708,6 +820,39 @@ function projectCell(cell: SceneCell): ProjectedCell {
 
   return {
     cell,
+    center,
+    corners,
+    bounds: {
+      minX: Math.min(...xs),
+      maxX: Math.max(...xs),
+      minY: Math.min(...ys),
+      maxY: Math.max(...ys),
+    },
+  };
+}
+
+/**
+ * Собирает спроецированную геометрию footprint authored-объекта.
+ */
+function projectObjectFootprint(object: SceneObject & { x: number; y: number }): ProjectedObjectFootprint {
+  const x0 = resolveWorldCoordinate(object.x, gridWidth.value);
+  const y0 = resolveWorldCoordinate(object.y, gridHeight.value);
+  const x1 = x0 + (TILE_WORLD_SIZE * Math.max(1, object.width));
+  const y1 = y0 + (TILE_WORLD_SIZE * Math.max(1, object.height));
+  const anchorCell = getCell(object.x, object.y);
+  const z = ((anchorCell?.elevation ?? 0) * ELEVATION_STEP);
+  const corners = [
+    projectWorldPoint(x0, y0, z),
+    projectWorldPoint(x1, y0, z),
+    projectWorldPoint(x1, y1, z),
+    projectWorldPoint(x0, y1, z),
+  ];
+  const center = projectWorldPoint((x0 + x1) / 2, (y0 + y1) / 2, z);
+  const xs = corners.map((corner) => corner.x);
+  const ys = corners.map((corner) => corner.y);
+
+  return {
+    object,
     center,
     corners,
     bounds: {
@@ -1245,11 +1390,15 @@ function drawCell(context: CanvasRenderingContext2D, projectedCell: ProjectedCel
 /**
  * Отрисовывает куст на конкретной клетке.
  */
-function drawBush(context: CanvasRenderingContext2D, projectedCell: ProjectedCell, isSelected = false): void {
-  const baseX = projectedCell.center.x;
-  const baseY = projectedCell.center.y - 8;
-  const tileWidth = projectedCell.bounds.maxX - projectedCell.bounds.minX;
-  const scale = Math.max(0.72, Math.min(1.18, tileWidth / 120));
+function drawBush(context: CanvasRenderingContext2D, footprint: ProjectedObjectFootprint, isSelected = false): void {
+  const baseX = footprint.center.x;
+  const objectWidthInCells = Math.max(1, footprint.object.width);
+  const objectHeightInCells = Math.max(1, footprint.object.height);
+  const isMultiCellObject = objectWidthInCells > 1 || objectHeightInCells > 1;
+  const billboardWidth = Math.max(44, objectWidthInCells * TILE_WORLD_SIZE * viewport.value.zoom * 0.72);
+  const billboardHeight = Math.max(44, objectHeightInCells * TILE_WORLD_SIZE * viewport.value.zoom * 0.72);
+  const scale = Math.max(0.72, viewport.value.zoom);
+  const baseY = isMultiCellObject ? footprint.center.y : footprint.center.y - 8;
 
   context.save();
   context.translate(baseX, baseY);
@@ -1287,7 +1436,7 @@ function drawBush(context: CanvasRenderingContext2D, projectedCell: ProjectedCel
     gradient.addColorStop(1, '#166534');
     context.fillStyle = gradient;
     context.beginPath();
-    context.arc(leaf.x * scale, leaf.y * scale, leaf.radius * scale, 0, Math.PI * 2);
+    context.arc((leaf.x * billboardWidth) / 180, (leaf.y * billboardHeight) / 180, Math.max(10, (leaf.radius * scale * (objectWidthInCells + objectHeightInCells)) / 2.4), 0, Math.PI * 2);
     context.fill();
 
     context.lineWidth = 1.2;
@@ -1299,7 +1448,7 @@ function drawBush(context: CanvasRenderingContext2D, projectedCell: ProjectedCel
     context.strokeStyle = 'rgba(250, 204, 21, 0.9)';
     context.lineWidth = 3;
     context.beginPath();
-    context.ellipse(0, -22, 32 * scale, 26 * scale, 0, 0, Math.PI * 2);
+    context.ellipse(0, -(billboardHeight * 0.18), billboardWidth * 0.24, billboardHeight * 0.2, 0, 0, Math.PI * 2);
     context.stroke();
   }
 
@@ -1309,13 +1458,15 @@ function drawBush(context: CanvasRenderingContext2D, projectedCell: ProjectedCel
 /**
  * Отрисовывает бочку на конкретной клетке.
  */
-function drawBarrel(context: CanvasRenderingContext2D, projectedCell: ProjectedCell, isSelected = false): void {
-  const baseX = projectedCell.center.x;
-  const baseY = projectedCell.center.y - 6;
-  const tileWidth = projectedCell.bounds.maxX - projectedCell.bounds.minX;
-  const scale = Math.max(0.76, Math.min(1.15, tileWidth / 120));
-  const bodyWidth = 34 * scale;
-  const bodyHeight = 50 * scale;
+function drawBarrel(context: CanvasRenderingContext2D, footprint: ProjectedObjectFootprint, isSelected = false): void {
+  const baseX = footprint.center.x;
+  const objectWidthInCells = Math.max(1, footprint.object.width);
+  const objectHeightInCells = Math.max(1, footprint.object.height);
+  const isMultiCellObject = objectWidthInCells > 1 || objectHeightInCells > 1;
+  const scale = Math.max(0.76, viewport.value.zoom);
+  const bodyWidth = Math.max(34, objectWidthInCells * TILE_WORLD_SIZE * viewport.value.zoom * 0.3);
+  const bodyHeight = Math.max(50, objectHeightInCells * TILE_WORLD_SIZE * viewport.value.zoom * 0.42);
+  const baseY = isMultiCellObject ? footprint.center.y : footprint.center.y - 6;
 
   context.save();
   context.translate(baseX, baseY);
@@ -1387,27 +1538,77 @@ function drawBarrel(context: CanvasRenderingContext2D, projectedCell: ProjectedC
 /**
  * Отрисовывает authored-объект картинкой с fallback на старый procedural-рендер.
  */
-function drawSceneObject(context: CanvasRenderingContext2D, projectedCell: ProjectedCell, objectKind: SceneObjectDefinition['code'], isSelected = false): void {
+function drawSceneObject(
+  context: CanvasRenderingContext2D,
+  footprint: ProjectedObjectFootprint,
+  objectKind: SceneObjectDefinition['code'],
+  isSelected = false,
+): void {
   const image = resolveSceneObjectImage(objectKind);
 
   if (image === null) {
     if (objectKind === 'bush') {
-      drawBush(context, projectedCell, isSelected);
+      drawBush(context, footprint, isSelected);
     }
 
     if (objectKind === 'barrel') {
-      drawBarrel(context, projectedCell, isSelected);
+      drawBarrel(context, footprint, isSelected);
+    }
+
+    if (objectKind === 'house') {
+      const footprintWidth = footprint.bounds.maxX - footprint.bounds.minX;
+      const footprintHeight = footprint.bounds.maxY - footprint.bounds.minY;
+      const objectWidthInCells = Math.max(1, footprint.object.width);
+      const objectHeightInCells = Math.max(1, footprint.object.height);
+      const baseX = footprint.center.x;
+      const baseY = footprint.center.y;
+      const bodyWidth = Math.max(140, objectWidthInCells * TILE_WORLD_SIZE * viewport.value.zoom * 0.86);
+      const bodyHeight = Math.max(96, objectHeightInCells * TILE_WORLD_SIZE * viewport.value.zoom * 0.52);
+      const roofHeight = Math.max(64, bodyHeight * 0.7);
+      const doorWidth = bodyWidth * 0.18;
+      const doorHeight = bodyHeight * 0.42;
+      const windowWidth = bodyWidth * 0.16;
+      const windowHeight = bodyHeight * 0.22;
+      context.save();
+      context.translate(baseX, baseY);
+      context.fillStyle = 'rgba(15, 23, 42, 0.34)';
+      context.beginPath();
+      context.ellipse(0, 10, Math.max(24, footprintWidth * 0.32), Math.max(18, footprintHeight * 0.18), 0, 0, Math.PI * 2);
+      context.fill();
+      context.fillStyle = '#7c4a2d';
+      context.fillRect(-(bodyWidth / 2), -bodyHeight, bodyWidth, bodyHeight);
+      context.fillStyle = '#c2410c';
+      context.beginPath();
+      context.moveTo(-(bodyWidth * 0.62), -(bodyHeight * 0.96));
+      context.lineTo(0, -(bodyHeight + roofHeight));
+      context.lineTo(bodyWidth * 0.62, -(bodyHeight * 0.96));
+      context.closePath();
+      context.fill();
+      context.fillStyle = '#f5d0a9';
+      context.fillRect(-(doorWidth / 2), -doorHeight, doorWidth, doorHeight);
+      context.fillRect(-(bodyWidth * 0.32), -(bodyHeight * 0.68), windowWidth, windowHeight);
+      context.fillRect(bodyWidth * 0.16, -(bodyHeight * 0.68), windowWidth, windowHeight);
+      if (isSelected) {
+        context.strokeStyle = 'rgba(250, 204, 21, 0.95)';
+        context.lineWidth = 4;
+        context.strokeRect(-(bodyWidth * 0.56), -(bodyHeight + roofHeight + 8), bodyWidth * 1.12, bodyHeight + roofHeight + 24);
+      }
+      context.restore();
     }
 
     return;
   }
 
-  const baseX = projectedCell.center.x;
-  const baseY = projectedCell.center.y - 6;
-  const tileWidth = projectedCell.bounds.maxX - projectedCell.bounds.minX;
-  const tileHeight = projectedCell.bounds.maxY - projectedCell.bounds.minY;
-  const maxWidth = Math.max(46, tileWidth * 0.92);
-  const maxHeight = Math.max(60, tileHeight * 1.55);
+  const footprintHeight = footprint.bounds.maxY - footprint.bounds.minY;
+  const objectWidthInCells = Math.max(1, footprint.object.width);
+  const objectHeightInCells = Math.max(1, footprint.object.height);
+  const isMultiCellObject = objectWidthInCells > 1 || objectHeightInCells > 1;
+  const baseX = footprint.center.x;
+  const baseY = isMultiCellObject
+    ? footprint.center.y
+    : footprint.bounds.maxY - Math.max(8, footprintHeight * 0.16);
+  const maxWidth = Math.max(46, objectWidthInCells * TILE_WORLD_SIZE * viewport.value.zoom * 0.82);
+  const maxHeight = Math.max(60, objectHeightInCells * TILE_WORLD_SIZE * viewport.value.zoom * 1.08);
   const sourceRatio = image.width / image.height;
   let drawWidth = maxWidth;
   let drawHeight = drawWidth / sourceRatio;
@@ -1418,12 +1619,12 @@ function drawSceneObject(context: CanvasRenderingContext2D, projectedCell: Proje
   }
 
   const drawX = baseX - (drawWidth / 2);
-  const drawY = baseY - drawHeight;
+  const drawY = isMultiCellObject ? baseY - (drawHeight / 2) : baseY - drawHeight;
 
   context.save();
   context.fillStyle = 'rgba(15, 23, 42, 0.34)';
   context.beginPath();
-  context.ellipse(baseX, baseY + 6, drawWidth * 0.32, 10, 0, 0, Math.PI * 2);
+  context.ellipse(baseX, baseY + 6, Math.max(18, (footprint.bounds.maxX - footprint.bounds.minX) * 0.3), Math.max(10, footprintHeight * 0.16), 0, 0, Math.PI * 2);
   context.fill();
   context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
 
@@ -1606,25 +1807,38 @@ function drawActor(context: CanvasRenderingContext2D, projectedCell: ProjectedCe
  * Отрисовывает все объекты и актеров поверх клеток.
  */
 function drawSceneEntities(context: CanvasRenderingContext2D, projectedCells: ProjectedCell[]): void {
-  const placements = projectedCells
-    .map((projectedCell) => ({
-      actorPlacement: getActorPlacementAtCell(projectedCell.cell.x, projectedCell.cell.y),
-      object: getObjectAtCell(projectedCell.cell.x, projectedCell.cell.y),
-      projectedCell,
+  const objectPlacements = sceneObjects.value
+    .filter((object): object is SceneObject & { x: number; y: number } => object.x !== null && object.y !== null)
+    .map((object) => ({
+      object,
+      footprint: projectObjectFootprint(object),
     }))
-    .sort((left, right) => left.projectedCell.center.y - right.projectedCell.center.y);
+    .sort((left, right) => left.footprint.bounds.maxY - right.footprint.bounds.maxY);
 
-  for (const placement of placements) {
-    const isSelected = selectedCellKey.value === resolveCellKey(placement.projectedCell.cell.x, placement.projectedCell.cell.y);
+  objectPlacements.forEach(({ object, footprint }) => {
+    const isSelected = selectedCell.value !== null && objectOccupiesCell(object, selectedCell.value.x, selectedCell.value.y);
+    drawSceneObject(context, footprint, object.kind, isSelected);
+  });
 
-    if (placement.object) {
-      drawSceneObject(context, placement.projectedCell, placement.object.kind, isSelected);
+  projectedCells.forEach((projectedCell) => {
+    const actorPlacement = getActorPlacementAtCell(projectedCell.cell.x, projectedCell.cell.y);
+
+    if (actorPlacement) {
+      const isSelected = selectedCellKey.value === resolveCellKey(projectedCell.cell.x, projectedCell.cell.y);
+      drawActor(context, projectedCell, actorPlacement, isSelected);
     }
+  });
+}
 
-    if (placement.actorPlacement) {
-      drawActor(context, placement.projectedCell, placement.actorPlacement, isSelected);
-    }
+/**
+ * Возвращает опорную клетку выбранного authored-объекта.
+ */
+function resolveObjectAnchorCell(object: SceneObject): SceneCell | null {
+  if (object.x === null || object.y === null) {
+    return null;
   }
+
+  return getCell(object.x, object.y) ?? null;
 }
 
 /**
@@ -1932,6 +2146,14 @@ onBeforeUnmount(() => {
           NPC
         </button>
         <button
+          v-if="getObjectAtCell(editorContextMenu.cellX, editorContextMenu.cellY)?.is_interactive"
+          class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-amber-50 transition hover:bg-white/5"
+          type="button"
+          @click.stop="openObjectInventory(getObjectAtCell(editorContextMenu.cellX, editorContextMenu.cellY)!)"
+        >
+          Инвентарь объекта
+        </button>
+        <button
           v-if="playerSpawnPoint?.x === editorContextMenu.cellX && playerSpawnPoint?.y === editorContextMenu.cellY"
           class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-emerald-100 transition hover:bg-white/5"
           type="button"
@@ -2074,6 +2296,14 @@ onBeforeUnmount(() => {
           </section>
         </div>
       </Teleport>
+
+      <SceneObjectInventoryModal
+        :catalog="itemCatalog"
+        :items="normalizeObjectInventory(objectInventoryTarget?.state && typeof objectInventoryTarget.state === 'object' ? (objectInventoryTarget.state as Record<string, unknown>).inventory : null)"
+        :object-name="objectInventoryTarget?.name ?? objectInventoryTarget?.kind ?? ''"
+        :open="objectInventoryTarget !== null"
+        @close="objectInventoryTarget = null"
+      />
     </template>
   </main>
 </template>
@@ -2266,6 +2496,12 @@ onBeforeUnmount(() => {
     linear-gradient(90deg, rgba(62, 39, 20, 0.92) 0 14%, transparent 14% 86%, rgba(62, 39, 20, 0.92) 86% 100%),
     repeating-linear-gradient(90deg, rgba(180, 111, 55, 0.92) 0 0.42rem, rgba(131, 77, 33, 0.95) 0.42rem 0.84rem),
     linear-gradient(180deg, #b45309, #78350f);
+}
+
+.scene-object-preview-house {
+  background:
+    linear-gradient(145deg, transparent 0 34%, #c2410c 34% 66%, transparent 66%),
+    linear-gradient(180deg, #9a3412 0 42%, #7c4a2d 42% 100%);
 }
 
 @media (max-width: 1279px) {
