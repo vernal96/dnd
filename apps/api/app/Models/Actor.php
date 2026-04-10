@@ -25,6 +25,8 @@ use Illuminate\Support\Facades\Storage;
  * @property int|null $base_health
  * @property int|null $health_current
  * @property int|null $health_max
+ * @property int $armor_class
+ * @property int $jump_height
  * @property string $luck
  * @property array<string, mixed>|null $stats
  * @property array<int, array<string, mixed>>|null $inventory
@@ -52,6 +54,8 @@ final class Actor extends Model
 		'base_health',
 		'health_current',
 		'health_max',
+		'armor_class',
+		'jump_height',
 		'luck',
 		'stats',
 		'inventory',
@@ -65,6 +69,8 @@ final class Actor extends Model
 		'base_health' => 'integer',
 		'health_current' => 'integer',
 		'health_max' => 'integer',
+		'armor_class' => 'integer',
+		'jump_height' => 'integer',
 		'stats' => 'array',
 		'inventory' => 'array',
 		'meta' => 'array',

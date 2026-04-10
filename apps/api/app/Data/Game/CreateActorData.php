@@ -27,6 +27,8 @@ final readonly class CreateActorData
 		public ?int $baseHealth,
 		public ?int $healthCurrent,
 		public ?int $healthMax,
+		public int $armorClass,
+		public int $jumpHeight,
 		public string $luck,
 		public ?array $stats,
 		public array $inventory,
@@ -39,7 +41,7 @@ final readonly class CreateActorData
 	/**
 	 * Создает DTO из валидированного payload.
 	 *
-	 * @param array{kind?:string,name:string,description?:?string,race?:?string,character_class?:?string,level?:int,movement_speed?:int,base_health?:?int,health_current?:?int,health_max?:?int,luck?:string,stats?:array<string, mixed>|null,inventory?:array<int, array<string, mixed>>,image_path?:?string,meta?:array<string, mixed>|null} $payload
+	 * @param array{kind?:string,name:string,description?:?string,race?:?string,character_class?:?string,level?:int,movement_speed?:int,base_health?:?int,health_current?:?int,health_max?:?int,armor_class?:int,jump_height?:int,luck?:string,stats?:array<string, mixed>|null,inventory?:array<int, array<string, mixed>>,image_path?:?string,meta?:array<string, mixed>|null} $payload
 	 */
 	public static function fromArray(array $payload): self
 	{
@@ -50,10 +52,12 @@ final readonly class CreateActorData
 			race: $payload['race'] ?? null,
 			characterClass: $payload['character_class'] ?? null,
 			level: $payload['level'] ?? 1,
-			movementSpeed: $payload['movement_speed'] ?? 6,
-			baseHealth: $payload['base_health'] ?? null,
+			movementSpeed: $payload['movement_speed'] ?? 3,
+			baseHealth: $payload['base_health'] ?? 5,
 			healthCurrent: $payload['health_current'] ?? null,
 			healthMax: $payload['health_max'] ?? null,
+			armorClass: $payload['armor_class'] ?? 10,
+			jumpHeight: $payload['jump_height'] ?? 1,
 			luck: $payload['luck'] ?? 'normal',
 			stats: $payload['stats'] ?? null,
 			inventory: array_map(

@@ -1,6 +1,18 @@
 import { fetchWithSession } from '@/services/httpApi';
 import type { RuntimeActorInstance, RuntimeActorMovePayload, RuntimeSceneDetail } from '@/types/runtimeScene';
 
+export type RuntimeActorActionPayload = {
+  action: 'trip_attack' | 'weapon_attack';
+  equipment_slot?: string | null;
+  item_code?: string | null;
+  target_actor_id: number;
+};
+
+export type RuntimeActorEquipmentPayload = {
+  item_code?: string | null;
+  slot: string;
+};
+
 /**
  * Возвращает активную runtime-сцену игры текущего мастера.
  */
@@ -53,6 +65,26 @@ export function endPlayerRuntimeTurn(gameId: number, actorId: number): Promise<R
 }
 
 /**
+ * Выполняет runtime-действие героя текущего игрока.
+ */
+export function performPlayerRuntimeAction(gameId: number, actorId: number, payload: RuntimeActorActionPayload): Promise<RuntimeSceneDetail> {
+  return fetchWithSession<RuntimeSceneDetail>(`/player/games/${gameId}/runtime/actors/${actorId}/actions`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
+ * Изменяет экипировку героя текущего игрока.
+ */
+export function equipPlayerRuntimeActor(gameId: number, actorId: number, payload: RuntimeActorEquipmentPayload): Promise<RuntimeSceneDetail> {
+  return fetchWithSession<RuntimeSceneDetail>(`/player/games/${gameId}/runtime/actors/${actorId}/equipment`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
  * Активирует authored-сцену как runtime-сцену.
  */
 export function activateRuntimeScene(gameId: number, sceneStateId: number): Promise<RuntimeSceneDetail> {
@@ -66,6 +98,26 @@ export function activateRuntimeScene(gameId: number, sceneStateId: number): Prom
  */
 export function moveRuntimeActor(gameId: number, actorId: number, payload: RuntimeActorMovePayload): Promise<RuntimeActorInstance> {
   return fetchWithSession<RuntimeActorInstance>(`/games/${gameId}/runtime/actors/${actorId}/move`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
+ * Выполняет runtime-действие актора от имени мастера.
+ */
+export function performRuntimeAction(gameId: number, actorId: number, payload: RuntimeActorActionPayload): Promise<RuntimeSceneDetail> {
+  return fetchWithSession<RuntimeSceneDetail>(`/games/${gameId}/runtime/actors/${actorId}/actions`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
+ * Изменяет экипировку runtime-актора от имени мастера.
+ */
+export function equipRuntimeActor(gameId: number, actorId: number, payload: RuntimeActorEquipmentPayload): Promise<RuntimeSceneDetail> {
+  return fetchWithSession<RuntimeSceneDetail>(`/games/${gameId}/runtime/actors/${actorId}/equipment`, {
     method: 'POST',
     body: JSON.stringify(payload),
   });

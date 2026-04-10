@@ -96,6 +96,8 @@ Route::middleware([
                 Route::get('/scene', [PlayerRuntimeSceneController::class, 'showActive']);
                 Route::prefix('actors/{actor}')->group(function (): void {
                     Route::post('/move', [PlayerRuntimeSceneController::class, 'moveActor']);
+                    Route::post('/actions', [PlayerRuntimeSceneController::class, 'performAction']);
+                    Route::post('/equipment', [PlayerRuntimeSceneController::class, 'equipActor']);
                     Route::post('/action', [PlayerRuntimeSceneController::class, 'useAction']);
                     Route::post('/bonus-action', [PlayerRuntimeSceneController::class, 'useBonusAction']);
                     Route::post('/end-turn', [PlayerRuntimeSceneController::class, 'nextTurn']);
@@ -154,6 +156,8 @@ Route::middleware([
                 Route::post('/spawn', [GmRuntimeSceneController::class, 'spawnActor']);
                 Route::prefix('{actor}')->group(function (): void {
                     Route::post('/move', [GmRuntimeSceneController::class, 'moveActor']);
+                    Route::post('/actions', [GmRuntimeSceneController::class, 'performAction']);
+                    Route::post('/equipment', [GmRuntimeSceneController::class, 'equipActor']);
                     Route::post('/action', [GmRuntimeSceneController::class, 'useAction']);
                     Route::post('/bonus-action', [GmRuntimeSceneController::class, 'useBonusAction']);
                 });

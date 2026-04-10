@@ -368,6 +368,317 @@ final class GmRuntimeSceneControllerTest extends TestCase
 	}
 
 	/**
+	 * Проверяет, что мастер может выполнить атаку оружием runtime-актором.
+	 */
+	public function test_game_master_can_perform_weapon_attack(): void
+	{
+		$this->fakeDiceRolls([15, 4]);
+
+		$gameMaster = User::query()->create([
+			'name' => 'gm-runtime-attack',
+			'email' => 'gm-runtime-attack@example.com',
+			'can_access_gm' => true,
+			'password' => 'secret-pass',
+		]);
+
+		$game = Game::query()->create([
+			'title' => 'Runtime attack game',
+			'gm_user_id' => $gameMaster->id,
+			'status' => 'active',
+		]);
+
+		$sceneTemplate = SceneTemplate::query()->create([
+			'created_by' => $gameMaster->id,
+			'name' => 'Runtime attack scene',
+			'width' => 6,
+			'height' => 6,
+			'status' => 'draft',
+		]);
+
+		$sceneState = GameSceneState::query()->create([
+			'game_id' => $game->id,
+			'scene_template_id' => $sceneTemplate->id,
+			'status' => 'active',
+			'version' => 1,
+			'loaded_at' => now(),
+		]);
+
+		$game->forceFill([
+			'active_scene_state_id' => $sceneState->id,
+		])->save();
+
+		$attacker = ActorInstance::query()->create([
+			'game_id' => $game->id,
+			'game_scene_state_id' => $sceneState->id,
+			'kind' => 'npc',
+			'controller_type' => 'gm',
+			'name' => 'Воин',
+			'status' => 'active',
+			'x' => 1,
+			'y' => 1,
+			'hp_current' => 18,
+			'hp_max' => 18,
+			'luck' => 'normal',
+			'runtime_state' => [
+				'level' => 1,
+				'armor_class' => 10,
+				'movement_speed' => 3,
+				'stats' => ['str' => 14, 'dex' => 10, 'con' => 10, 'int' => 10, 'wis' => 10, 'cha' => 10],
+				'inventory' => [
+					[
+						'itemCode' => 'longsword',
+						'quantity' => 1,
+						'slot' => 'main_hand',
+						'isEquipped' => true,
+						'state' => null,
+					],
+				],
+			],
+		]);
+
+		$target = ActorInstance::query()->create([
+			'game_id' => $game->id,
+			'game_scene_state_id' => $sceneState->id,
+			'kind' => 'npc',
+			'controller_type' => 'gm',
+			'name' => 'Цель',
+			'status' => 'active',
+			'x' => 2,
+			'y' => 1,
+			'hp_current' => 20,
+			'hp_max' => 20,
+			'luck' => 'normal',
+			'runtime_state' => [
+				'armor_class' => 10,
+				'movement_speed' => 3,
+			],
+		]);
+
+		$csrfToken = $this->authenticate($gameMaster);
+
+		$this->withHeaders([
+			...$this->frontendHeaders(),
+			'X-CSRF-TOKEN' => $csrfToken,
+		])->postJson('/api/games/'.$game->id.'/runtime/actors/'.$attacker->id.'/actions', [
+			'action' => 'weapon_attack',
+			'equipment_slot' => 'main_hand',
+			'target_actor_id' => $target->id,
+		])
+			->assertOk()
+			->assertJsonPath('actor_instances.1.hp_current', 15)
+			->assertJsonPath('runtime_state.action_log.0.type', 'weapon_attack')
+			->assertJsonPath('runtime_state.action_log.0.is_hit', true)
+			->assertJsonPath('runtime_state.action_log.0.damage', 5);
+
+		$this->assertDatabaseHas('actor_instances', [
+			'id' => $target->id,
+			'hp_current' => 15,
+		]);
+	}
+
+	/**
+	 * Проверяет, что мастер может экипировать предмет runtime-актору.
+	 */
+	public function test_game_master_can_equip_runtime_actor_item(): void
+	{
+		$gameMaster = User::query()->create([
+			'name' => 'gm-runtime-equip',
+			'email' => 'gm-runtime-equip@example.com',
+			'can_access_gm' => true,
+			'password' => 'secret-pass',
+		]);
+
+		$game = Game::query()->create([
+			'title' => 'Runtime equip game',
+			'gm_user_id' => $gameMaster->id,
+			'status' => 'active',
+		]);
+
+		$sceneTemplate = SceneTemplate::query()->create([
+			'created_by' => $gameMaster->id,
+			'name' => 'Runtime equip scene',
+			'width' => 6,
+			'height' => 6,
+			'status' => 'draft',
+		]);
+
+		$sceneState = GameSceneState::query()->create([
+			'game_id' => $game->id,
+			'scene_template_id' => $sceneTemplate->id,
+			'status' => 'active',
+			'version' => 1,
+			'loaded_at' => now(),
+		]);
+
+		$game->forceFill([
+			'active_scene_state_id' => $sceneState->id,
+		])->save();
+
+		$actorInstance = ActorInstance::query()->create([
+			'game_id' => $game->id,
+			'game_scene_state_id' => $sceneState->id,
+			'kind' => 'npc',
+			'controller_type' => 'gm',
+			'name' => 'Воин экипировки',
+			'status' => 'active',
+			'x' => 1,
+			'y' => 1,
+			'hp_current' => 18,
+			'hp_max' => 18,
+			'runtime_state' => [
+				'inventory' => [
+					[
+						'itemCode' => 'longsword',
+						'quantity' => 1,
+						'slot' => null,
+						'isEquipped' => false,
+						'state' => null,
+					],
+					[
+						'itemCode' => 'chain-mail',
+						'quantity' => 1,
+						'slot' => null,
+						'isEquipped' => false,
+						'state' => null,
+					],
+				],
+			],
+		]);
+
+		$csrfToken = $this->authenticate($gameMaster);
+
+		$this->withHeaders([
+			...$this->frontendHeaders(),
+			'X-CSRF-TOKEN' => $csrfToken,
+		])->postJson('/api/games/'.$game->id.'/runtime/actors/'.$actorInstance->id.'/equipment', [
+			'item_code' => 'longsword',
+			'slot' => 'main_hand',
+		])
+			->assertOk()
+			->assertJsonPath('actor_instances.0.runtime_state.inventory.0.slot', 'main_hand')
+			->assertJsonPath('actor_instances.0.runtime_state.inventory.0.isEquipped', true);
+
+		$actorInstance->refresh();
+
+		$this->assertSame('main_hand', $actorInstance->runtime_state['inventory'][0]['slot']);
+		$this->assertTrue($actorInstance->runtime_state['inventory'][0]['isEquipped']);
+
+		$this->withHeaders([
+			...$this->frontendHeaders(),
+			'X-CSRF-TOKEN' => $csrfToken,
+		])->postJson('/api/games/'.$game->id.'/runtime/actors/'.$actorInstance->id.'/equipment', [
+			'item_code' => 'chain-mail',
+			'slot' => 'armor',
+		])
+			->assertOk()
+			->assertJsonPath('actor_instances.0.runtime_state.inventory.1.slot', 'armor')
+			->assertJsonPath('actor_instances.0.runtime_state.armor_class', 16);
+
+		$actorInstance->refresh();
+
+		$this->assertSame('armor', $actorInstance->runtime_state['inventory'][1]['slot']);
+		$this->assertSame(16, $actorInstance->runtime_state['armor_class']);
+	}
+
+	/**
+	 * Проверяет, что прием сбивания с ног накладывает эффект при провале спасброска.
+	 */
+	public function test_game_master_can_perform_trip_attack(): void
+	{
+		$this->fakeDiceRolls([3]);
+
+		$gameMaster = User::query()->create([
+			'name' => 'gm-runtime-trip',
+			'email' => 'gm-runtime-trip@example.com',
+			'can_access_gm' => true,
+			'password' => 'secret-pass',
+		]);
+
+		$game = Game::query()->create([
+			'title' => 'Runtime trip game',
+			'gm_user_id' => $gameMaster->id,
+			'status' => 'active',
+		]);
+
+		$sceneTemplate = SceneTemplate::query()->create([
+			'created_by' => $gameMaster->id,
+			'name' => 'Runtime trip scene',
+			'width' => 6,
+			'height' => 6,
+			'status' => 'draft',
+		]);
+
+		$sceneState = GameSceneState::query()->create([
+			'game_id' => $game->id,
+			'scene_template_id' => $sceneTemplate->id,
+			'status' => 'active',
+			'version' => 1,
+			'loaded_at' => now(),
+		]);
+
+		$game->forceFill([
+			'active_scene_state_id' => $sceneState->id,
+		])->save();
+
+		$attacker = ActorInstance::query()->create([
+			'game_id' => $game->id,
+			'game_scene_state_id' => $sceneState->id,
+			'kind' => 'npc',
+			'controller_type' => 'gm',
+			'name' => 'Боец',
+			'status' => 'active',
+			'x' => 1,
+			'y' => 1,
+			'hp_current' => 18,
+			'hp_max' => 18,
+			'luck' => 'normal',
+			'runtime_state' => [
+				'level' => 1,
+				'stats' => ['str' => 14, 'dex' => 10, 'con' => 10, 'int' => 10, 'wis' => 10, 'cha' => 10],
+			],
+		]);
+
+		$target = ActorInstance::query()->create([
+			'game_id' => $game->id,
+			'game_scene_state_id' => $sceneState->id,
+			'kind' => 'npc',
+			'controller_type' => 'gm',
+			'name' => 'Цель',
+			'status' => 'active',
+			'x' => 2,
+			'y' => 1,
+			'hp_current' => 20,
+			'hp_max' => 20,
+			'luck' => 'normal',
+			'runtime_state' => [
+				'stats' => ['str' => 8, 'dex' => 10, 'con' => 10, 'int' => 10, 'wis' => 10, 'cha' => 10],
+			],
+		]);
+
+		$csrfToken = $this->authenticate($gameMaster);
+
+		$this->withHeaders([
+			...$this->frontendHeaders(),
+			'X-CSRF-TOKEN' => $csrfToken,
+		])->postJson('/api/games/'.$game->id.'/runtime/actors/'.$attacker->id.'/actions', [
+			'action' => 'trip_attack',
+			'target_actor_id' => $target->id,
+		])
+			->assertOk()
+			->assertJsonPath('runtime_state.action_log.0.type', 'trip_attack')
+			->assertJsonPath('runtime_state.action_log.0.is_failed', true)
+			->assertJsonPath('actor_instances.1.temporary_effects.0.code', 'prone');
+
+		$this->withHeaders([
+			...$this->frontendHeaders(),
+			'X-CSRF-TOKEN' => $csrfToken,
+		])->postJson('/api/games/'.$game->id.'/runtime/actors/'.$target->id.'/move', [
+			'x' => 3,
+			'y' => 1,
+		])->assertUnprocessable();
+	}
+
+	/**
 	 * Проверяет, что поверхность огня наносит уменьшенный расой урон после перемещения.
 	 */
 	public function test_game_master_move_applies_surface_damage_with_race_resistance(): void

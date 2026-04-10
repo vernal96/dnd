@@ -7,6 +7,7 @@ namespace App\Application\Player;
 use App\Application\Catalog\AbilityCatalog;
 use App\Application\Catalog\CharacterClassCatalog;
 use App\Application\Catalog\RaceCatalog;
+use App\Application\Game\ActorCombatStatsService;
 use App\Data\Catalog\AbilityBonusesData;
 use App\Data\Player\CreatePlayerCharacterData;
 use App\Data\Player\PlayerCharacterViewData;
@@ -39,6 +40,7 @@ final class PlayerCharacterManagementService
 		private readonly RaceCatalog $raceCatalog,
 		private readonly CharacterClassCatalog $characterClassCatalog,
 		private readonly AbilityCatalog $abilityCatalog,
+		private readonly ActorCombatStatsService $actorCombatStatsService,
 	)
 	{
 	}
@@ -257,7 +259,7 @@ final class PlayerCharacterManagementService
 	 * Собирает производные характеристики персонажа на основе базы, расы и класса.
 	 *
 	 * @param array{str:int,dex:int,con:int,int:int,wis:int,cha:int} $baseStats
-	 * @return array<string, int>
+	 * @return array<string, int|array<string, int>>
 	 */
 	private function buildDerivedStats(
 		array $baseStats,
@@ -265,10 +267,19 @@ final class PlayerCharacterManagementService
 		AbstractCharacterClass $characterClass,
 	): array
 	{
+		$derivedStats = $this->actorCombatStatsService->buildDerivedStats(
+			stats: $baseStats,
+			level: 1,
+			healthBonus: $race->getHealthBonus() + $characterClass->getHealthBonus(),
+			speedBonus: $race->getSpeedBonus() + $characterClass->getSpeedBonus(),
+		);
+
 		return [
 			...$baseStats,
-			'speed' => 6 + $race->getSpeedBonus() + $characterClass->getSpeedBonus(),
-			'health' => $race->getHealthBonus() + $characterClass->getHealthBonus(),
+			...$derivedStats,
+			'health_bonus' => $race->getHealthBonus() + $characterClass->getHealthBonus(),
+			'speed_bonus' => $race->getSpeedBonus() + $characterClass->getSpeedBonus(),
+			'armor_bonus' => 0,
 		];
 	}
 

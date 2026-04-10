@@ -37,6 +37,8 @@ final class ActorResource extends JsonResource
 			'base_health' => $actor->base_health,
 			'health_current' => $actor->health_current,
 			'health_max' => $actor->health_max,
+			'armor_class' => $actor->armor_class,
+			'jump_height' => $actor->jump_height,
 			'luck' => $actor->luck,
 			'stats' => $actor->stats,
 			'inventory' => $actor->inventory,

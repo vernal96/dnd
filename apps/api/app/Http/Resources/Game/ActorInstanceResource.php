@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Game;
 
+use App\Application\Game\SurfaceEffectService;
 use App\Models\ActorInstance;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -22,6 +23,7 @@ final class ActorInstanceResource extends JsonResource
 	{
 		/** @var ActorInstance $actorInstance */
 		$actorInstance = $this->resource;
+		$surfaceEffectService = app(SurfaceEffectService::class);
 
 		return [
 			'id' => $actorInstance->id,
@@ -43,10 +45,10 @@ final class ActorInstanceResource extends JsonResource
 			'luck' => $actorInstance->luck,
 			'is_hidden' => (bool) $actorInstance->is_hidden,
 			'resources' => $actorInstance->resources,
-			'temporary_effects' => $actorInstance->temporary_effects,
+			'temporary_effects' => $surfaceEffectService->activeEffects($actorInstance),
 			'runtime_state' => $actorInstance->runtime_state,
 			'image_url' => $actorInstance->image_url,
-			'movement_speed' => $actorInstance->movement_speed,
+			'movement_speed' => $surfaceEffectService->resolveEffectiveMovementSpeed($actorInstance),
 		];
 	}
 }

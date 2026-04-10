@@ -3,6 +3,8 @@ import { ArrowLeft, Crosshair, Package, Play, Swords, UserRound, Waves } from 'l
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import RuntimeActorInventoryModal from '@/components/runtime/RuntimeActorInventoryModal.vue';
+import RuntimeActionLog from '@/components/runtime/RuntimeActionLog.vue';
+import RuntimeActionPalette from '@/components/runtime/RuntimeActionPalette.vue';
 import RuntimeSceneCanvas from '@/components/runtime/RuntimeSceneCanvas.vue';
 import { useAuthSession } from '@/composables/useAuthSession';
 import { connectRealtime, subscribeRealtime } from '@/composables/useRealtimeSocket';
@@ -15,9 +17,11 @@ import {
   dropRuntimeItem,
   endRuntimeEncounter,
   endRuntimeTurn,
+  equipRuntimeActor,
   fetchActiveRuntimeScene,
   moveRuntimeActor,
   paintRuntimeCell,
+  performRuntimeAction,
   spawnRuntimeActor,
   startRuntimeEncounter,
   useRuntimeAction,
@@ -128,6 +132,8 @@ const isReconnectPending = ref(false);
 const isClientReady = ref(false);
 const isEncounterStarting = ref(false);
 const isEncounterUpdating = ref(false);
+const isRuntimeActionPending = ref(false);
+const isEquipmentUpdating = ref(false);
 const isEncounterStartModalOpen = ref(false);
 const selectedEncounterActorIds = ref<number[]>([]);
 
@@ -135,6 +141,7 @@ const imageCache = new Map<string, HTMLImageElement>();
 const brokenImageUrls = new Set<string>();
 const loadingImageUrls = new Set<string>();
 const actorContextMenu = ref<{ actorId: number; x: number; y: number } | null>(null);
+const actionTargetActorId = ref<number | null>(null);
 
 const gameId = computed<number | null>(() => parseRouteParam(route.params.id));
 const sceneBackLink = computed<string>(() => (gameId.value === null ? '/cabinet/gm' : `/cabinet/gm/games/${gameId.value}`));
@@ -168,6 +175,7 @@ const selectedEncounterParticipant = computed<RuntimeEncounterParticipant | null
 });
 const currentActorRemainingMovement = computed(() => currentEncounterParticipant.value?.movement_left ?? null);
 const canLaunchEncounter = computed(() => (runtimeScene.value?.actor_instances.length ?? 0) > 0);
+const runtimeActionLog = computed<Array<Record<string, unknown>>>(() => runtimeScene.value?.runtime_state?.action_log ?? []);
 const availablePlayerCharacters = computed(() =>
   (gameDetail.value?.members ?? [])
     .filter((member) => member.role === 'player' && member.player_character !== null)
@@ -200,6 +208,13 @@ const inventoryActor = computed<RuntimeActorInstance | null>(() => {
 
   return runtimeScene.value?.actor_instances.find((actor) => actor.id === inventoryActorId.value) ?? null;
 });
+const actionTargetActor = computed<RuntimeActorInstance | null>(() => {
+  if (actionTargetActorId.value === null) {
+    return null;
+  }
+
+  return runtimeScene.value?.actor_instances.find((actor) => actor.id === actionTargetActorId.value) ?? null;
+});
 
 function parseRouteParam(rawValue: unknown): number | null {
   const parsedValue = Number.parseInt(Array.isArray(rawValue) ? rawValue[0] : String(rawValue), 10);
@@ -221,6 +236,10 @@ function normalizeInventory(inventory: RuntimeActorInventoryItem[] | null | unde
 
 function closeActorContextMenu(): void {
   actorContextMenu.value = null;
+}
+
+function closeActionPalette(): void {
+  actionTargetActorId.value = null;
 }
 
 function syncEncounterSelection(): void {
@@ -260,6 +279,102 @@ function openInventoryForActor(actorId: number): void {
   closeActorContextMenu();
 }
 
+async function handleEquipInventoryItem(slot: string, itemCode: string | null): Promise<void> {
+  if (gameId.value === null || inventoryActor.value === null || isEquipmentUpdating.value) {
+    return;
+  }
+
+  try {
+    isEquipmentUpdating.value = true;
+    runtimeError.value = '';
+    runtimeScene.value = await equipRuntimeActor(gameId.value, inventoryActor.value.id, {
+      item_code: itemCode,
+      slot,
+    });
+  } catch (error) {
+    runtimeError.value = (error as Error).message;
+  } finally {
+    isEquipmentUpdating.value = false;
+    scheduleCanvasRender();
+  }
+}
+
+function canAttackActor(actorId: number): boolean {
+  const targetActor = getRuntimeActorById(actorId);
+
+  return selectedActor.value !== null && targetActor !== null && targetActor.id !== selectedActor.value.id;
+}
+
+function openActionPalette(targetActorId: number): void {
+  actionTargetActorId.value = targetActorId;
+  closeActorContextMenu();
+}
+
+async function handleWeaponAttack(targetActorId: number, equipmentSlot: string | null = null): Promise<void> {
+  if (gameId.value === null || selectedActor.value === null || isRuntimeActionPending.value) {
+    return;
+  }
+
+  try {
+    isRuntimeActionPending.value = true;
+    runtimeError.value = '';
+    const updatedScene = await performRuntimeAction(gameId.value, selectedActor.value.id, {
+      action: 'weapon_attack',
+      equipment_slot: equipmentSlot ?? resolveDefaultWeaponEquipmentSlot(selectedActor.value),
+      target_actor_id: targetActorId,
+    });
+
+    runtimeScene.value = updatedScene;
+    closeActionPalette();
+    closeActorContextMenu();
+  } catch (error) {
+    runtimeError.value = (error as Error).message;
+  } finally {
+    isRuntimeActionPending.value = false;
+    scheduleCanvasRender();
+  }
+}
+
+function resolveDefaultWeaponEquipmentSlot(actor: RuntimeActorInstance): string | null {
+  const inventory = actor.runtime_state?.inventory ?? [];
+  const weaponSlots = ['main_hand', 'off_hand', 'ranged'];
+
+  for (const slot of weaponSlots) {
+    const item = inventory.find((entry) => entry.slot === slot);
+    const catalogItem = itemCatalog.value.find((catalogEntry) => catalogEntry.code === item?.itemCode);
+
+    if (catalogItem?.type === 'melee-weapon' || catalogItem?.type === 'ranged-weapon') {
+      return slot;
+    }
+  }
+
+  return null;
+}
+
+async function handleTripAttack(targetActorId: number): Promise<void> {
+  if (gameId.value === null || selectedActor.value === null || isRuntimeActionPending.value) {
+    return;
+  }
+
+  try {
+    isRuntimeActionPending.value = true;
+    runtimeError.value = '';
+    const updatedScene = await performRuntimeAction(gameId.value, selectedActor.value.id, {
+      action: 'trip_attack',
+      target_actor_id: targetActorId,
+    });
+
+    runtimeScene.value = updatedScene;
+    closeActionPalette();
+    closeActorContextMenu();
+  } catch (error) {
+    runtimeError.value = (error as Error).message;
+  } finally {
+    isRuntimeActionPending.value = false;
+    scheduleCanvasRender();
+  }
+}
+
 function resolveInventoryItemName(itemCode: string): string {
   const catalogItem = itemCatalog.value.find((item) => item.code === itemCode);
 
@@ -276,6 +391,10 @@ function getObjectAtCell(x: number, y: number): SceneObject | undefined {
 
 function getActorAtCell(x: number, y: number): RuntimeActorInstance | undefined {
   return runtimeScene.value?.actor_instances.find((actor) => actor.x === x && actor.y === y);
+}
+
+function getRuntimeActorById(actorId: number): RuntimeActorInstance | null {
+  return runtimeScene.value?.actor_instances.find((actor) => actor.id === actorId) ?? null;
 }
 
 function getItemDropAtCell(x: number, y: number): RuntimeSceneDetail['item_drops'][number] | undefined {
@@ -759,6 +878,36 @@ function projectActorPosition(actor: RuntimeActorInstance): CanvasPoint {
   return projectWorldPoint(worldX, worldY, elevation);
 }
 
+function drawActorEffects(context: CanvasRenderingContext2D, actor: RuntimeActorInstance, cardX: number, cardY: number, cardWidth: number): void {
+  const effects = actor.temporary_effects ?? [];
+
+  if (effects.length === 0) {
+    return;
+  }
+
+  const size = 18;
+  const gap = 4;
+  const totalWidth = (effects.length * size) + ((effects.length - 1) * gap);
+  let x = cardX + ((cardWidth - totalWidth) / 2);
+  const y = cardY - size - 6;
+
+  for (const effect of effects) {
+    context.fillStyle = effect.type === 'negative' ? 'rgba(127, 29, 29, 0.92)' : 'rgba(22, 101, 52, 0.92)';
+    context.strokeStyle = effect.type === 'negative' ? 'rgba(254, 202, 202, 0.8)' : 'rgba(187, 247, 208, 0.8)';
+    context.lineWidth = 1;
+    context.beginPath();
+    context.arc(x + (size / 2), y + (size / 2), size / 2, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+    context.fillStyle = '#fff7ed';
+    context.font = '12px serif';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(effect.icon, x + (size / 2), y + (size / 2) + 1);
+    x += size + gap;
+  }
+}
+
 function drawActor(context: CanvasRenderingContext2D, actor: RuntimeActorInstance, isSelected = false): void {
   const isPlayerHero = actor.kind === 'player_character';
   const basePoint = projectActorPosition(actor);
@@ -865,6 +1014,8 @@ function drawActor(context: CanvasRenderingContext2D, actor: RuntimeActorInstanc
     roundRectPath(context, cardX + 3, cardY + 3, cardSize.width - 6, cardSize.height - 6, radius - 2);
     context.stroke();
   }
+
+  drawActorEffects(context, actor, cardX, cardY, cardSize.width);
   context.restore();
 }
 
@@ -1089,7 +1240,7 @@ function handleCanvasContextMenu(event: MouseEvent): void {
     return;
   }
 
-  selectedActorId.value = actorAtCell.id;
+  selectedActorId.value = selectedActorId.value ?? actorAtCell.id;
   selectedCellKey.value = resolveCellKey(clickedCell.cell.x, clickedCell.cell.y);
   actorContextMenu.value = {
     actorId: actorAtCell.id,
@@ -1878,6 +2029,26 @@ onBeforeUnmount(() => {
               @contextmenu.prevent.stop
             >
               <button
+                v-if="actorContextMenu && canAttackActor(actorContextMenu.actorId)"
+                class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-red-100 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                :disabled="isRuntimeActionPending"
+                type="button"
+                @click.stop="openActionPalette(actorContextMenu.actorId)"
+                @mousedown.stop
+              >
+                Атаковать
+              </button>
+              <button
+                v-if="actorContextMenu && canAttackActor(actorContextMenu.actorId)"
+                class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-orange-100 transition hover:bg-orange-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                :disabled="isRuntimeActionPending"
+                type="button"
+                @click.stop="handleTripAttack(actorContextMenu.actorId)"
+                @mousedown.stop
+              >
+                Сбить с ног
+              </button>
+              <button
                 class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-amber-50 transition hover:bg-white/5"
                 type="button"
                 @click.stop="openInventoryForActor(actorContextMenu.actorId)"
@@ -1987,6 +2158,8 @@ onBeforeUnmount(() => {
                 </button>
               </div>
             </section>
+
+            <RuntimeActionLog :entries="runtimeActionLog" />
 
             <section class="rounded-[1.5rem] border border-amber-200/10 bg-slate-950/30 p-4">
               <div class="flex items-center justify-between gap-3">
@@ -2245,10 +2418,24 @@ onBeforeUnmount(() => {
   <RuntimeActorInventoryModal
     v-if="isClientReady"
     :actor-name="inventoryActor?.name ?? ''"
+    :can-manage-equipment="inventoryActor !== null"
     :catalog="itemCatalog"
+    :equipment-pending="isEquipmentUpdating"
     :items="normalizeInventory(inventoryActor?.runtime_state?.inventory)"
     :open="inventoryActor !== null"
     @close="inventoryActorId = null"
+    @equip="handleEquipInventoryItem"
+  />
+
+  <RuntimeActionPalette
+    v-if="isClientReady && selectedActor && actionTargetActor"
+    :actor="selectedActor"
+    :catalog="itemCatalog"
+    :pending="isRuntimeActionPending"
+    :target="actionTargetActor"
+    @close="closeActionPalette"
+    @trip-attack="handleTripAttack(actionTargetActor.id)"
+    @weapon-attack="(slot) => handleWeaponAttack(actionTargetActor!.id, slot)"
   />
 
   <div

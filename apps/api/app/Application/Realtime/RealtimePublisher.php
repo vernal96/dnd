@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Application\Realtime;
 
+use App\Application\Game\SurfaceEffectService;
+use App\Models\ActorInstance;
 use App\Models\Game;
 use App\Models\GameInvitation;
 use App\Models\GameSceneState;
-use App\Models\ActorInstance;
 use Illuminate\Support\Facades\Redis;
 use Throwable;
 
@@ -272,6 +273,8 @@ final class RealtimePublisher
 	 */
 	private function buildActorPayload(ActorInstance $actorInstance): array
 	{
+		$surfaceEffectService = app(SurfaceEffectService::class);
+
 		return [
 			'id' => $actorInstance->id,
 			'game_id' => $actorInstance->game_id,
@@ -291,10 +294,10 @@ final class RealtimePublisher
 			'hp_max' => $actorInstance->hp_max,
 			'is_hidden' => (bool) $actorInstance->is_hidden,
 			'resources' => $actorInstance->resources,
-			'temporary_effects' => $actorInstance->temporary_effects,
+			'temporary_effects' => $surfaceEffectService->activeEffects($actorInstance),
 			'runtime_state' => $actorInstance->runtime_state,
 			'image_url' => $actorInstance->image_url,
-			'movement_speed' => $actorInstance->movement_speed,
+			'movement_speed' => $surfaceEffectService->resolveEffectiveMovementSpeed($actorInstance),
 		];
 	}
 }

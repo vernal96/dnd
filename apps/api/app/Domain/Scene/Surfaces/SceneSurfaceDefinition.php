@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Scene\Surfaces;
 
+use App\Data\Game\SurfaceEffectRuleData;
 use App\Domain\Actor\Elements\ActorElementDefinition;
 
 /**
@@ -40,6 +41,13 @@ interface SceneSurfaceDefinition
 	 * Возвращает связанную со средой стихию поверхности.
 	 */
 	public function element(): ?ActorElementDefinition;
+
+	/**
+	 * Возвращает правила наложения runtime-эффектов поверхностью.
+	 *
+	 * @return list<SurfaceEffectRuleData>
+	 */
+	public function effectRules(): array;
 
 	/**
 	 * Возвращает теги поверхности.

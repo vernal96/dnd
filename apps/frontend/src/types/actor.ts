@@ -13,6 +13,8 @@ export type GameActor = {
     gm_user_id: number;
     health_current: number | null;
     health_max: number | null;
+    armor_class: number;
+    jump_height: number;
     id: number;
     image_path: string | null;
     image_url: string | null;
@@ -31,6 +33,8 @@ export type SaveGameActorPayload = {
     description: string | null;
     health_current: number | null;
     health_max: number | null;
+    armor_class: number;
+    jump_height: number;
     image_path: string | null;
     inventory: Array<{
         is_equipped: boolean;

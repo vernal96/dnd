@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Scene\Surfaces;
 
+use App\Data\Game\SurfaceEffectRuleData;
 use App\Domain\Actor\Elements\ActorElementDefinition;
 
 /**
@@ -42,6 +43,11 @@ final class WaterSceneSurface implements SceneSurfaceDefinition
 	public function element(): ?ActorElementDefinition
 	{
 		return null;
+	}
+
+	public function effectRules(): array
+	{
+		return [];
 	}
 
 	public function tags(): array

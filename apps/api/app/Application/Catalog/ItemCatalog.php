@@ -8,6 +8,7 @@ use App\Domain\Actor\Item;
 use App\Domain\Actor\Items\BackpackItem;
 use App\Domain\Actor\Items\ChainMailItem;
 use App\Domain\Actor\Items\LongswordItem;
+use App\Domain\Actor\Items\ShortbowItem;
 
 /**
  * Хранит кодовый справочник предметов и снаряжения.
@@ -51,6 +52,7 @@ final class ItemCatalog
 		return [
 			new ChainMailItem,
 			new LongswordItem,
+			new ShortbowItem,
 			new BackpackItem,
 		];
 	}

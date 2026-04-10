@@ -4,18 +4,34 @@ import { computed, ref } from 'vue';
 import type { CatalogItem } from '@/types/item';
 import type { RuntimeActorInventoryItem } from '@/types/runtimeScene';
 
+type EquipmentSlot = {
+  label: string;
+  value: string;
+};
+
 const props = defineProps<{
   actorName: string;
+  canManageEquipment?: boolean;
   catalog: CatalogItem[];
+  equipmentPending?: boolean;
   items: RuntimeActorInventoryItem[];
   open: boolean;
 }>();
 
 const emit = defineEmits<{
   close: [];
+  equip: [slot: string, itemCode: string | null];
 }>();
 
 const hoveredItemKey = ref<string | null>(null);
+const equipmentSlots: EquipmentSlot[] = [
+  { label: 'Основная рука', value: 'main_hand' },
+  { label: 'Вторая рука', value: 'off_hand' },
+  { label: 'Дальний бой', value: 'ranged' },
+  { label: 'Доспех', value: 'armor' },
+  { label: 'Аксессуар 1', value: 'accessory_1' },
+  { label: 'Аксессуар 2', value: 'accessory_2' },
+];
 
 const normalizedItems = computed(() =>
   props.items.map((item, index) => {
@@ -27,8 +43,16 @@ const normalizedItems = computed(() =>
       imageUrl: catalogItem?.image_url ?? null,
       key: `${item.itemCode}-${item.slot ?? 'bag'}-${item.isEquipped ? 'eq' : 'bag'}-${index}`,
       name: catalogItem?.name ?? prettifyItemCode(item.itemCode),
+      type: catalogItem?.type ?? 'equipment',
     };
   }),
+);
+
+const equippedItems = computed(() =>
+  equipmentSlots.map((slot) => ({
+    ...slot,
+    item: normalizedItems.value.find((item) => item.slot === slot.value) ?? null,
+  })),
 );
 
 function prettifyItemCode(itemCode: string): string {
@@ -41,6 +65,26 @@ function prettifyItemCode(itemCode: string): string {
 
 function resolveItemGlyph(name: string): string {
   return name.slice(0, 1).toUpperCase();
+}
+
+function resolveAllowedSlots(itemType: string): EquipmentSlot[] {
+  if (itemType === 'melee-weapon') {
+    return equipmentSlots.filter((slot) => slot.value === 'main_hand' || slot.value === 'off_hand');
+  }
+
+  if (itemType === 'ranged-weapon') {
+    return equipmentSlots.filter((slot) => slot.value === 'ranged');
+  }
+
+  if (itemType === 'armor') {
+    return equipmentSlots.filter((slot) => slot.value === 'armor');
+  }
+
+  if (itemType === 'equipment') {
+    return equipmentSlots.filter((slot) => slot.value === 'accessory_1' || slot.value === 'accessory_2');
+  }
+
+  return [];
 }
 </script>
 
@@ -69,6 +113,52 @@ function resolveItemGlyph(name: string): string {
         </div>
 
         <div class="relative flex-1 overflow-y-auto p-6">
+          <div class="mb-6 rounded-[1.5rem] border border-amber-200/10 bg-slate-950/35 p-4">
+            <div class="flex items-center justify-between gap-3">
+              <p class="text-xs uppercase tracking-[0.2em] text-amber-200/50">Экипировка</p>
+              <p v-if="equipmentPending" class="text-xs text-slate-400">Обновление...</p>
+            </div>
+
+            <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div
+                v-for="slot in equippedItems"
+                :key="slot.value"
+                class="rounded-[1.15rem] border border-amber-200/10 bg-white/[0.04] p-3"
+              >
+                <p class="text-xs uppercase tracking-[0.16em] text-amber-200/45">{{ slot.label }}</p>
+                <div v-if="slot.item" class="mt-3 flex items-center gap-3">
+                  <img
+                    v-if="slot.item.imageUrl"
+                    :src="slot.item.imageUrl"
+                    :alt="slot.item.name"
+                    class="h-12 w-12 rounded-xl border border-white/10 object-cover"
+                  >
+                  <div
+                    v-else
+                    class="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-sm font-semibold text-amber-100"
+                  >
+                    {{ resolveItemGlyph(slot.item.name) }}
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm text-amber-50">{{ slot.item.name }}</p>
+                    <button
+                      v-if="canManageEquipment"
+                      class="mt-1 text-xs text-slate-400 transition hover:text-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                      :disabled="equipmentPending"
+                      type="button"
+                      @click="emit('equip', slot.value, null)"
+                    >
+                      Снять
+                    </button>
+                  </div>
+                </div>
+                <p v-else class="mt-3 rounded-xl border border-white/10 bg-slate-950/35 px-3 py-3 text-sm text-slate-400">
+                  Пусто
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div
             v-if="normalizedItems.length === 0"
             class="rounded-[1.35rem] border border-amber-200/10 bg-white/5 px-4 py-4 text-sm text-slate-300"
@@ -109,6 +199,22 @@ function resolveItemGlyph(name: string): string {
 
                 <div class="border-t border-amber-200/10 px-2 py-2">
                   <p class="truncate text-xs text-amber-50">{{ item.name }}</p>
+                  <div
+                    v-if="canManageEquipment && resolveAllowedSlots(item.type).length > 0"
+                    class="mt-2 flex flex-wrap gap-1"
+                  >
+                    <button
+                      v-for="slot in resolveAllowedSlots(item.type)"
+                      :key="slot.value"
+                      class="rounded-full border px-2 py-1 text-[0.62rem] uppercase transition disabled:cursor-not-allowed disabled:opacity-50"
+                      :class="item.slot === slot.value ? 'border-amber-300/35 bg-amber-300/10 text-amber-50' : 'border-amber-200/10 bg-slate-950/40 text-slate-300 hover:border-amber-200/25 hover:text-amber-50'"
+                      :disabled="equipmentPending || item.slot === slot.value"
+                      type="button"
+                      @click="emit('equip', slot.value, item.itemCode)"
+                    >
+                      {{ item.slot === slot.value ? 'В слоте' : slot.label }}
+                    </button>
+                  </div>
                 </div>
               </div>
 

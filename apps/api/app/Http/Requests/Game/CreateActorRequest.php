@@ -42,6 +42,8 @@ class CreateActorRequest extends FormRequest
 			'base_health' => ['nullable', 'integer', 'min:1', 'max:9999'],
 			'health_current' => ['nullable', 'integer', 'min:0'],
 			'health_max' => ['nullable', 'integer', 'min:1'],
+			'armor_class' => ['nullable', 'integer', 'min:1', 'max:99'],
+			'jump_height' => ['nullable', 'integer', 'min:1', 'max:20'],
 			'luck' => ['nullable', 'string', Rule::in(LuckScale::values())],
 			'stats' => ['nullable', 'array'],
 			'inventory' => ['nullable', 'array'],

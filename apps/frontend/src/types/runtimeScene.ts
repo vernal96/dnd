@@ -8,6 +8,17 @@ export type RuntimeActorInventoryItem = {
   state: Record<string, unknown> | null;
 };
 
+export type RuntimeActorTemporaryEffect = {
+  code: string;
+  expires_at?: string | null;
+  icon: string;
+  label: string;
+  remaining_turns?: number | null;
+  source_code?: string | null;
+  source_type?: string | null;
+  type: 'negative' | 'positive';
+};
+
 export type RuntimeEncounterParticipant = {
   action_available: boolean;
   actor: RuntimeActorInstance | null;
@@ -57,6 +68,7 @@ export type RuntimeActorInstance = {
     stats?: Record<string, number> | null;
   } | null;
   status: string;
+  temporary_effects: RuntimeActorTemporaryEffect[] | null;
   x: number | null;
   y: number | null;
 };
@@ -81,6 +93,7 @@ export type RuntimeSceneDetail = {
   game_id: number;
   id: number;
   runtime_state: {
+    action_log?: Array<Record<string, unknown>>;
     activated_at?: string;
   } | null;
   item_drops: Array<{

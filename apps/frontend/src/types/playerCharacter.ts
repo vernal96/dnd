@@ -7,6 +7,18 @@ export type CharacterStats = {
     wis: number;
 };
 
+export type CharacterDerivedStats = CharacterStats & {
+    armor_bonus?: number;
+    armor_class?: number;
+    damage_bonus?: number;
+    health?: number;
+    health_bonus?: number;
+    jump_height?: number;
+    modifiers?: Record<string, number>;
+    movement_speed?: number;
+    speed_bonus?: number;
+};
+
 export type PlayerCharacter = {
     active_game_id: number | null;
     active_game_title: string | null;
@@ -29,7 +41,7 @@ export type PlayerCharacter = {
     subrace_name: string | null;
     updated_at: string | null;
     user_id: number;
-    derived_stats: CharacterStats | null;
+    derived_stats: CharacterDerivedStats | null;
 };
 
 export type CreatePlayerCharacterPayload = {

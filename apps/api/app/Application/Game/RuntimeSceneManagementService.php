@@ -11,8 +11,14 @@ use App\Data\Game\RuntimeEncounterData;
 use App\Data\Game\RuntimeEncounterParticipantData;
 use App\Data\Game\RuntimeItemDropData;
 use App\Data\Game\RuntimeSceneViewData;
-use App\Domain\Actor\Abilities\ConstitutionAbility;
 use App\Domain\Actor\Abilities\DexterityAbility;
+use App\Domain\Actor\Ability;
+use App\Domain\Actor\ActorEquipmentSlot;
+use App\Domain\Actor\ActorEffect;
+use App\Domain\Actor\Dice;
+use App\Domain\Actor\Item;
+use App\Domain\Actor\ItemType;
+use App\Domain\Actor\LuckScale;
 use App\Domain\Scene\SceneSurfaceCatalog;
 use App\Domain\Scene\Surfaces\SceneSurfaceDefinition;
 use App\Models\Actor;
@@ -41,7 +47,10 @@ final class RuntimeSceneManagementService
 	public function __construct(
 		private readonly ItemCatalog $itemCatalog,
 		private readonly ItemCatalogImageStorageService $itemCatalogImageStorageService,
+		private readonly ActorCombatStatsService $actorCombatStatsService,
+		private readonly ActorEquipmentService $actorEquipmentService,
 		private readonly SurfaceEffectService $surfaceEffectService,
+		private readonly RandomDiceRollerService $diceRoller,
 		private readonly RealtimePublisher $realtimePublisher,
 	)
 	{
@@ -204,7 +213,7 @@ final class RuntimeSceneManagementService
 					'joined_round' => 1,
 					'is_hidden' => false,
 					'is_surprised' => false,
-					'movement_left' => max(0, (int) ($actor->movement_speed ?? 0)),
+					'movement_left' => $this->surfaceEffectService->resolveEffectiveMovementSpeed($actor),
 					'action_available' => true,
 					'bonus_action_available' => true,
 					'reaction_available' => true,
@@ -294,8 +303,8 @@ final class RuntimeSceneManagementService
 					'status' => 'active',
 					'x' => $placement->x,
 					'y' => $placement->y,
-					'hp_current' => $actor->health_current ?? $actor->base_health,
-					'hp_max' => $actor->health_max ?? $actor->base_health,
+					'hp_current' => $this->resolveActorHitPoints($actor),
+					'hp_max' => $this->resolveActorHitPoints($actor),
 					'luck' => $actor->luck,
 					'is_hidden' => false,
 					'resources' => null,
@@ -307,7 +316,7 @@ final class RuntimeSceneManagementService
 						'race' => $actor->race,
 						'character_class' => $actor->character_class,
 						'level' => $actor->level,
-						'movement_speed' => $actor->movement_speed,
+						...$this->buildActorRuntimeDerivedStats($actor),
 						'luck' => $actor->luck,
 						'stats' => $actor->stats,
 						'inventory' => $actor->inventory,
@@ -336,7 +345,8 @@ final class RuntimeSceneManagementService
 					continue;
 				}
 
-				$hitPoints = $this->resolvePlayerCharacterHitPoints($playerCharacter);
+				$derivedStats = $this->buildPlayerRuntimeDerivedStats($playerCharacter);
+				$hitPoints = $derivedStats['health'];
 
 				ActorInstance::query()->create([
 					'game_id' => $game->id,
@@ -362,7 +372,7 @@ final class RuntimeSceneManagementService
 						'race' => $playerCharacter->race,
 						'character_class' => $playerCharacter->class,
 						'level' => $playerCharacter->level,
-						'movement_speed' => $playerCharacter->derived_stats['speed'] ?? 6,
+						...$derivedStats,
 						'luck' => $playerCharacter->luck,
 						'stats' => $playerCharacter->base_stats,
 						'inventory' => [],
@@ -471,6 +481,10 @@ final class RuntimeSceneManagementService
 
 		if ($isOccupied) {
 			throw new RuntimeException('Целевая клетка уже занята другим персонажем.');
+		}
+
+		if ($this->surfaceEffectService->hasActiveEffect($actorInstance, ActorEffect::Prone)) {
+			throw new RuntimeException('Актор упал и не может двигаться.');
 		}
 
 		$activeEncounter = $this->findActiveEncounter($sceneState);
@@ -592,7 +606,11 @@ final class RuntimeSceneManagementService
 			throw new RuntimeException('Герой не размещен на активной сцене.');
 		}
 
-		$movementSpeed = (int) ($actorInstance->runtime_state['movement_speed'] ?? 0);
+		if ($this->surfaceEffectService->hasActiveEffect($actorInstance, ActorEffect::Prone)) {
+			throw new RuntimeException('Герой упал и не может двигаться.');
+		}
+
+		$movementSpeed = $this->surfaceEffectService->resolveEffectiveMovementSpeed($actorInstance);
 		$distance = abs($actorInstance->x - $x) + abs($actorInstance->y - $y);
 		$activeEncounter = $this->findActiveEncounter($sceneState);
 
@@ -656,6 +674,158 @@ final class RuntimeSceneManagementService
 	}
 
 	/**
+	 * Выполняет runtime-действие актора от имени мастера.
+	 *
+	 * @throws RuntimeException Если действие нарушает правила runtime-сцены.
+	 * @throws Throwable Если выполнение действия завершилось технической ошибкой.
+	 */
+	public function performRuntimeAction(
+		int $gameId,
+		int $actorInstanceId,
+		string $action,
+		int $targetActorId,
+		?string $equipmentSlot,
+		?string $itemCode,
+		User $user,
+	): ?GameSceneState
+	{
+		[$game, $sceneState] = $this->resolveOwnedActiveScene($gameId, $user);
+
+		if ($game === null || $sceneState === null) {
+			return null;
+		}
+
+		$actorInstance = $this->findRuntimeActorInScene($sceneState, $actorInstanceId);
+
+		if (!$actorInstance instanceof ActorInstance) {
+			return null;
+		}
+
+		$this->performRuntimeActionInternal($game, $sceneState, $actorInstance, $action, $targetActorId, $equipmentSlot, $itemCode, null);
+
+		return $this->findActiveSceneForGameMaster($gameId, $user);
+	}
+
+	/**
+	 * Выполняет runtime-действие героя игрока.
+	 *
+	 * @throws RuntimeException Если действие нарушает правила runtime-сцены.
+	 * @throws Throwable Если выполнение действия завершилось технической ошибкой.
+	 */
+	public function performRuntimeActionForPlayer(
+		int $gameId,
+		int $actorInstanceId,
+		string $action,
+		int $targetActorId,
+		?string $equipmentSlot,
+		?string $itemCode,
+		User $user,
+	): ?GameSceneState
+	{
+		$game = $this->findPlayableGame($gameId, $user);
+
+		if ($game === null) {
+			return null;
+		}
+
+		$sceneState = $this->resolveActiveSceneState($game);
+
+		if ($sceneState === null) {
+			return null;
+		}
+
+		$actorInstance = ActorInstance::query()
+			->where('id', $actorInstanceId)
+			->where('game_id', $game->id)
+			->where('game_scene_state_id', $sceneState->id)
+			->where('controlled_by_user_id', $user->id)
+			->where('controller_type', 'player')
+			->first();
+
+		if (!$actorInstance instanceof ActorInstance) {
+			return null;
+		}
+
+		$this->performRuntimeActionInternal($game, $sceneState, $actorInstance, $action, $targetActorId, $equipmentSlot, $itemCode, $user->id);
+
+		return $this->findActiveSceneForPlayer($gameId, $user);
+	}
+
+	/**
+	 * Экипирует предмет runtime-актору от имени мастера.
+	 *
+	 * @throws RuntimeException Если экипировка нарушает правила runtime-сцены.
+	 * @throws Throwable Если изменение экипировки завершилось технической ошибкой.
+	 */
+	public function equipRuntimeActor(
+		int $gameId,
+		int $actorInstanceId,
+		string $slot,
+		?string $itemCode,
+		User $user,
+	): ?GameSceneState
+	{
+		[$game, $sceneState] = $this->resolveOwnedActiveScene($gameId, $user);
+
+		if ($game === null || $sceneState === null) {
+			return null;
+		}
+
+		$actorInstance = $this->findRuntimeActorInScene($sceneState, $actorInstanceId);
+
+		if (!$actorInstance instanceof ActorInstance) {
+			return null;
+		}
+
+		$this->equipRuntimeActorInternal($game, $sceneState, $actorInstance, $slot, $itemCode);
+
+		return $this->findActiveSceneForGameMaster($gameId, $user);
+	}
+
+	/**
+	 * Экипирует предмет герою текущего игрока.
+	 *
+	 * @throws RuntimeException Если экипировка нарушает правила runtime-сцены.
+	 * @throws Throwable Если изменение экипировки завершилось технической ошибкой.
+	 */
+	public function equipRuntimeActorForPlayer(
+		int $gameId,
+		int $actorInstanceId,
+		string $slot,
+		?string $itemCode,
+		User $user,
+	): ?GameSceneState
+	{
+		$game = $this->findPlayableGame($gameId, $user);
+
+		if ($game === null) {
+			return null;
+		}
+
+		$sceneState = $this->resolveActiveSceneState($game);
+
+		if ($sceneState === null) {
+			return null;
+		}
+
+		$actorInstance = ActorInstance::query()
+			->where('id', $actorInstanceId)
+			->where('game_id', $game->id)
+			->where('game_scene_state_id', $sceneState->id)
+			->where('controlled_by_user_id', $user->id)
+			->where('controller_type', 'player')
+			->first();
+
+		if (!$actorInstance instanceof ActorInstance) {
+			return null;
+		}
+
+		$this->equipRuntimeActorInternal($game, $sceneState, $actorInstance, $slot, $itemCode);
+
+		return $this->findActiveSceneForPlayer($gameId, $user);
+	}
+
+	/**
 	 * Добавляет нового runtime-актора на активную сцену.
 	 *
 	 * @throws RuntimeException
@@ -693,8 +863,8 @@ final class RuntimeSceneManagementService
 					'status' => 'active',
 					'x' => $x,
 					'y' => $y,
-					'hp_current' => $actor->health_current ?? $actor->base_health,
-					'hp_max' => $actor->health_max ?? $actor->base_health,
+					'hp_current' => $this->resolveActorHitPoints($actor),
+					'hp_max' => $this->resolveActorHitPoints($actor),
 					'luck' => $actor->luck,
 					'is_hidden' => false,
 					'resources' => null,
@@ -706,7 +876,7 @@ final class RuntimeSceneManagementService
 						'race' => $actor->race,
 						'character_class' => $actor->character_class,
 						'level' => $actor->level,
-						'movement_speed' => $actor->movement_speed,
+						...$this->buildActorRuntimeDerivedStats($actor),
 						'luck' => $actor->luck,
 						'stats' => $actor->stats,
 						'inventory' => $actor->inventory,
@@ -743,7 +913,8 @@ final class RuntimeSceneManagementService
 				}
 
 				$character = $member->playerCharacter;
-				$hitPoints = $this->resolvePlayerCharacterHitPoints($character);
+				$derivedStats = $this->buildPlayerRuntimeDerivedStats($character);
+				$hitPoints = $derivedStats['health'];
 
 				/** @var ActorInstance $actorInstance */
 				$actorInstance = ActorInstance::query()->create([
@@ -770,7 +941,7 @@ final class RuntimeSceneManagementService
 						'race' => $character->race,
 						'character_class' => $character->class,
 						'level' => $character->level,
-						'movement_speed' => $character->derived_stats['speed'] ?? 6,
+						...$derivedStats,
 						'luck' => $character->luck,
 						'stats' => $character->base_stats,
 						'inventory' => [],
@@ -1341,6 +1512,287 @@ final class RuntimeSceneManagementService
 	}
 
 	/**
+	 * Применяет изменение экипировки runtime-актора и публикует обновление сцены.
+	 *
+	 * @throws RuntimeException
+	 * @throws Throwable
+	 */
+	private function equipRuntimeActorInternal(
+		Game $game,
+		GameSceneState $sceneState,
+		ActorInstance $actorInstance,
+		string $slot,
+		?string $itemCode,
+	): void
+	{
+		$equipmentSlot = ActorEquipmentSlot::tryFrom($slot);
+
+		if (!$equipmentSlot instanceof ActorEquipmentSlot) {
+			throw new RuntimeException('Неизвестный слот экипировки.');
+		}
+
+		DB::transaction(function () use ($sceneState, $actorInstance, $equipmentSlot, $itemCode): void {
+			$this->actorEquipmentService->equipRuntimeActor($actorInstance, $equipmentSlot, $itemCode);
+			$runtimeState = is_array($actorInstance->runtime_state) ? $actorInstance->runtime_state : [];
+			$runtimeState['armor_class'] = $this->resolveRuntimeActorArmorClass($actorInstance);
+
+			$actorInstance->forceFill([
+				'runtime_state' => $runtimeState,
+			])->save();
+
+			$sceneState->forceFill([
+				'version' => $sceneState->version + 1,
+			])->save();
+		});
+
+		$sceneState->refresh();
+
+		try {
+			$this->realtimePublisher->publishGameSceneUpdated($game, $sceneState);
+		} catch (Throwable $throwable) {
+			report($throwable);
+		}
+	}
+
+	/**
+	 * Выполняет runtime-действие и фиксирует результат на сцене.
+	 *
+	 * @throws RuntimeException
+	 * @throws Throwable
+	 */
+	private function performRuntimeActionInternal(
+		Game $game,
+		GameSceneState $sceneState,
+		ActorInstance $actorInstance,
+		string $action,
+		int $targetActorId,
+		?string $equipmentSlot,
+		?string $itemCode,
+		?int $requiredUserId,
+	): void
+	{
+		$targetActor = $this->findRuntimeActorInScene($sceneState, $targetActorId);
+
+		if (!$targetActor instanceof ActorInstance) {
+			throw new RuntimeException('Цель атаки не найдена на активной сцене.');
+		}
+
+		if ($targetActor->id === $actorInstance->id) {
+			throw new RuntimeException('Нельзя атаковать самого себя.');
+		}
+
+		if ($actorInstance->x === null || $actorInstance->y === null || $targetActor->x === null || $targetActor->y === null) {
+			throw new RuntimeException('Атакующий и цель должны быть размещены на сцене.');
+		}
+
+		$activeEncounter = $this->findActiveEncounter($sceneState);
+		$participant = null;
+
+		if ($activeEncounter instanceof Encounter) {
+			$participant = $this->findEncounterParticipant($activeEncounter, $actorInstance->id);
+
+			if (!$participant instanceof EncounterParticipant || $activeEncounter->current_participant_id !== $participant->id) {
+				throw new RuntimeException('Сейчас не ход этого участника.');
+			}
+
+			if ($requiredUserId !== null && $actorInstance->controlled_by_user_id !== $requiredUserId) {
+				throw new RuntimeException('Нельзя выполнить действие чужим персонажем.');
+			}
+
+			if (!$participant->action_available) {
+				throw new RuntimeException('Основное действие уже израсходовано.');
+			}
+		}
+
+		match ($action) {
+			'weapon_attack' => $this->performWeaponAttack($game, $sceneState, $actorInstance, $targetActor, $participant, $equipmentSlot, $itemCode),
+			'trip_attack' => $this->performTripAttack($game, $sceneState, $actorInstance, $targetActor, $participant),
+			default => throw new RuntimeException('Неизвестное runtime-действие.'),
+		};
+	}
+
+	/**
+	 * Выполняет атаку оружием.
+	 *
+	 * @throws RuntimeException
+	 * @throws Throwable
+	 */
+	private function performWeaponAttack(
+		Game $game,
+		GameSceneState $sceneState,
+		ActorInstance $actorInstance,
+		ActorInstance $targetActor,
+		?EncounterParticipant $participant,
+		?string $equipmentSlot,
+		?string $itemCode,
+	): void
+	{
+		$item = $this->resolveWeaponForActor($actorInstance, $equipmentSlot, $itemCode);
+		$damageDice = $item->getDamageDice();
+
+		if ($damageDice === null) {
+			throw new RuntimeException('Выбранный предмет не может наносить урон.');
+		}
+
+		$distance = abs($actorInstance->x - $targetActor->x) + abs($actorInstance->y - $targetActor->y);
+
+		if ($item->getType() === ItemType::MeleeWeapon && $distance > 1) {
+			throw new RuntimeException('Цель слишком далеко для ближней атаки.');
+		}
+
+		$primaryAbility = $this->resolvePrimaryAttackAbility($item);
+		$stats = is_array($actorInstance->runtime_state['stats'] ?? null) ? $actorInstance->runtime_state['stats'] : [];
+		$level = (int) ($actorInstance->runtime_state['level'] ?? 1);
+		$primaryModifier = $this->actorCombatStatsService->resolveAbilityModifier($this->resolveRuntimeAbilityValue($stats, $primaryAbility));
+		$proficiencyBonus = (int) floor((max(1, $level) - 1) / 4);
+		$luckScale = LuckScale::tryFrom($actorInstance->luck) ?? LuckScale::Normal;
+		$attackRoll = $this->diceRoller->roll(Dice::D20, $luckScale);
+		$attackTotal = $attackRoll + $primaryModifier + $proficiencyBonus;
+		$targetArmorClass = (int) ($targetActor->runtime_state['armor_class'] ?? 10);
+		$isHit = $attackRoll === 20 || ($attackRoll !== 1 && $attackTotal >= $targetArmorClass);
+		$damageRoll = $isHit ? $this->diceRoller->roll($damageDice, $luckScale) : 0;
+		$damageBonus = $isHit ? $this->actorCombatStatsService->resolveDamageBonus($primaryModifier, $level) : 0;
+		$damage = $isHit ? max(0, $damageRoll + $damageBonus) : 0;
+		$nextHp = is_int($targetActor->hp_current) ? max(0, $targetActor->hp_current - $damage) : null;
+		$actionLogEntry = [
+			'id' => (string) Str::uuid(),
+			'type' => 'weapon_attack',
+			'actor_id' => $actorInstance->id,
+			'actor_name' => $actorInstance->name,
+			'target_actor_id' => $targetActor->id,
+			'target_actor_name' => $targetActor->name,
+			'item_code' => $item->getCode(),
+			'item_name' => $item->getName(),
+			'ability_code' => $primaryAbility->getCode(),
+			'attack_roll' => $attackRoll,
+			'attack_total' => $attackTotal,
+			'target_armor_class' => $targetArmorClass,
+			'is_hit' => $isHit,
+			'damage_dice' => $damageDice->value,
+			'damage_roll' => $damageRoll,
+			'damage_bonus' => $damageBonus,
+			'damage' => $damage,
+			'created_at' => now()->toJSON(),
+		];
+
+		DB::transaction(function () use ($sceneState, $targetActor, $nextHp, $participant, $actionLogEntry): void {
+			if ($nextHp !== null) {
+				$targetActor->forceFill([
+					'hp_current' => $nextHp,
+				])->save();
+			}
+
+			if ($participant instanceof EncounterParticipant) {
+				$participant->forceFill([
+					'action_available' => false,
+				])->save();
+			}
+
+			$runtimeState = is_array($sceneState->runtime_state) ? $sceneState->runtime_state : [];
+			$actionLog = is_array($runtimeState['action_log'] ?? null) ? $runtimeState['action_log'] : [];
+			$actionLog[] = $actionLogEntry;
+			$runtimeState['action_log'] = array_slice($actionLog, -50);
+
+			$sceneState->forceFill([
+				'runtime_state' => $runtimeState,
+				'version' => $sceneState->version + 1,
+			])->save();
+		});
+
+		$sceneState->refresh();
+
+		try {
+			$this->realtimePublisher->publishGameSceneUpdated($game, $sceneState);
+		} catch (Throwable $throwable) {
+			report($throwable);
+		}
+	}
+
+	/**
+	 * Выполняет прием сбивания с ног через спасбросок Силы цели.
+	 *
+	 * @throws RuntimeException
+	 * @throws Throwable
+	 */
+	private function performTripAttack(
+		Game $game,
+		GameSceneState $sceneState,
+		ActorInstance $actorInstance,
+		ActorInstance $targetActor,
+		?EncounterParticipant $participant,
+	): void
+	{
+		$distance = abs((int) $actorInstance->x - (int) $targetActor->x) + abs((int) $actorInstance->y - (int) $targetActor->y);
+
+		if ($distance > 1) {
+			throw new RuntimeException('Цель слишком далеко, чтобы сбить ее с ног.');
+		}
+
+		$attackerStats = is_array($actorInstance->runtime_state['stats'] ?? null) ? $actorInstance->runtime_state['stats'] : [];
+		$targetStats = is_array($targetActor->runtime_state['stats'] ?? null) ? $targetActor->runtime_state['stats'] : [];
+		$attackerStrengthModifier = $this->actorCombatStatsService->resolveAbilityModifier($this->resolveRuntimeAbilityValueByCode($attackerStats, 'str'));
+		$targetStrengthModifier = $this->actorCombatStatsService->resolveAbilityModifier($this->resolveRuntimeAbilityValueByCode($targetStats, 'str'));
+		$attackerLevel = (int) ($actorInstance->runtime_state['level'] ?? 1);
+		$difficultyClass = 10 + $attackerStrengthModifier + (int) floor((max(1, $attackerLevel) - 1) / 4);
+		$luckScale = LuckScale::tryFrom($targetActor->luck) ?? LuckScale::Normal;
+		$savingThrowRoll = $this->diceRoller->roll(Dice::D20, $luckScale);
+		$savingThrowTotal = $savingThrowRoll + $targetStrengthModifier;
+		$isFailed = $savingThrowRoll === 1 || ($savingThrowRoll !== 20 && $savingThrowTotal < $difficultyClass);
+		$actionLogEntry = [
+			'id' => (string) Str::uuid(),
+			'type' => 'trip_attack',
+			'actor_id' => $actorInstance->id,
+			'actor_name' => $actorInstance->name,
+			'target_actor_id' => $targetActor->id,
+			'target_actor_name' => $targetActor->name,
+			'save_ability_code' => 'str',
+			'save_roll' => $savingThrowRoll,
+			'save_total' => $savingThrowTotal,
+			'difficulty_class' => $difficultyClass,
+			'is_failed' => $isFailed,
+			'applied_effect_code' => $isFailed ? ActorEffect::Prone->value : null,
+			'created_at' => now()->toJSON(),
+		];
+
+		DB::transaction(function () use ($sceneState, $targetActor, $participant, $actionLogEntry, $isFailed): void {
+			if ($isFailed) {
+				$this->applyTemporaryEffect(
+					actorInstance: $targetActor,
+					effect: ActorEffect::Prone,
+					sourceType: 'runtime_action',
+					sourceCode: 'trip_attack',
+					durationTurns: 1,
+					durationSeconds: 10,
+				);
+			}
+
+			if ($participant instanceof EncounterParticipant) {
+				$participant->forceFill([
+					'action_available' => false,
+				])->save();
+			}
+
+			$runtimeState = is_array($sceneState->runtime_state) ? $sceneState->runtime_state : [];
+			$actionLog = is_array($runtimeState['action_log'] ?? null) ? $runtimeState['action_log'] : [];
+			$actionLog[] = $actionLogEntry;
+			$runtimeState['action_log'] = array_slice($actionLog, -50);
+
+			$sceneState->forceFill([
+				'runtime_state' => $runtimeState,
+				'version' => $sceneState->version + 1,
+			])->save();
+		});
+
+		$sceneState->refresh();
+
+		try {
+			$this->realtimePublisher->publishGameSceneUpdated($game, $sceneState);
+		} catch (Throwable $throwable) {
+			report($throwable);
+		}
+	}
+
+	/**
 	 * Переводит encounter на следующий ход.
 	 *
 	 * @param array{actor_id:int,user_id:int}|null $playerGuard
@@ -1381,20 +1833,12 @@ final class RuntimeSceneManagementService
 			}
 		}
 
-		$nextIndex = $currentIndex + 1;
-		$nextRound = $encounter->round;
-
-		if (!isset($participants[$nextIndex])) {
-			$nextIndex = 0;
-			$nextRound += 1;
-		}
-
-		/** @var EncounterParticipant $nextParticipant */
-		$nextParticipant = $participants[$nextIndex];
-		$nextActor = $nextParticipant->actor;
-		$nextMovementSpeed = $nextActor instanceof ActorInstance
-			? max(0, (int) ($nextActor->movement_speed ?? 0))
-			: 0;
+		/** @var list<EncounterParticipant> $orderedParticipants */
+		$orderedParticipants = $participants->all();
+		$nextTurn = $this->resolveNextEncounterTurn($orderedParticipants, $currentIndex, $encounter->round);
+		$nextParticipant = $nextTurn['participant'];
+		$nextMovementSpeed = $nextTurn['movement_speed'];
+		$nextRound = $nextTurn['round'];
 
 		DB::transaction(function () use ($encounter, $nextParticipant, $nextMovementSpeed, $nextRound, $sceneState): void {
 			$nextParticipant->forceFill([
@@ -1413,6 +1857,260 @@ final class RuntimeSceneManagementService
 				'version' => $sceneState->version + 1,
 			])->save();
 		});
+	}
+
+	/**
+	 * Возвращает следующего участника, пропуская ход акторов с эффектом падения.
+	 *
+	 * @param list<EncounterParticipant> $participants
+	 * @return array{participant:EncounterParticipant,movement_speed:int,round:int}
+	 */
+	private function resolveNextEncounterTurn(array $participants, int $currentIndex, int $currentRound): array
+	{
+		$participantCount = count($participants);
+		$nextIndex = $currentIndex;
+		$nextRound = $currentRound;
+
+		for ($attempt = 0; $attempt < max(1, $participantCount * 2); $attempt++) {
+			$nextIndex++;
+
+			if (!isset($participants[$nextIndex])) {
+				$nextIndex = 0;
+				$nextRound++;
+			}
+
+			$participant = $participants[$nextIndex];
+			$actor = $participant->actor;
+
+			if (!$actor instanceof ActorInstance) {
+				return [
+					'participant' => $participant,
+					'movement_speed' => 0,
+					'round' => $nextRound,
+				];
+			}
+
+			if ($this->surfaceEffectService->consumeSkippedTurnIfNeeded($actor)) {
+				$participant->forceFill([
+					'movement_left' => 0,
+					'action_available' => false,
+					'bonus_action_available' => false,
+					'reaction_available' => false,
+				])->save();
+
+				continue;
+			}
+
+			return [
+				'participant' => $participant,
+				'movement_speed' => $this->surfaceEffectService->resolveEffectiveMovementSpeed($actor),
+				'round' => $nextRound,
+			];
+		}
+
+		/** @var EncounterParticipant $fallbackParticipant */
+		$fallbackParticipant = $participants[$nextIndex] ?? $participants[0];
+
+		return [
+			'participant' => $fallbackParticipant,
+			'movement_speed' => 0,
+			'round' => $nextRound,
+		];
+	}
+
+	/**
+	 * Возвращает runtime-актора из указанной сцены.
+	 */
+	private function findRuntimeActorInScene(GameSceneState $sceneState, int $actorInstanceId): ?ActorInstance
+	{
+		return ActorInstance::query()
+			->where('id', $actorInstanceId)
+			->where('game_scene_state_id', $sceneState->id)
+			->where('game_id', $sceneState->game_id)
+			->first();
+	}
+
+	/**
+	 * Возвращает оружие для атаки актора.
+	 */
+	private function resolveWeaponForActor(ActorInstance $actorInstance, ?string $equipmentSlot, ?string $itemCode): Item
+	{
+		if (is_string($equipmentSlot) && $equipmentSlot !== '') {
+			$slot = ActorEquipmentSlot::tryFrom($equipmentSlot);
+
+			if (!$slot instanceof ActorEquipmentSlot) {
+				throw new RuntimeException('Неизвестный слот экипировки.');
+			}
+
+			$item = $this->actorEquipmentService->resolveEquippedItem($actorInstance, $slot);
+
+			if (!$item instanceof Item) {
+				throw new RuntimeException('В выбранном слоте нет экипированного оружия.');
+			}
+
+			if (!$this->actorEquipmentService->isWeapon($item)) {
+				throw new RuntimeException('Предмет в выбранном слоте не является оружием.');
+			}
+
+			return $item;
+		}
+
+		if (is_string($itemCode) && $itemCode !== '') {
+			$item = $this->itemCatalog->findActiveItemByCode($itemCode);
+
+			if (!$item instanceof Item) {
+				throw new RuntimeException('Выбранное оружие не найдено.');
+			}
+
+			if (!in_array($item->getType(), [ItemType::MeleeWeapon, ItemType::RangedWeapon], true)) {
+				throw new RuntimeException('Выбранный предмет не является оружием.');
+			}
+
+			return $item;
+		}
+
+		$equippedWeapon = $this->actorEquipmentService->resolveFirstEquippedWeapon($actorInstance);
+
+		if ($equippedWeapon instanceof Item) {
+			return $equippedWeapon;
+		}
+
+		$fallbackWeapon = $this->itemCatalog->findActiveItemByCode('longsword');
+
+		if (!$fallbackWeapon instanceof Item) {
+			throw new RuntimeException('Оружие по умолчанию не найдено.');
+		}
+
+		return $fallbackWeapon;
+	}
+
+	/**
+	 * Возвращает основную характеристику атаки оружием.
+	 */
+	private function resolvePrimaryAttackAbility(Item $item): Ability
+	{
+		$ability = $item->getAttackAbilities()[0] ?? null;
+
+		if (!$ability instanceof Ability) {
+			throw new RuntimeException('Для оружия не задана основная характеристика атаки.');
+		}
+
+		return $ability;
+	}
+
+	/**
+	 * Рассчитывает runtime AC с учетом экипированной брони.
+	 */
+	private function resolveRuntimeActorArmorClass(ActorInstance $actorInstance): int
+	{
+		$runtimeState = is_array($actorInstance->runtime_state) ? $actorInstance->runtime_state : [];
+		$stats = is_array($runtimeState['stats'] ?? null) ? $runtimeState['stats'] : [];
+		$level = (int) ($runtimeState['level'] ?? 1);
+		$armor = $this->actorEquipmentService->resolveEquippedItem($actorInstance, ActorEquipmentSlot::Armor);
+
+		if (!$armor instanceof Item) {
+			return $this->actorCombatStatsService->buildDerivedStats($stats, $level)['armor_class'];
+		}
+
+		$armorClass = $armor->getArmorClassBase() ?? $this->actorCombatStatsService->baseArmorClass();
+		$armorClass += $armor->getArmorClassBonus() ?? 0;
+		$armorAbility = $armor->getArmorClassAbility();
+
+		if ($armorAbility instanceof Ability) {
+			$abilityModifier = $this->actorCombatStatsService->resolveAbilityModifier($this->resolveRuntimeAbilityValue($stats, $armorAbility));
+			$abilityCap = $armor->getArmorClassAbilityCap();
+			$armorClass += $abilityCap === null ? $abilityModifier : min($abilityModifier, $abilityCap);
+		}
+
+		return max(1, $armorClass);
+	}
+
+	/**
+	 * Накладывает временный runtime-эффект на актора.
+	 */
+	private function applyTemporaryEffect(
+		ActorInstance $actorInstance,
+		ActorEffect $effect,
+		string $sourceType,
+		string $sourceCode,
+		int $durationTurns,
+		int $durationSeconds,
+	): void
+	{
+		$effects = is_array($actorInstance->temporary_effects) ? $actorInstance->temporary_effects : [];
+		$payload = [
+			'code' => $effect->value,
+			'label' => $effect->label(),
+			'type' => $effect->type(),
+			'icon' => $effect->icon(),
+			'source_type' => $sourceType,
+			'source_code' => $sourceCode,
+			'remaining_turns' => max(0, $durationTurns),
+			'expires_at' => now()->addSeconds(max(1, $durationSeconds))->toJSON(),
+		];
+		$wasUpdated = false;
+
+		foreach ($effects as $index => $activeEffect) {
+			if (!is_array($activeEffect) || ($activeEffect['code'] ?? null) !== $effect->value) {
+				continue;
+			}
+
+			$effects[$index] = $payload;
+			$wasUpdated = true;
+			break;
+		}
+
+		if (!$wasUpdated) {
+			$effects[] = $payload;
+		}
+
+		$actorInstance->forceFill([
+			'temporary_effects' => array_values($effects),
+		])->save();
+	}
+
+	/**
+	 * Возвращает значение характеристики из runtime-статов актора.
+	 *
+	 * @param array<string, mixed> $stats
+	 */
+	private function resolveRuntimeAbilityValue(array $stats, Ability $ability): int
+	{
+		return $this->resolveRuntimeAbilityValueByCode($stats, $ability->getCode());
+	}
+
+	/**
+	 * Возвращает значение характеристики из runtime-статов актора по коду.
+	 *
+	 * @param array<string, mixed> $stats
+	 */
+	private function resolveRuntimeAbilityValueByCode(array $stats, string $abilityCode): int
+	{
+		$value = $stats[$abilityCode] ?? null;
+
+		if (is_int($value)) {
+			return $value;
+		}
+
+		$legacyValue = $stats[$this->resolveLegacyAbilityCode($abilityCode)] ?? null;
+
+		return is_int($legacyValue) ? $legacyValue : 10;
+	}
+
+	/**
+	 * Возвращает legacy-код характеристики из ранних payload NPC.
+	 */
+	private function resolveLegacyAbilityCode(string $abilityCode): string
+	{
+		return match ($abilityCode) {
+			'str' => 'strength',
+			'dex' => 'dexterity',
+			'con' => 'constitution',
+			'int' => 'intelligence',
+			'wis' => 'wisdom',
+			'cha' => 'charisma',
+			default => $abilityCode,
+		};
 	}
 
 	/**
@@ -1534,14 +2232,46 @@ final class RuntimeSceneManagementService
 	}
 
 	/**
-	 * Рассчитывает базовое здоровье runtime-героя игрока.
+	 * Рассчитывает здоровье persistent-актора для runtime.
 	 */
-	private function resolvePlayerCharacterHitPoints(PlayerCharacter $character): int
+	private function resolveActorHitPoints(Actor $actor): int
 	{
-		$constitution = (int) ($character->base_stats[(new ConstitutionAbility)->getCode()] ?? 10);
-		$constitutionModifier = (int) floor(($constitution - 10) / 2);
-		$healthBonus = (int) ($character->derived_stats['health'] ?? 0);
+		if (is_int($actor->health_max) && $actor->health_max > 0) {
+			return $actor->health_max;
+		}
 
-		return max(1, 10 + $constitutionModifier + $character->level + $healthBonus);
+		return $this->buildActorRuntimeDerivedStats($actor)['health'];
+	}
+
+	/**
+	 * Рассчитывает производные показатели persistent-актора.
+	 *
+	 * @return array{health:int,movement_speed:int,armor_class:int,jump_height:int,damage_bonus:int,modifiers:array{str:int,dex:int,con:int}}
+	 */
+	private function buildActorRuntimeDerivedStats(Actor $actor): array
+	{
+		return $this->actorCombatStatsService->buildDerivedStats(
+			stats: $actor->stats,
+			level: $actor->level,
+			healthBonus: max(0, (int) ($actor->base_health ?? $this->actorCombatStatsService->baseHealth()) - $this->actorCombatStatsService->baseHealth()),
+			speedBonus: max(0, (int) $actor->movement_speed - $this->actorCombatStatsService->baseMovementSpeed()),
+			armorBonus: max(0, (int) $actor->armor_class - $this->actorCombatStatsService->baseArmorClass()),
+		);
+	}
+
+	/**
+	 * Рассчитывает производные показатели runtime-героя игрока.
+	 *
+	 * @return array{health:int,movement_speed:int,armor_class:int,jump_height:int,damage_bonus:int,modifiers:array{str:int,dex:int,con:int}}
+	 */
+	private function buildPlayerRuntimeDerivedStats(PlayerCharacter $character): array
+	{
+		return $this->actorCombatStatsService->buildDerivedStats(
+			stats: $character->base_stats,
+			level: $character->level,
+			healthBonus: (int) ($character->derived_stats['health_bonus'] ?? 0),
+			speedBonus: (int) ($character->derived_stats['speed_bonus'] ?? 0),
+			armorBonus: (int) ($character->derived_stats['armor_bonus'] ?? 0),
+		);
 	}
 }

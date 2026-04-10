@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domain\Scene\Surfaces;
 
+use App\Data\Game\SurfaceEffectRuleData;
+use App\Domain\Actor\ActorEffect;
+use App\Domain\Actor\Dice;
 use App\Domain\Actor\Elements\ActorElementDefinition;
 
 /**
@@ -42,6 +45,19 @@ final class IceSceneSurface implements SceneSurfaceDefinition
 	public function element(): ?ActorElementDefinition
 	{
 		return null;
+	}
+
+	public function effectRules(): array
+	{
+		return [
+			new SurfaceEffectRuleData(
+				effect: ActorEffect::Prone,
+				rollDice: Dice::D20,
+				applyWhenRollBelow: 5,
+				durationTurns: 1,
+				durationSeconds: 10,
+			),
+		];
 	}
 
 	public function tags(): array

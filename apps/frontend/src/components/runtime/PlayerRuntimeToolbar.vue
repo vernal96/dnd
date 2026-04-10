@@ -14,6 +14,16 @@ type InventorySlot = {
   } | null;
 };
 
+type EquipmentSlotView = {
+  item: RuntimeActorInventoryItem | null;
+  key: string;
+  label: string;
+  meta: {
+    imageUrl: string | null;
+    name: string;
+  } | null;
+};
+
 const props = defineProps<{
   actor: RuntimeActorInstance | null;
   catalog: CatalogItem[];
@@ -26,6 +36,14 @@ const emit = defineEmits<{
 
 const INVENTORY_COLUMNS = 30;
 const SLOT_ROWS = 2;
+const EQUIPMENT_SLOTS = [
+  { label: 'Рука', value: 'main_hand' },
+  { label: '2 рука', value: 'off_hand' },
+  { label: 'Дальний', value: 'ranged' },
+  { label: 'Броня', value: 'armor' },
+  { label: 'Акс. 1', value: 'accessory_1' },
+  { label: 'Акс. 2', value: 'accessory_2' },
+];
 
 const portraitImageUrl = computed(() => props.actor?.image_url ?? props.actor?.runtime_state?.image_url ?? null);
 const actorLevel = computed(() => props.actor?.runtime_state?.level ?? null);
@@ -33,12 +51,14 @@ const actorRace = computed(() => resolveRaceLabel(props.actor?.runtime_state?.ra
 const actorClass = computed(() => resolveCharacterClassLabel(props.actor?.runtime_state?.character_class));
 const actorHpCurrent = computed(() => props.actor?.hp_current ?? null);
 const actorHpMax = computed(() => props.actor?.hp_max ?? null);
+const actorEffects = computed(() => props.actor?.temporary_effects ?? []);
+const bagItems = computed(() => props.items.filter((item) => item.slot === null || item.slot === ''));
 
 const inventorySlots = computed<InventorySlot[]>(() => {
   const totalSlots = INVENTORY_COLUMNS * SLOT_ROWS;
 
   return Array.from({ length: totalSlots }, (_, index) => {
-    const item = props.items[index] ?? null;
+    const item = bagItems.value[index] ?? null;
 
     if (item === null) {
       return {
@@ -60,6 +80,25 @@ const inventorySlots = computed<InventorySlot[]>(() => {
     };
   });
 });
+
+const equipmentSlots = computed<EquipmentSlotView[]>(() =>
+  EQUIPMENT_SLOTS.map((slot) => {
+    const item = props.items.find((entry) => entry.slot === slot.value) ?? null;
+    const catalogItem = item === null ? null : props.catalog.find((entry) => entry.code === item.itemCode) ?? null;
+
+    return {
+      item,
+      key: slot.value,
+      label: slot.label,
+      meta: item === null
+        ? null
+        : {
+          imageUrl: catalogItem?.image_url ?? null,
+          name: catalogItem?.name ?? prettifyItemCode(item.itemCode),
+        },
+    };
+  }),
+);
 
 function prettifyItemCode(itemCode: string): string {
   return itemCode
@@ -98,6 +137,20 @@ function handleOpenInventory(): void {
           type="button"
           @click="handleOpenInventory"
         >
+          <div
+            v-if="actorEffects.length > 0"
+            class="absolute left-2 right-2 top-2 z-10 flex flex-wrap justify-center gap-1.5"
+          >
+            <span
+              v-for="effect in actorEffects"
+              :key="effect.code"
+              class="flex h-7 min-w-7 items-center justify-center rounded-full border border-red-200/25 bg-red-950/85 px-1.5 text-xs text-red-100 shadow-[0_8px_20px_rgba(127,29,29,0.35)]"
+              :title="effect.label"
+            >
+              {{ effect.icon }}
+            </span>
+          </div>
+
           <div class="absolute inset-[0.35rem] overflow-hidden rounded-[0.8rem] border border-white/10 bg-slate-900/75">
             <img
               v-if="portraitImageUrl"
@@ -135,6 +188,32 @@ function handleOpenInventory(): void {
       </div>
 
       <div class="pointer-events-auto flex-1 rounded-[1.8rem] border border-amber-200/15 bg-[linear-gradient(180deg,rgba(15,23,42,0.8),rgba(2,6,23,0.92))] p-3 shadow-[0_24px_60px_rgba(2,6,23,0.42)] backdrop-blur-md">
+        <div class="mb-3 flex gap-2 overflow-x-auto pb-1">
+          <button
+            v-for="slot in equipmentSlots"
+            :key="slot.key"
+            class="group/equipment relative flex h-12 min-w-20 items-center gap-2 overflow-hidden rounded-[0.95rem] border px-2 transition"
+            :class="slot.item ? 'border-amber-300/25 bg-amber-300/10 hover:border-amber-200/40' : 'border-white/10 bg-white/[0.035]'"
+            type="button"
+            @click="handleOpenInventory"
+          >
+            <span class="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-slate-950/55">
+              <img
+                v-if="slot.meta?.imageUrl"
+                :src="slot.meta.imageUrl"
+                :alt="slot.meta.name"
+                class="h-full w-full object-cover"
+              >
+              <span v-else-if="slot.item" class="font-display text-sm text-amber-50">{{ resolveInitial(slot.meta?.name) }}</span>
+              <span v-else class="text-[0.62rem] text-slate-500">—</span>
+            </span>
+            <span class="min-w-0 text-left">
+              <span class="block text-[0.58rem] uppercase tracking-[0.12em] text-amber-200/45">{{ slot.label }}</span>
+              <span class="block max-w-24 truncate text-[0.68rem] text-slate-200">{{ slot.meta?.name ?? 'Пусто' }}</span>
+            </span>
+          </button>
+        </div>
+
         <div
           class="grid"
           :style="{
