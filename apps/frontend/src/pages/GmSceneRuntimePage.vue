@@ -29,6 +29,7 @@ import type { CatalogItem } from '@/types/item';
 import type { RealtimeEventMessage } from '@/types/realtime';
 import type { SceneCell, SceneObject, SceneObjectDefinition, SceneSurfaceDefinition, SceneViewportMetadata } from '@/types/scene';
 import type { RuntimeActorInstance, RuntimeActorInventoryItem, RuntimeEncounterParticipant, RuntimeSceneDetail } from '@/types/runtimeScene';
+import { resolveCharacterClassLabel, resolveRaceLabel } from '@/utils/catalogLabel';
 
 type CanvasPoint = {
   x: number;
@@ -2027,7 +2028,7 @@ onBeforeUnmount(() => {
                     <div class="min-w-0">
                       <p class="truncate text-sm text-amber-50">{{ selectedActor.name }}</p>
                       <p class="truncate text-xs text-slate-300">
-                        {{ selectedActor.runtime_state?.race || 'Без расы' }} · {{ selectedActor.runtime_state?.character_class || 'Без класса' }}
+                        {{ resolveRaceLabel(selectedActor.runtime_state?.race) }} · {{ resolveCharacterClassLabel(selectedActor.runtime_state?.character_class) }}
                       </p>
                       <p class="text-xs text-slate-400">
                         Ур. {{ selectedActor.runtime_state?.level ?? '—' }} · HP {{ selectedActor.hp_current ?? 0 }}/{{ selectedActor.hp_max ?? 0 }}
@@ -2109,7 +2110,7 @@ onBeforeUnmount(() => {
                       </div>
                       <div class="min-w-0">
                         <span class="block truncate text-sm text-amber-50">{{ actor.name }}</span>
-                        <span class="block truncate text-xs text-slate-300">{{ actor.race || 'Без расы' }} · {{ actor.character_class || 'Без класса' }}</span>
+                        <span class="block truncate text-xs text-slate-300">{{ resolveRaceLabel(actor.race) }} · {{ resolveCharacterClassLabel(actor.character_class) }}</span>
                       </div>
                     </button>
                   </div>
@@ -2222,7 +2223,7 @@ onBeforeUnmount(() => {
                   <div class="min-w-0">
                     <span class="block truncate text-sm text-amber-50">{{ actor.name }}</span>
                     <span class="block truncate text-xs text-slate-300">
-                      {{ actor.runtime_state?.race || 'Без расы' }} · {{ actor.runtime_state?.character_class || 'Без класса' }}
+                      {{ resolveRaceLabel(actor.runtime_state?.race) }} · {{ resolveCharacterClassLabel(actor.runtime_state?.character_class) }}
                     </span>
                     <span class="block text-xs text-slate-400">
                       {{ actor.x }},{{ actor.y }} · {{ actor.movement_speed ?? actor.runtime_state?.movement_speed ?? '—' }} кл.
@@ -2296,7 +2297,7 @@ onBeforeUnmount(() => {
           </div>
           <div class="min-w-0 flex-1">
             <p class="truncate text-sm text-amber-50">{{ actor.name }}</p>
-            <p class="truncate text-xs text-slate-300">{{ actor.runtime_state?.race || 'Без расы' }} · {{ actor.runtime_state?.character_class || 'Без класса' }}</p>
+            <p class="truncate text-xs text-slate-300">{{ resolveRaceLabel(actor.runtime_state?.race) }} · {{ resolveCharacterClassLabel(actor.runtime_state?.character_class) }}</p>
           </div>
           <span class="rounded-full border border-amber-200/10 bg-slate-950/50 px-3 py-1 text-xs uppercase text-slate-300">
             {{ selectedEncounterActorIds.includes(actor.id) ? 'В бою' : 'Пропустить' }}

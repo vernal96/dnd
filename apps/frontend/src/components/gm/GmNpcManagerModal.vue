@@ -4,6 +4,7 @@ import { ref, watch } from 'vue';
 import { deleteGameActor, fetchGameActors } from '@/services/actorApi';
 import PlayerCharacterCreateModal from '@/components/player/PlayerCharacterCreateModal.vue';
 import type { GameActor } from '@/types/actor';
+import { resolveCharacterClassLabel, resolveRaceLabel } from '@/utils/catalogLabel';
 
 const props = defineProps<{
   open: boolean;
@@ -161,7 +162,7 @@ watch(
             <div class="min-w-0 flex-1">
               <p class="truncate text-base text-amber-50">{{ actor.name }}</p>
               <p class="mt-1 truncate text-sm text-slate-300">
-                {{ actor.race || 'Без расы' }} · {{ actor.character_class || 'Без класса' }}
+                {{ resolveRaceLabel(actor.race) }} · {{ resolveCharacterClassLabel(actor.character_class) }}
               </p>
               <p class="mt-1 text-xs text-slate-400">
                 Ур. {{ actor.level }} · HP {{ actor.base_health ?? actor.health_max ?? 0 }} · {{ actor.movement_speed }} кл.

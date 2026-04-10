@@ -16,6 +16,7 @@ import {fetchGame, inviteGameMember, removeGameMember, updateGameStatus} from '@
 import type {GameActor} from '@/types/actor';
 import type {GameDetail, GameStatus} from '@/types/game';
 import type {RealtimeEventMessage} from '@/types/realtime';
+import {resolveCharacterClassLabel, resolveRaceLabel} from '@/utils/catalogLabel';
 import {formatGameStatus} from '@/utils/gameStatus';
 
 const route = useRoute();
@@ -560,13 +561,13 @@ onUnmounted(() => {
 
                   <div class="mt-4 flex flex-wrap gap-2 text-xs uppercase text-slate-300">
                     <span class="rounded-full border border-amber-200/10 bg-white/5 px-3 py-2">
-                      {{ member.player_character.race || 'Без расы' }}
+                      {{ resolveRaceLabel(member.player_character.race) }}
                       <template v-if="member.player_character.subrace">
                         · {{ member.player_character.subrace }}
                       </template>
                     </span>
                     <span class="rounded-full border border-amber-200/10 bg-white/5 px-3 py-2">
-                      {{ member.player_character.class || 'Без класса' }}
+                      {{ resolveCharacterClassLabel(member.player_character.class) }}
                     </span>
                     <span class="rounded-full border border-amber-200/10 bg-white/5 px-3 py-2">
                       Ур. {{ member.player_character.level }}

@@ -13,6 +13,7 @@ import type { GameActor } from '@/types/actor';
 import type { CatalogItem } from '@/types/item';
 import type { RuntimeActorInventoryItem } from '@/types/runtimeScene';
 import type { SceneActorPlacement, SceneCell, SceneObject, SceneObjectDefinition, ScenePlayerSpawnPoint, SceneSurfaceDefinition, SceneViewportMetadata } from '@/types/scene';
+import { resolveCharacterClassLabel, resolveRaceLabel } from '@/utils/catalogLabel';
 
 type GridResizeEdge = 'bottom' | 'left' | 'right' | 'top';
 type GridResizeMode = 'expand' | 'shrink';
@@ -2289,7 +2290,7 @@ onBeforeUnmount(() => {
                 </span>
                 <span class="min-w-0">
                   <span class="block truncate text-sm text-amber-50">{{ actor.name }}</span>
-                  <span class="block truncate text-xs text-slate-300">{{ actor.race || 'Неизвестная раса' }} · {{ actor.character_class || 'Без класса' }}</span>
+                  <span class="block truncate text-xs text-slate-300">{{ resolveRaceLabel(actor.race, 'Неизвестная раса') }} · {{ resolveCharacterClassLabel(actor.character_class) }}</span>
                 </span>
               </button>
             </div>

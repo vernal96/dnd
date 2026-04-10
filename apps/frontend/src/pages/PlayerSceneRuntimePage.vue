@@ -2,6 +2,7 @@
 import { ArrowLeft, Shield, Sword } from 'lucide-vue-next';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import PlayerRuntimeToolbar from '@/components/runtime/PlayerRuntimeToolbar.vue';
 import RuntimeActorInventoryModal from '@/components/runtime/RuntimeActorInventoryModal.vue';
 import RuntimeSceneCanvas from '@/components/runtime/RuntimeSceneCanvas.vue';
 import { useAuthSession } from '@/composables/useAuthSession';
@@ -20,6 +21,7 @@ import type { CatalogItem } from '@/types/item';
 import type { RealtimeEventMessage } from '@/types/realtime';
 import type { SceneObjectDefinition, SceneSurfaceDefinition } from '@/types/scene';
 import type { RuntimeActorInstance, RuntimeActorInventoryItem, RuntimeEncounterParticipant, RuntimeSceneDetail } from '@/types/runtimeScene';
+import { resolveCharacterClassLabel, resolveRaceLabel } from '@/utils/catalogLabel';
 
 type CanvasPoint = {
   x: number;
@@ -1835,7 +1837,7 @@ onBeforeUnmount(() => {
               </div>
               <p class="mt-3 font-display text-2xl text-amber-50">{{ selectedActor.name }}</p>
               <p class="mt-2 text-sm text-slate-300">
-                {{ selectedActor.runtime_state?.race || 'Без расы' }} · {{ selectedActor.runtime_state?.character_class || 'Без класса' }}
+                {{ resolveRaceLabel(selectedActor.runtime_state?.race) }} · {{ resolveCharacterClassLabel(selectedActor.runtime_state?.character_class) }}
               </p>
               <p class="mt-2 text-sm text-slate-400">
                 Скорость: {{ selectedActor.movement_speed ?? selectedActor.runtime_state?.movement_speed ?? '—' }} клеток
@@ -1865,6 +1867,14 @@ onBeforeUnmount(() => {
     :items="normalizeInventory(inventoryActor?.runtime_state?.inventory)"
     :open="inventoryActor !== null"
     @close="inventoryActorId = null"
+  />
+
+  <PlayerRuntimeToolbar
+    v-if="isClientReady"
+    :actor="selectedActor"
+    :catalog="itemCatalog"
+    :items="normalizeInventory(selectedActor?.runtime_state?.inventory)"
+    @open-inventory="openInventoryForActor"
   />
 </template>
 

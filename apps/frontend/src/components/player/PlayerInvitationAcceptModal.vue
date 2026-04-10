@@ -4,6 +4,7 @@ import {computed, ref, watch} from 'vue';
 import {fetchInvitationAvailableCharacters} from '@/services/gameApi';
 import type {GameInvitationSummary} from '@/types/game';
 import type {PlayerCharacter} from '@/types/playerCharacter';
+import {resolveCharacterClassLabel, resolveRaceLabel} from '@/utils/catalogLabel';
 
 const props = defineProps<{
   open: boolean;
@@ -149,9 +150,9 @@ watch(
                   <div class="min-w-0">
                     <p class="truncate font-display text-2xl text-amber-50">{{ character.name }}</p>
                     <p class="mt-1 truncate text-sm text-slate-300">
-                      {{ character.race_name || character.race || 'Без расы' }}
+                      {{ character.race_name || resolveRaceLabel(character.race) }}
                       <template v-if="character.subrace_name"> · {{ character.subrace_name }}</template>
-                      · {{ character.character_class_name || character.character_class || 'Без класса' }}
+                      · {{ character.character_class_name || resolveCharacterClassLabel(character.character_class) }}
                       · ур. {{ character.level }}
                     </p>
                     <p class="mt-1 truncate text-xs text-slate-400">
@@ -189,9 +190,9 @@ watch(
                 v-if="selectedCharacter"
                 class="mt-4 rounded-2xl border border-amber-200/10 bg-slate-950/40 px-4 py-3 text-sm leading-6 text-slate-300"
               >
-                {{ selectedCharacter.race_name || selectedCharacter.race || 'Без расы' }}
+                {{ selectedCharacter.race_name || resolveRaceLabel(selectedCharacter.race) }}
                 <template v-if="selectedCharacter.subrace_name"> · {{ selectedCharacter.subrace_name }}</template>
-                · {{ selectedCharacter.character_class_name || selectedCharacter.character_class || 'Без класса' }}
+                · {{ selectedCharacter.character_class_name || resolveCharacterClassLabel(selectedCharacter.character_class) }}
                 · ур. {{ selectedCharacter.level }}
               </div>
             </div>

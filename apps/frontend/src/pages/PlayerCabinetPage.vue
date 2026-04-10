@@ -15,6 +15,7 @@ import {fetchPlayerActiveGames} from '@/services/gameApi';
 import type {GameInvitationSummary, PlayerActiveGameSummary} from '@/types/game';
 import type {PlayerCharacter} from '@/types/playerCharacter';
 import type {RealtimeEventMessage} from '@/types/realtime';
+import {resolveCharacterClassLabel, resolveRaceLabel} from '@/utils/catalogLabel';
 
 const router = useRouter();
 const {currentUser, ensureSessionLoaded, isAuthenticated, isPending, logoutUser} = useAuthSession();
@@ -375,11 +376,11 @@ onUnmounted(() => {
                     {{ member.player_character?.name || 'Герой не выбран' }}
                   </h4>
                   <p class="mt-2 text-sm text-amber-100/70">
-                    {{ member.player_character?.race || 'Без расы' }}
+                    {{ resolveRaceLabel(member.player_character?.race) }}
                     <template v-if="member.player_character?.subrace">
                       · {{ member.player_character.subrace }}
                     </template>
-                    · {{ member.player_character?.class || 'Без класса' }}
+                    · {{ resolveCharacterClassLabel(member.player_character?.class) }}
                     · Ур. {{ member.player_character?.level || '—' }}
                     · XP {{ member.player_character?.experience || 0 }}
                   </p>
@@ -578,13 +579,13 @@ onUnmounted(() => {
 
                   <div class="mt-4 flex flex-wrap gap-2 text-xs uppercase text-slate-300">
                     <span class="rounded-full border border-amber-200/10 bg-white/5 px-3 py-2">
-                      {{ character.race_name || character.race || 'Без расы' }}
+                      {{ character.race_name || resolveRaceLabel(character.race) }}
                       <template v-if="character.subrace_name">
                         · {{ character.subrace_name }}
                       </template>
                     </span>
                     <span class="rounded-full border border-amber-200/10 bg-white/5 px-3 py-2">
-                      {{ character.character_class_name || character.character_class || 'Без класса' }}
+                      {{ character.character_class_name || resolveCharacterClassLabel(character.character_class) }}
                     </span>
                     <span class="rounded-full border border-amber-200/10 bg-white/5 px-3 py-2">
                       Ур. {{ character.level }}
